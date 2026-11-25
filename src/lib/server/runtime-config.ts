@@ -2,6 +2,7 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
+import type { BackOfficeMode } from '$lib/types/BackOfficeMode';
 import type { Currency } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
@@ -74,6 +75,8 @@ const baseConfig = {
 	 * Edited by the hoster (mongosh today) — no in-app UI.
 	 */
 	disabledAdminEntries: [] as string[],
+	/** Full back office, or the PoS one: the payment terminal without the shop. */
+	backOfficeMode: 'full' as BackOfficeMode,
 	adminWelcomMessage: '',
 	isAdminCreated: false,
 	exchangeRate: defaultExchangeRate,
@@ -85,6 +88,12 @@ const baseConfig = {
 	priceReferenceCurrency: 'SAT' as Currency,
 	accountingCurrency: null as Currency | null,
 	orderNumber: 0,
+	/** Numbers the payments taken on terminals, apart from the orders. */
+	posPaymentNumber: 0,
+	/** The Stripe Terminal Location of the shop, that its Tap to Pay terminals connect to. */
+	stripeTerminalLocationId: '',
+	/** PayPal on paired terminals, apart from the shop's PayPal (Payment Settings > PayPal POS). */
+	paypalPos: { clientId: '', secret: '', sandbox: false, currency: 'EUR' as Currency },
 	paymentMethods: { order: [] as PaymentMethod[], disabled: [] as PaymentMethod[] },
 	paymentProcessorPreferences: {} as Partial<Record<PaymentMethod, PaymentProcessor>>,
 	/**
@@ -460,6 +469,12 @@ Amount: {{amount}} {{currency}}</p>`,
 			subject: 'Order #{{orderNumber}}',
 			html: `<p>Payment for order #{{orderNumber}} is paid, see <a href="{{orderLink}}">{{orderLink}}</a></p>
 <p>Order <a href="{{orderLink}}">#{{orderNumber}}</a> is fully paid!</p>`,
+			default: true as boolean
+		},
+		'pos.receipt': {
+			subject: '{{brandName}} - Payment receipt #{{number}}',
+			html: `<p>Thank you for your payment of {{amount}}.</p>
+<p>Your receipt: <a href="{{receiptLink}}">{{receiptLink}}</a></p>`,
 			default: true as boolean
 		},
 		'order.payment.paid': {

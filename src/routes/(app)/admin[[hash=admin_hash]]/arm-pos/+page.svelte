@@ -1,0 +1,159 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { useI18n } from '$lib/i18n';
+
+	export let data;
+	export let form;
+
+	const { t, locale } = useI18n();
+
+	// A PIN drawn at random, shown in clear so that it can be given to the operator.
+	let pins: Record<string, string> = {};
+	let generatedPins: Record<string, boolean> = {};
+	function generatePin(userId: string) {
+		const digits = crypto.getRandomValues(new Uint32Array(6));
+		pins[userId] = Array.from(digits, (n) => String(n % 10)).join('');
+		generatedPins[userId] = true;
+	}
+
+	// Inside the be-BOP-pos app, the identifier is written on the badge with its NFC module.
+	type NfcBridge = { writeNfc(text: string): Promise<unknown> };
+	let nfc: NfcBridge | undefined;
+	let writeStatus = '';
+	onMount(() => {
+		nfc = (window as unknown as { bebopPos?: NfcBridge }).bebopPos;
+	});
+	async function writeBadge(identifier: string) {
+		writeStatus = t('admin.armPos.badgePresent');
+		try {
+			await nfc?.writeNfc(identifier);
+			writeStatus = t('admin.armPos.badgeWritten');
+		} catch (err) {
+			writeStatus = err instanceof Error ? err.message : String(err);
+		}
+	}
+</script>
+
+<h1 class="text-3xl">{t('admin.armPos.title')}</h1>
+
+<p>{t('admin.armPos.intro')}</p>
+
+{#if form && 'badgeIdentifier' in form && form.badgeIdentifier}
+	<section class="border border-amber-400 bg-amber-50 rounded p-4 flex flex-col gap-2">
+		<p class="font-semibold">{t('admin.armPos.badgeWrite')}</p>
+		<code class="break-all">{form.badgeIdentifier}</code>
+		{#if nfc}
+			<button
+				type="button"
+				class="btn btn-black self-start"
+				on:click={() => form && 'badgeIdentifier' in form && writeBadge(form.badgeIdentifier ?? '')}
+			>
+				{t('admin.armPos.writeBadge')}
+			</button>
+			{#if writeStatus}
+				<p>{writeStatus}</p>
+			{/if}
+		{/if}
+	</section>
+{/if}
+
+<h2 class="text-2xl">{t('admin.armPos.rolesTitle')}</h2>
+<p class="text-sm">{t('admin.armPos.superAdminNote')}</p>
+
+{#each data.roles as role}
+	<form
+		method="post"
+		action="?/roleActions"
+		class="flex flex-wrap gap-3 items-center border-b py-2"
+	>
+		<input type="hidden" name="roleId" value={role._id} />
+		<span class="font-semibold w-40">{role.name}</span>
+		{#each data.actions as action}
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					class="form-checkbox"
+					name="posActions"
+					value={action}
+					checked={role.posActions.includes(action)}
+				/>
+				{t(`admin.armPos.actions.${action}`)}
+			</label>
+		{/each}
+		<button type="submit" class="btn btn-black ml-auto">{t('admin.action.save')}</button>
+	</form>
+{/each}
+
+<h2 class="text-2xl">{t('admin.armPos.operatorsTitle')}</h2>
+
+{#each data.users as user}
+	<section class="border-b py-3 flex flex-col gap-2">
+		<p class="font-semibold">
+			{user.name}
+			<span class="text-sm opacity-70"
+				>({user.roleId}){user.disabled ? ' · ' + t('admin.armPos.disabled') : ''}</span
+			>
+		</p>
+		<div class="flex flex-wrap gap-2 items-end">
+			<form method="post" action="?/pin" class="flex gap-2 items-end">
+				<input type="hidden" name="userId" value={user._id} />
+				<label class="form-label">
+					{user.hasPin ? t('admin.armPos.changePin') : t('admin.armPos.setPin')}
+					<input
+						type={generatedPins[user._id] ? 'text' : 'password'}
+						name="pin"
+						class="form-input"
+						inputmode="numeric"
+						pattern="\d{'{'}4,12{'}'}"
+						maxlength="12"
+						autocomplete="new-password"
+						bind:value={pins[user._id]}
+						required
+					/>
+				</label>
+				<button type="button" class="btn btn-gray" on:click={() => generatePin(user._id)}>
+					{t('admin.armPos.generatePin')}
+				</button>
+				<button type="submit" class="btn btn-black">{t('admin.action.save')}</button>
+			</form>
+			{#if user.hasPin}
+				<form method="post" action="?/clearPin">
+					<input type="hidden" name="userId" value={user._id} />
+					<button type="submit" class="btn btn-red">{t('admin.armPos.clearPin')}</button>
+				</form>
+			{/if}
+			<form method="post" action="?/addBadge">
+				<input type="hidden" name="userId" value={user._id} />
+				<button type="submit" class="btn btn-gray">{t('admin.armPos.addBadge')}</button>
+			</form>
+		</div>
+		{#if form && 'error' in form && form.userId === user._id}
+			<p class="text-red-500 text-sm">{t('admin.armPos.pinInvalid')}</p>
+		{/if}
+		{#each user.badges as badge}
+			<div class="flex flex-wrap gap-2 items-center text-sm">
+				<code>{badge.prefix}…</code>
+				<span>{new Date(badge.createdAt).toLocaleDateString($locale)}</span>
+				<span>{badge.suspended ? t('admin.armPos.suspended') : t('admin.armPos.active')}</span>
+				<form method="post" action="?/suspendBadge">
+					<input type="hidden" name="userId" value={user._id} />
+					<input type="hidden" name="badgeId" value={badge._id} />
+					<input type="hidden" name="suspended" value={badge.suspended ? 'false' : 'true'} />
+					<button type="submit" class="underline">
+						{badge.suspended ? t('admin.armPos.reactivate') : t('admin.armPos.suspend')}
+					</button>
+				</form>
+				<form method="post" action="?/renewBadge">
+					<input type="hidden" name="userId" value={user._id} />
+					<input type="hidden" name="badgeId" value={badge._id} />
+					<button type="submit" class="underline">{t('admin.armPos.renew')}</button>
+				</form>
+				<form method="post" action="?/removeBadge">
+					<input type="hidden" name="userId" value={user._id} />
+					<input type="hidden" name="badgeId" value={badge._id} />
+					<button type="submit" class="underline text-red-500">{t('admin.armPos.remove')}</button>
+				</form>
+			</div>
+		{/each}
+	</section>
+{/each}

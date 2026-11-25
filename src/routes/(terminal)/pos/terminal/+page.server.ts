@@ -1,0 +1,204 @@
+import { fail, redirect } from '@sveltejs/kit';
+import { ObjectId } from 'mongodb';
+import { z } from 'zod';
+import {
+	POS_OPERATOR_COOKIE,
+	operatorCookieOptions,
+	terminalKeyOf
+} from '$lib/server/api/pos-terminal';
+import {
+	closeOperatorSession,
+	openOperatorSession,
+	operatorFromBadge,
+	operatorFromPin,
+	operatorOfSession,
+	terminalOperators
+} from '$lib/server/arm-pos';
+import {
+	PosPaymentError,
+	createPosPayment,
+	terminalPaymentMethods
+} from '$lib/server/pos-payments';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import { collections } from '$lib/server/database';
+import { getCurrentPosSession } from '$lib/server/pos-sessions';
+import { StripeAmountTooSmallError, StripeApiError } from '$lib/server/stripe-terminal';
+import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
+import { PUBLIC_VERSION } from '$env/static/public';
+import { ORIGIN } from '$lib/server/env-config';
+
+/**
+ * The payment screen of a paired terminal: amount, tip, the till's reference, then how the
+ * customer pays. The app opens it once with `Authorization: Bearer <API key>`; a cookie then
+ * keeps the terminal signed in on the pages that follow. An operator signs in first (arm-pos).
+ */
+export async function load(event) {
+	const apiKey = await terminalKeyOf(event);
+	// Shown on the home screen, under the be-BOP logo.
+	const server = {
+		version: PUBLIC_VERSION ? PUBLIC_VERSION.slice(0, 7) : '—',
+		name: runtimeConfig.brandName,
+		host: new URL(ORIGIN).host
+	};
+
+	if (!apiKey) {
+		return { paired: false as const, server };
+	}
+
+	const operator = await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id);
+	if (!operator) {
+		return {
+			paired: true as const,
+			server,
+			deviceName: apiKey.name,
+			locked: true as const,
+			cardConfigured: terminalPaymentMethods().includes('card'),
+			operators: (await terminalOperators()).map((o) => ({
+				id: o._id.toHexString(),
+				alias: o.alias
+			}))
+		};
+	}
+
+	// A payment is paid, canceled or replaced by another method: never left. While one of this
+	// terminal is waiting, its screen is the only one.
+	const waiting = await collections.posPayments.findOne(
+		{ 'device.apiKeyId': apiKey._id, 'payment.status': 'pending' },
+		{ sort: { createdAt: -1 } }
+	);
+	if (waiting) {
+		throw redirect(303, `/pos/terminal/payment/${waiting._id}`);
+	}
+
+	// A payment that failed or was canceled, to take again with another method.
+	const retryId = event.url.searchParams.get('retry');
+	const retried = retryId
+		? await collections.posPayments.findOne({
+				_id: retryId,
+				'device.apiKeyId': apiKey._id,
+				'payment.status': { $in: ['failed', 'expired', 'canceled'] }
+		  })
+		: null;
+
+	const tillClosed = await isTillClosedForTerminals();
+	const mayOpenTill = runtimeConfig.posSession.enabled && operator.actions.includes('zReport');
+
+	// A closed till cannot take payments: whoever may open it goes straight to the opening page.
+	if (tillClosed && mayOpenTill) {
+		throw redirect(303, '/pos/terminal/till');
+	}
+
+	return {
+		paired: true as const,
+		server,
+		deviceName: apiKey.name,
+		locked: false as const,
+		cardConfigured: terminalPaymentMethods().includes('card'),
+		tillClosed,
+		retry: retried && {
+			amount: retried.amount.amount,
+			tip: retried.tip.amount,
+			externalRef: retried.externalRef ?? ''
+		},
+		operator: { alias: operator.alias, actions: operator.actions },
+		currency: runtimeConfig.mainCurrency,
+		methods: operator.actions.includes('charge') && !tillClosed ? terminalPaymentMethods() : []
+	};
+}
+
+/** The shop forbids taking payments while no till session is open (Settings > POS). */
+async function isTillClosedForTerminals(): Promise<boolean> {
+	const { enabled, forbidTouchWhenSessionClosed } = runtimeConfig.posSession;
+	return enabled && forbidTouchWhenSessionClosed && !(await getCurrentPosSession());
+}
+
+export const actions = {
+	async unlock(event) {
+		const apiKey = await terminalKeyOf(event);
+		if (!apiKey) {
+			return fail(401, { error: 'notPaired' as const });
+		}
+		const data = await event.request.formData();
+		const operatorId = String(data.get('operatorId') ?? '');
+		const pin = String(data.get('pin') ?? '');
+		const badge = String(data.get('badge') ?? '');
+		const operator = badge
+			? await operatorFromBadge(badge)
+			: ObjectId.isValid(operatorId)
+			? await operatorFromPin(new ObjectId(operatorId), pin)
+			: null;
+		if (!operator) {
+			return fail(403, { error: 'wrongCredentials' as const });
+		}
+		event.cookies.set(
+			POS_OPERATOR_COOKIE,
+			await openOperatorSession(apiKey._id, operator._id),
+			operatorCookieOptions
+		);
+	},
+
+	async lock(event) {
+		await closeOperatorSession(event.cookies.get(POS_OPERATOR_COOKIE));
+		event.cookies.delete(POS_OPERATOR_COOKIE, { path: '/' });
+	},
+
+	async pay(event) {
+		const apiKey = await terminalKeyOf(event);
+		if (!apiKey) {
+			return fail(401, { error: 'notPaired' as const });
+		}
+		const operator = await operatorOfSession(event.cookies.get(POS_OPERATOR_COOKIE), apiKey._id);
+		if (!operator?.actions.includes('charge')) {
+			return fail(403, { error: 'notAllowed' as const });
+		}
+		if (await isTillClosedForTerminals()) {
+			return fail(403, { error: 'tillClosed' as const });
+		}
+
+		const parsed = z
+			.object({
+				amount: z.number({ coerce: true }).positive(),
+				tip: z.number({ coerce: true }).min(0).default(0),
+				externalRef: z.string().max(100).optional(),
+				method: z.enum(ALL_PAYMENT_METHODS)
+			})
+			.safeParse(Object.fromEntries(await event.request.formData()));
+		if (!parsed.success) {
+			return fail(400, { error: 'invalid' as const });
+		}
+		if (!parsed.data.externalRef?.trim() && !operator.actions.includes('tillDown')) {
+			return fail(403, { error: 'notAllowed' as const });
+		}
+
+		let id: string;
+		try {
+			const posPayment = await createPosPayment({
+				device: { apiKeyId: apiKey._id, name: apiKey.name },
+				operator: { userId: operator._id, alias: operator.alias },
+				amount: parsed.data.amount,
+				tip: parsed.data.tip,
+				method: parsed.data.method,
+				externalRef: parsed.data.externalRef
+			});
+			id = posPayment._id;
+		} catch (err) {
+			if (err instanceof StripeAmountTooSmallError) {
+				return fail(400, { error: 'amountTooLow' as const });
+			}
+			console.error('[pos terminal] payment creation failed', err);
+			if (err instanceof StripeApiError) {
+				// The code Stripe gave, shown as is: it says what to fix. Never the body, which can quote a key.
+				return fail(502, { error: 'failed' as const, detail: err.summary });
+			}
+			if (err instanceof PosPaymentError) {
+				return fail(502, { error: 'unavailable' as const });
+			}
+			return fail(502, {
+				error: 'failed' as const,
+				detail: (err instanceof Error ? err.message : String(err)).slice(0, 300)
+			});
+		}
+
+		throw redirect(303, `/pos/terminal/payment/${id}`);
+	}
+};

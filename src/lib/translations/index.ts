@@ -52,7 +52,7 @@ export const languageNames: Record<LanguageKey, string> = {
 	'es-sv': 'Español (El Salvador)',
 	fr: 'Français',
 	nl: 'Nederlands',
-	it: 'Italian',
+	it: 'Italiano',
 	de: 'Deutsch',
-	pt: 'Portuguese'
+	pt: 'Português'
 };

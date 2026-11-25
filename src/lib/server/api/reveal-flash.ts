@@ -13,6 +13,8 @@ export type ApiKeyRevealPayload = {
 	prefix: string;
 	id: string;
 	name: string;
+	/** The key has `pos:read`: a be-BOP-pos terminal can pair with it, so its QR code is shown. */
+	posPairing?: boolean;
 	/** Unix epoch seconds — cookie payload hard expiry. */
 	exp: number;
 };

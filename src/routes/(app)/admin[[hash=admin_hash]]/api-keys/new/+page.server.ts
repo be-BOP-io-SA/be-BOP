@@ -77,7 +77,8 @@ export const actions: Actions = {
 			secret,
 			prefix: apiKey.keyPrefix,
 			id: apiKey._id.toString(),
-			name: apiKey.name
+			name: apiKey.name,
+			...(parsed.data.scopes.includes('pos:read') && { posPairing: true })
 		});
 
 		throw redirect(303, `${adminPrefix()}/api-keys/new/reveal`);

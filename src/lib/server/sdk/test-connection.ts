@@ -1,4 +1,6 @@
 import { getProcessor } from './pp';
+import { createPaypalPosCheckout, isPaypalPosReady } from '../paypal-pos';
+import { runtimeConfig } from '../runtime-config';
 import { toCurrency } from '$lib/utils/toCurrency';
 
 const TEST_TIMEOUT_MS = 15_000;
@@ -38,14 +40,45 @@ export async function testProcessorConnection(
 	// as the checkout does — a raw 1 EUR would be minted verbatim in the wrong currency.
 	const currency = pp.settlementCurrency();
 	const toPay = { amount: toCurrency(currency, 1, 'EUR'), currency };
+
+	return await attemptConnection(processorName, () =>
+		pp.createPayment({
+			orderId: testId,
+			orderNumber: 0,
+			paymentId: testId,
+			toPay
+		})
+	);
+}
+
+/**
+ * The same check for PayPal POS, the PayPal app of the paired terminals: it creates the PayPal
+ * checkout of a 1 EUR terminal payment, which is what a terminal does to show its QR code.
+ */
+export async function testPaypalPosConnection(
+	origin: string
+): Promise<{ ok: boolean; reason?: string }> {
+	if (!isPaypalPosReady()) {
+		return { ok: false, reason: 'Processor is not configured (missing credentials).' };
+	}
+	const currency = runtimeConfig.paypalPos.currency;
+
+	return await attemptConnection('paypal-pos', () =>
+		createPaypalPosCheckout({
+			toPay: { amount: toCurrency(currency, 1, 'EUR'), currency },
+			number: 0,
+			returnUrl: origin
+		})
+	);
+}
+
+async function attemptConnection(
+	processorName: string,
+	attempt: () => Promise<unknown>
+): Promise<{ ok: boolean; reason?: string }> {
 	try {
 		await Promise.race([
-			pp.createPayment({
-				orderId: testId,
-				orderNumber: 0,
-				paymentId: testId,
-				toPay
-			}),
+			attempt(),
 			new Promise<never>((_, reject) =>
 				setTimeout(
 					() =>

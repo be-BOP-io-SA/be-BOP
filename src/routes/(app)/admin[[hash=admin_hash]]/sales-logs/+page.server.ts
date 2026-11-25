@@ -28,6 +28,7 @@ export async function load({ url }) {
 			eventType: log.eventType,
 			objectId: log.objectId,
 			objectType: log.objectType,
+			origin: log.origin ?? ('shop' as const),
 			before: log.before,
 			after: log.after,
 			createdAt: log.createdAt,

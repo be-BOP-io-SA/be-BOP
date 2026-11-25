@@ -1,3 +1,4 @@
+import { POS_ACTIONS } from '$lib/types/PosAction';
 import { CURRENCIES } from '$lib/types/Currency';
 import {
 	API_V1_BATCH_STATUSES,
@@ -1022,6 +1023,219 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 									schema: { type: 'integer', minimum: 1 }
 								}
 							},
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/pos/ping': {
+				get: {
+					tags: ['pos'],
+					summary: 'Check that a PoS terminal is paired',
+					description:
+						'What a be-BOP-pos terminal calls after scanning its pairing QR code: it answers 200 ' +
+						'when the key is usable and carries `pos:read`, with the names the terminal shows.',
+					operationId: 'getPosPing',
+					security: [{ BearerAuth: ['pos:read'] }, { ApiKeyAuth: ['pos:read'] }],
+					responses: {
+						'200': {
+							description: 'The key is paired with this shop.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['ok', 'device', 'shop'],
+										properties: {
+											ok: { type: 'boolean', example: true },
+											device: {
+												type: 'object',
+												required: ['name'],
+												properties: { name: { type: 'string', description: 'The API key name.' } }
+											},
+											shop: {
+												type: 'object',
+												required: ['name'],
+												properties: { name: { type: 'string', description: 'The brand name.' } }
+											}
+										}
+									}
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/pos/stripe/connection-token': {
+				post: {
+					tags: ['pos'],
+					summary: 'Stripe Terminal connection token',
+					description:
+						'A short-lived connection token for the Stripe Terminal SDK of a be-BOP-pos terminal, made ' +
+						"from the shop's Stripe settings, with the Stripe Location the terminal connects to. The " +
+						'device never holds a Stripe credential.',
+					operationId: 'createPosStripeConnectionToken',
+					security: [{ BearerAuth: ['pos:write'] }, { ApiKeyAuth: ['pos:write'] }],
+					responses: {
+						'200': {
+							description: 'A connection token and the Location.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['secret', 'location'],
+										properties: {
+											secret: { type: 'string', description: 'The connection token.' },
+											location: { type: 'string', description: 'The Stripe Location id.' }
+										}
+									}
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'501': {
+							description: 'Stripe or its Terminal Location is not set up on this shop',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/pos/operators': {
+				get: {
+					tags: ['pos'],
+					summary: 'arm-pos operator profiles',
+					description:
+						'Who may sign in on a terminal, and what each may do: users whose role has terminal ' +
+						'rights and who have a PIN or a badge.',
+					operationId: 'getPosOperators',
+					security: [{ BearerAuth: ['pos:read'] }, { ApiKeyAuth: ['pos:read'] }],
+					responses: {
+						'200': {
+							description: 'The operators.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['operators'],
+										properties: {
+											operators: {
+												type: 'array',
+												items: {
+													type: 'object',
+													required: ['id', 'alias', 'actions'],
+													properties: {
+														id: { type: 'string' },
+														alias: { type: 'string' },
+														actions: {
+															type: 'array',
+															items: { type: 'string', enum: [...POS_ACTIONS] }
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						'401': {
+							description: 'Missing or invalid API key',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'500': {
+							description: 'Internal error',
+							content: { 'application/json': { schema: errorRef } }
+						}
+					}
+				}
+			},
+			'/api/v1/pos/operators/authorize': {
+				post: {
+					tags: ['pos'],
+					summary: 'Check an operator right with a badge or a PIN',
+					description:
+						'Whether the operator behind a badge, or an operator and their PIN, may take an action: ' +
+						"leaving the locked service mode, or a manager's badge allowing what the signed-in " +
+						'operator may not.',
+					operationId: 'authorizePosOperator',
+					security: [{ BearerAuth: ['pos:read'] }, { ApiKeyAuth: ['pos:read'] }],
+					requestBody: {
+						required: true,
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									required: ['action'],
+									properties: {
+										action: { type: 'string', enum: [...POS_ACTIONS] },
+										badge: { type: 'string', description: 'The identifier read on the badge.' },
+										operatorId: { type: 'string' },
+										pin: { type: 'string' }
+									}
+								}
+							}
+						}
+					},
+					responses: {
+						'200': {
+							description: 'The operator may take the action.',
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['allowed', 'operator'],
+										properties: {
+											allowed: { type: 'boolean', example: true },
+											operator: {
+												type: 'object',
+												required: ['id', 'alias'],
+												properties: { id: { type: 'string' }, alias: { type: 'string' } }
+											}
+										}
+									}
+								}
+							}
+						},
+						'400': {
+							description: 'Neither a badge nor an operator and a PIN',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'401': {
+							description: 'Missing or invalid API key, unknown or suspended badge, or wrong PIN',
+							content: { 'application/json': { schema: errorRef } }
+						},
+						'403': {
+							description: 'Missing required scope, or the operator may not take this action',
 							content: { 'application/json': { schema: errorRef } }
 						},
 						'500': {

@@ -74,6 +74,9 @@
 						>{t('admin.salesLogs.columnType')}</th
 					>
 					<th class="border border-gray-300 px-3 py-2 text-left"
+						>{t('admin.salesLogs.columnOrigin')}</th
+					>
+					<th class="border border-gray-300 px-3 py-2 text-left"
 						>{t('admin.salesLogs.columnBefore')}</th
 					>
 					<th class="border border-gray-300 px-3 py-2 text-left"
@@ -114,6 +117,11 @@
 							{log.objectId}
 						</td>
 						<td class="border border-gray-300 px-3 py-2">{log.objectType}</td>
+						<td class="border border-gray-300 px-3 py-2 whitespace-nowrap">
+							{log.origin === 'pos'
+								? t('admin.salesLogs.originPos')
+								: t('admin.salesLogs.originShop')}
+						</td>
 						<td
 							class="border border-gray-300 px-3 py-2 font-mono text-xs max-w-[200px] truncate"
 							title={JSON.stringify(log.before)}

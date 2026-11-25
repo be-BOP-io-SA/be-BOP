@@ -99,6 +99,11 @@ export const adminLinks: AdminLinks = [
 				label: 'ARM'
 			},
 			{
+				// Terminal rights by action, operator PINs and badges.
+				href: '/admin/arm-pos',
+				label: 'ARM PoS'
+			},
+			{
 				href: '/admin/identity',
 				label: 'Identity',
 				superAdminOnly: true
@@ -117,6 +122,12 @@ export const adminLinks: AdminLinks = [
 				label: 'POS'
 			},
 			{
+				// Where the switch between the full and the PoS back office is saved.
+				href: '/admin/back-office-mode',
+				label: 'Back office mode',
+				hidden: true
+			},
+			{
 				href: '/admin/age-retriction',
 				label: 'Age restriction'
 			},
@@ -132,6 +143,11 @@ export const adminLinks: AdminLinks = [
 				href: '/admin/api-keys',
 				label: 'API Keys',
 				superAdminOnly: true
+			},
+			{
+				// Version information, and the certificate of this be-BOP to download.
+				href: '/admin/certification',
+				label: 'Certification'
 			}
 		]
 	},
@@ -147,6 +163,16 @@ export const adminLinks: AdminLinks = [
 				const href = processorAdminHref(slug);
 				return href ? [{ href, label: PROCESSORS[slug].label }] : [];
 			}),
+			{
+				// The Stripe Location the Tap to Pay terminals connect to.
+				href: '/admin/stripe-terminal',
+				label: 'Stripe Terminal'
+			},
+			{
+				// PayPal on the terminals, apart from the shop's PayPal.
+				href: '/admin/paypal-pos',
+				label: 'PayPal POS'
+			},
 			// These two configure a method rather than a provider, so they have no manifest entry.
 			{
 				href: '/admin/pos-payments',
@@ -169,6 +195,11 @@ export const adminLinks: AdminLinks = [
 			{
 				href: '/admin/reporting',
 				label: 'Reporting'
+			},
+			{
+				// Taken on paired terminals, without an order.
+				href: '/admin/terminal-payments',
+				label: 'Terminal payments'
 			},
 			{
 				href: '/admin/sales-logs',
@@ -241,3 +272,55 @@ export const adminLinks: AdminLinks = [
 		]
 	}
 ];
+
+/**
+ * The menu of the PoS back office, for a shop that only takes payments on its terminals. Every
+ * entry is one of the full menu, so the role permissions read from it cover this menu too.
+ */
+const POS_MENU: Array<{ section: string; hrefs: string[] }> = [
+	{
+		section: 'Settings',
+		hrefs: [
+			'/admin/config',
+			'/admin/arm',
+			'/admin/arm-pos',
+			'/admin/identity',
+			'/admin/physical-shop',
+			'/admin/template',
+			'/admin/pos',
+			// The keys a be-BOP-pos terminal pairs with.
+			'/admin/api-keys',
+			'/admin/certification',
+			'/admin/back-office-mode'
+		]
+	},
+	{
+		section: 'Payment Settings',
+		hrefs: [
+			'/admin/phoenixd',
+			'/admin/swiss-bitcoin-pay',
+			'/admin/btcpay-server',
+			'/admin/blink',
+			'/admin/bitcoin-nodeless',
+			'/admin/stripe',
+			'/admin/stripe-terminal',
+			'/admin/taler',
+			'/admin/paypal',
+			'/admin/paypal-pos'
+		]
+	},
+	{
+		section: 'Transaction',
+		hrefs: ['/admin/terminal-payments', '/admin/reporting', '/admin/sales-logs']
+	},
+	{ section: 'Node Management', hrefs: ['/admin/smtp', '/admin/email', '/admin/nostr'] }
+];
+
+export const posAdminLinks: AdminLinks = POS_MENU.map(({ section, hrefs }) => {
+	const fullSection = adminLinks.find((s) => s.section === section);
+	return {
+		section,
+		icon: fullSection?.icon ?? IconSetting,
+		links: hrefs.flatMap((href) => fullSection?.links.filter((link) => link.href === href) ?? [])
+	};
+});

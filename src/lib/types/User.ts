@@ -20,6 +20,10 @@ export interface User extends Timestamps {
 		expiresAt: Date;
 	};
 	hasPosOptions?: boolean;
+	/** bcrypt of the PIN the operator signs in with on a paired terminal. */
+	posPin?: string;
+	/** NFC badges the operator signs in with on a paired terminal. */
+	posBadges?: import('./PosAction').PosBadge[];
 	alias?: string;
 	// Per-user preferences. Designed to host other sub-objects later (employee selfcare).
 	userSettings?: {

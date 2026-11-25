@@ -53,6 +53,7 @@ import { renewSessionId } from '$lib/server/user';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { rateLimit } from '$lib/server/rateLimit';
 import { handleApiV1 } from '$lib/server/api/v1/middleware';
+import { refuseCrossSiteForm } from '$lib/server/csrf';
 import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
 import { attemptAutoconfigurePhoenixd } from '$lib/server/phoenixd';
 
@@ -327,7 +328,9 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 	}
 
 	const isPosUrl = guardPath.startsWith('/pos/') || guardPath === '/pos';
-	if (isPosUrl) {
+	// A paired terminal opens its screens with its API key, not an employee login.
+	const isPosDeviceUrl = guardPath === '/pos/terminal' || guardPath.startsWith('/pos/terminal/');
+	if (isPosUrl && !isPosDeviceUrl) {
 		if (!event.locals.user) {
 			throw redirect(303, '/admin/login');
 		}
@@ -559,7 +562,8 @@ export const handle: Handle = sequence(addSecurityHeaders, async ({ event, resol
 	if (event.url.pathname === '/api/v1' || event.url.pathname.startsWith('/api/v1/')) {
 		return handleApiV1({ event, resolve });
 	}
-	return handleApp({ event, resolve });
+	// SvelteKit's own check is off (svelte.config.js) so that it spares the API v1 above.
+	return refuseCrossSiteForm(event.request, event.url) ?? handleApp({ event, resolve });
 });
 
 // Kick-off autoconfiguration of phoenixd
