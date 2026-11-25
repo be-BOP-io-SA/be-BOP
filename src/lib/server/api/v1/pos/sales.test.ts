@@ -254,25 +254,6 @@ describe('ingestPosSales', () => {
 		]);
 	});
 
-	it('answers each sale on its own when the key accepts several orders per reference', async () => {
-		writeBatch.mockResolvedValue({
-			ok: true,
-			status: 'ok',
-			results: [
-				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-1', orderStatus: 'paid' },
-				{ externalOrderId: 'sale-1', status: 'created', orderId: 'ord-2', orderStatus: 'paid' }
-			]
-		});
-		const res = await ingestOk({
-			apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
-			sales: [sale(), sale()]
-		});
-		expect(res.results.map((r) => [r.status, r.orderId])).toEqual([
-			['success', 'ord-1'],
-			['success', 'ord-2']
-		]);
-	});
-
 	it('throws on a failure a retry could clear, so the caller keeps retrying', async () => {
 		// Both statuses require an orderUrl, so a sale with no order fits neither. An INTERNAL_ERROR
 		// carries no HTTP status: nothing says the caller did anything wrong.

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { STREAM_SETTING_BOUNDS } from '$lib/types/ApiKey';
+import { mayAcceptRepeatedExternalOrderIds, STREAM_SETTING_BOUNDS } from '$lib/types/ApiKey';
 
 /**
  * One stream setting as typed in the admin. An empty field is an answer, not a missing one: it
@@ -40,6 +40,23 @@ export const apiKeySettingsShape = {
 export const apiKeySettingsSchema = z.object(apiKeySettingsShape);
 export type ApiKeySettings = z.infer<typeof apiKeySettingsSchema>;
 
+export const REPEATED_EXTERNAL_IDS_ON_POS_KEY =
+	'Several orders per external id are not available to a key with a point-of-sale right';
+
+/** The one rule for the option, applied to the settings together with the scopes they go with. */
+export const repeatedExternalIdsRule: [
+	(key: { scopes: readonly string[]; acceptDuplicateExternalOrderIds: boolean }) => boolean,
+	{ message: string; path: string[] }
+] = [
+	(key) => !key.acceptDuplicateExternalOrderIds || mayAcceptRepeatedExternalOrderIds(key.scopes),
+	{ message: REPEATED_EXTERNAL_IDS_ON_POS_KEY, path: ['acceptDuplicateExternalOrderIds'] }
+];
+
+/** What a key's page validates: its settings, against the rights the key already has. */
+export const apiKeySettingsOfKeySchema = apiKeySettingsSchema
+	.extend({ scopes: z.array(z.string()) })
+	.refine(...repeatedExternalIdsRule);
+
 /** The settings of a posted form, as the schema takes them: an unticked box posts nothing. */
 export function apiKeySettingsInput(formData: FormData) {
 	return {
@@ -52,16 +69,21 @@ export function apiKeySettingsInput(formData: FormData) {
 }
 
 /**
- * What a refused stream settings form answers. The lifetime ceiling is told apart from the other
- * refusals because the admin shows it in the shop's language.
+ * What a refused key settings form answers. The lifetime ceiling and the till rule are told apart
+ * from the other refusals because the admin shows them in the shop's language.
  */
 export function streamSettingsRefusal(error: z.ZodError): {
 	error: z.typeToFlattenedError<unknown>;
 	streamLifetimeTooLong: boolean;
+	repeatedIdsOnPosKey: boolean;
 } {
 	const isTooLong = (issue: z.ZodIssue) => issue.message === STREAM_LIFETIME_TOO_LONG;
+	const isTillRule = (issue: z.ZodIssue) => issue.message === REPEATED_EXTERNAL_IDS_ON_POS_KEY;
 	return {
-		error: new z.ZodError(error.issues.filter((issue) => !isTooLong(issue))).flatten(),
-		streamLifetimeTooLong: error.issues.some(isTooLong)
+		error: new z.ZodError(
+			error.issues.filter((issue) => !isTooLong(issue) && !isTillRule(issue))
+		).flatten(),
+		streamLifetimeTooLong: error.issues.some(isTooLong),
+		repeatedIdsOnPosKey: error.issues.some(isTillRule)
 	};
 }

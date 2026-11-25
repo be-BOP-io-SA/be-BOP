@@ -97,7 +97,7 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					'no order is known for it yet, send the command again. A key set to accept several ' +
 					'orders with the same external id creates a new order for each command, except for a ' +
 					'command sent again with the same `createdAt`, which is the same sale and is refused as ' +
-					'above.'
+					'above. That option is only available to a key without a point-of-sale (`pos:*`) right.'
 			},
 			currency: { type: 'string', enum: currencyEnum },
 			createdAt: {
@@ -1233,10 +1233,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					description:
 						'One sale, one order. By default a reference (`externalOrderId`, the seam calls it ' +
 						'`saleRef`) this key already sent is a `conflict`: nothing is written, and `orderUrl` ' +
-						'points at the order that already holds the reference. A key set to accept several ' +
-						'orders with the same external id writes a new order for every sale, except a sale ' +
-						'sent again with the same reference and the same `soldAt`: that one is the same sale, ' +
-						'and is a `conflict` too. A malformed batch ' +
+						'points at the order that already holds the reference; the option to accept several ' +
+						'orders per external id is not available to a key with a point-of-sale right. A ' +
+						'malformed batch ' +
 						'is rejected whole and nothing is ingested. A sale that cannot be ingested at all has no ' +
 						'order to point at and so no representable outcome here: the request fails rather than ' +
 						'inventing a status — 400 when the shop refuses it for good, 500 when a retry may still ' +

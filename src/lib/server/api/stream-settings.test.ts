@@ -43,6 +43,7 @@ describe('streamSettingsRefusal', () => {
 		});
 		expect(refusal).toEqual({
 			streamLifetimeTooLong: true,
+			repeatedIdsOnPosKey: false,
 			error: { formErrors: [], fieldErrors: {} }
 		});
 	});

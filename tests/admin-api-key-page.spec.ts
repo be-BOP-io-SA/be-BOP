@@ -6,7 +6,7 @@ function storedKey(name: string) {
 }
 
 /** Creates a key through the admin and opens its page. */
-async function createKey(page: Page, name: string) {
+async function createKey(page: Page, name: string, scope = 'orders:read') {
 	await page.goto('/admin/api-keys/new');
 	const nameField = page.locator('input[name="name"]');
 	// A fill done before hydration is wiped: retry until the field keeps the value.
@@ -14,7 +14,7 @@ async function createKey(page: Page, name: string) {
 		await nameField.fill(name);
 		await expect(nameField).toHaveValue(name);
 	}).toPass();
-	await page.locator('input[name="scopes"][value="pos:read"]').check();
+	await page.locator(`input[name="scopes"][value="${scope}"]`).check();
 	await page.locator('form button[type="submit"], form input[type="submit"]').last().click();
 	await expect(page).toHaveURL(/\/admin\/api-keys\/new\/reveal/);
 
@@ -165,5 +165,68 @@ test.describe('in French', () => {
 				"Suivre les commandes en direct, par les flux d'événements sous /api/v1/orders."
 			)
 		).toBeVisible();
+	});
+});
+
+test.describe('several orders per external id', () => {
+	test('cannot be ticked together with a point-of-sale right when creating a key', async ({
+		page
+	}) => {
+		await page.goto('/admin/api-keys/new');
+		const option = page.getByLabel('Accept several orders with the same external id');
+		const create = page.locator('input[type="submit"]').last();
+		const message = page.getByText(
+			'Several orders per external id are not available to a key with a point-of-sale right'
+		);
+
+		await expect(async () => {
+			await option.check();
+			await expect(option).toBeChecked();
+		}).toPass();
+		await expect(message).toHaveCount(0);
+		await page.locator('input[name="scopes"][value="pos:read"]').check();
+
+		await expect(message).toBeVisible();
+		await expect(create).toBeDisabled();
+
+		await option.uncheck();
+		await expect(message).toHaveCount(0);
+		await expect(create).toBeEnabled();
+	});
+
+	test.describe('in French', () => {
+		test.use({ locale: 'fr-FR' });
+
+		test('an existing key with both is told so, and cannot be saved until one is dropped', async ({
+			page
+		}) => {
+			const name = `e2e-cle-caisse-${Date.now()}`;
+			const now = new Date();
+			const { insertedId } = await withDb((db) =>
+				db.collection('apiKeys').insertOne({
+					name,
+					keyHash: `${Date.now()}`.padEnd(64, '0'),
+					keyPrefix: `bebop_ak_e2e${Date.now()}`,
+					scopes: ['pos:write'],
+					acceptDuplicateExternalOrderIds: true,
+					createdAt: now,
+					updatedAt: now
+				})
+			);
+			await page.goto(`/admin/api-keys/${insertedId.toString()}`);
+
+			const save = page.getByRole('button', { name: 'Enregistrer', exact: true });
+			await expect(
+				page.getByText('Plusieurs commandes par identifiant externe sont indisponibles')
+			).toBeVisible();
+			await expect(save).toBeDisabled();
+
+			await page
+				.getByLabel('Accepter plusieurs commandes avec le même identifiant externe')
+				.uncheck();
+			await expect(save).toBeEnabled();
+			await save.click();
+			await expect(page.getByText('Modifications enregistrées.')).toBeInViewport();
+		});
 	});
 });

@@ -123,9 +123,8 @@ export type PosSaleStatus = (typeof POS_SALE_STATUSES)[number];
  * `pending`: an order was created, and it is not paid: the amount sent does not cover what be-BOP
  * expected, or its payment could not be recorded. `orderUrl` points at it.
  * `conflict`: the reference was already received from this API key. Nothing was written, and
- * `orderUrl` points at the order that holds the reference. A key that accepts several orders with
- * the same external id gets one only for a sale sent again with the same `soldAt`, which is the
- * same sale: any other sale is written as its own order.
+ * `orderUrl` points at the order that holds the reference. A key that may push sales cannot accept
+ * several orders with the same external id, so a reference is never written twice.
  *
  * A sale that produced no order has none of these: they all require an `orderUrl`. It fails the whole
  * request instead, as a `PosSaleRejection` when the shop refused it and as a 500 otherwise.

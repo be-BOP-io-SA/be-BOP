@@ -19,6 +19,7 @@ import {
 	type ApiV1OrderResult,
 	type ApiV1Warning
 } from '$lib/types/ApiV1';
+import { mayAcceptRepeatedExternalOrderIds } from '$lib/types/ApiKey';
 import type { Order } from '$lib/types/Order';
 import {
 	normalizeOrderPayments,
@@ -245,7 +246,10 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 	// when a batch is sent again: there, the sale is the external id together with the date it
 	// was made at. Sent without a date, nothing tells a new sale from the same one resent.
 	const soldAt = cmd.createdAt ? new Date(cmd.createdAt) : undefined;
-	const alreadySent = !apiKey.acceptDuplicateExternalOrderIds
+	// The option is not honoured on a key with a point-of-sale right, as the admin does not offer it.
+	const repeatedIdsAccepted =
+		apiKey.acceptDuplicateExternalOrderIds && mayAcceptRepeatedExternalOrderIds(apiKey.scopes);
+	const alreadySent = !repeatedIdsAccepted
 		? { claim: cmd.externalOrderId, order: {} }
 		: soldAt
 		? { claim: `${cmd.externalOrderId}@${soldAt.getTime()}`, order: { createdAt: soldAt }, soldAt }
