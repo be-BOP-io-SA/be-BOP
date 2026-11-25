@@ -15,6 +15,16 @@ Interactive storefront checkout stays on Face B (cookies / session). Do not mix 
 
 Interactive OpenAPI: [`/api/v1/docs`](/api/v1/docs) (schema at [`/api/v1/openapi.json`](/api/v1/openapi.json)).
 
+## Switch the API on (Admin → API Keys)
+
+The API is **off by default**, and only the shop can turn it on: tick **API enabled** on **Admin → API Keys** and save. The page stays usable while the API is off, so keys can be prepared first.
+
+While it is off, every `/api/v1` address answers `404` with the usual error envelope (`{ "error": { "code": "NOT_FOUND", "message": "Not found" } }`) and nothing else: `GET /api/v1/health`, `openapi.json`, `docs` and the product pictures too, `OPTIONS` preflights included, and no key works. A shop that has not switched the API on cannot be told from one that has none. A device must not read this `404` as a temporary condition: unlike maintenance (`503`), nothing in it asks the caller to try again later.
+
+Unticking the box closes the event streams that are open at once; each stream also checks the setting at every heartbeat, so a shop running several servers has them all closed within 25 seconds.
+
+A trailing slash is accepted on every `/api/v1` address: `/api/v1/health/` answers like `/api/v1/health`, with no redirect.
+
 ## Create a key (Admin → API Keys)
 
 1. Sign in as Super Admin.

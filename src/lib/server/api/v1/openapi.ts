@@ -336,7 +336,11 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 			title: 'be-BOP Public HTTP API',
 			version: 'v1',
 			description:
-				'Face A — machine-to-machine PoS → be-BOP concentrator. Authenticate with Bearer or X-Api-Key (API key secret only; not a user session). See /api/v1/docs for Swagger UI. Scopes: ' +
+				'Face A — machine-to-machine PoS → be-BOP concentrator. Authenticate with Bearer or X-Api-Key (API key secret only; not a user session). See /api/v1/docs for Swagger UI. ' +
+				'The API is off until the shop switches it on in Admin -> API Keys: until then every address ' +
+				'of it, this document and the health check included, answers a plain `404 NOT_FOUND`, ' +
+				'exactly as an address that does not exist, and a device must not take that for a ' +
+				'temporary condition. Scopes: ' +
 				scopeDescription
 		},
 		servers,

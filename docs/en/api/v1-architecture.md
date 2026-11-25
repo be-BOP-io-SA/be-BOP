@@ -60,6 +60,14 @@ Keep the existing **in-process** `rateLimit(bucketId, key, max, duration)` (Map,
 - Per-API-key limit on `POST /orders` + IP safety net on `/api/v1` (health / openapi.json / docs GET + OPTIONS excluded from IP bucket).
 - `429 RATE_LIMITED` responses include `Retry-After: <seconds>` = **ceil remaining window** until the oldest hit ages out (minimum 1). Keyed by API key id on write; IP safety net is separate. Still in-process Map (no Redis).
 
+## General switch
+
+`runtimeConfig.apiV1.enabled`, off by default, edited in Admin → API Keys (its own form and action, so the CORS form never carries it). Read through `isApiV1Enabled()`, which only accepts an explicit `true`: a stored setting that predates the field means off, and nothing is migrated.
+
+`handleApiV1` checks it first, before maintenance and before the rate limiter. Off, every `/api/v1` request — any route, any method, `OPTIONS`, health, `openapi.json`, `docs` and the product pictures — gets `404 NOT_FOUND` / `Not found` in the usual envelope, with no CORS header, no limiter bucket and no journal line: the answer of a shop that has no API. No error code says "disabled".
+
+Open event streams are closed at once when the box is unticked (`closeAllStreams`, on the server that handled the request), and every stream reads the switch at each heartbeat (25 s), which closes the streams of the other servers of a shop.
+
 ## Maintenance policy
 
 | Route                                | During `runtimeConfig.isMaintenance`           |

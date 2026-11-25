@@ -15,6 +15,16 @@ Le checkout vitrine reste Face B (cookies / session). Ne pas mélanger les deux.
 
 OpenAPI interactif : [`/api/v1/docs`](/api/v1/docs) (schéma [`/api/v1/openapi.json`](/api/v1/openapi.json)).
 
+## Activer l’API (Admin → API Keys)
+
+L’API est **désactivée par défaut**, et seule la boutique peut l’activer : cocher **API activée** dans **Admin → API Keys** et enregistrer. La page reste utilisable tant que l’API est désactivée, ce qui permet de préparer les clés d’abord.
+
+Tant qu’elle est désactivée, toute adresse `/api/v1` répond `404` avec l’enveloppe d’erreur habituelle (`{ "error": { "code": "NOT_FOUND", "message": "Not found" } }`) et rien d’autre : `GET /api/v1/health`, `openapi.json`, `docs` et les images des produits aussi, les préflights `OPTIONS` compris, et aucune clé ne fonctionne. Une boutique qui n’a pas activé l’API ne se distingue pas d’une boutique qui n’en a pas. Un appareil ne doit pas lire ce `404` comme une situation temporaire : contrairement à la maintenance (`503`), rien n’y demande de réessayer plus tard.
+
+Décocher la case ferme tout de suite les flux d’événements ouverts ; chaque flux relit aussi le réglage à chaque battement, si bien qu’une boutique qui fait tourner plusieurs serveurs les voit tous fermés en 25 secondes au plus.
+
+Une barre finale est acceptée sur toutes les adresses `/api/v1` : `/api/v1/health/` répond comme `/api/v1/health`, sans redirection.
+
 ## Créer une clé (Admin → API Keys)
 
 1. Se connecter en Super Admin.
