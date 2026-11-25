@@ -29,6 +29,7 @@ export const API_V1_SCOPES = [
 export type ApiV1Scope = (typeof API_V1_SCOPES)[number];
 
 export const API_V1_WARNING_CODES = [
+	/** A product be-BOP does not know, sent with its price while the third party sets the prices. */
 	'PRODUCT_MISSING',
 	'AMOUNT_MISMATCH',
 	'POS_LABEL_UNKNOWN',

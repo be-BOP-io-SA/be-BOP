@@ -80,3 +80,33 @@ describe('warnings on the sales a till pushes', () => {
 		expect(result).not.toHaveProperty('warnings');
 	});
 });
+
+describe('a sale of a product be-BOP does not know', () => {
+	beforeEach(async () => {
+		await cleanDb();
+		await collections.products.insertOne({ ...TEST_DIGITAL_PRODUCT });
+		apiKey._id = new ObjectId();
+		runtimeConfig.mainCurrency = 'EUR';
+		runtimeConfig.vatExempted = true;
+		runtimeConfig.apiV1.trustExternalPricing = false;
+	}, 60_000);
+
+	it('is refused for good, so the till stops sending it, and names the product', async () => {
+		const ghost = sale('ghost-1', {
+			items: [
+				{ product: 'ghost-sku', quantity: 1, price: { amountMinor: 250, currency: 'EUR' } }
+			] as PosSale['items']
+		});
+
+		const outcome = await ingestPosSales({ apiKey, sales: [sale('plain-ok'), ghost] });
+
+		expect(outcome).toMatchObject({
+			rejection: {
+				externalOrderId: 'ghost-1',
+				code: 'VALIDATION_ERROR',
+				details: { productIds: ['ghost-sku'] },
+				ingested: ['plain-ok']
+			}
+		});
+	});
+});

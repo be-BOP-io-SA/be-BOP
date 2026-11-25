@@ -283,6 +283,32 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 	}
 }
 
+/**
+ * A product be-BOP does not know is refused, before anything is written. Only when the third-party
+ * system is the source of truth is one accepted, and then only with the price it was sent at.
+ */
+function unknownProductsRefusal(
+	cmd: OrderWriteCommand,
+	productIds: string[],
+	trustExternalPricing: boolean
+): ApiV1OrderResult {
+	const list = productIds.join(', ');
+	return {
+		externalOrderId: cmd.externalOrderId,
+		status: 'failed',
+		error: {
+			code: 'VALIDATION_ERROR',
+			message: trustExternalPricing
+				? `Unknown product sent without a price above zero: ${list}. With the third-party system ` +
+				  'as the source of truth, send a price above zero for every product be-BOP does not know.'
+				: `Unknown product: ${list}. be-BOP prices its own catalogue, so every product sent ` +
+				  'must exist in it. Enable "Make the third-party system the prioritary source of ' +
+				  'truth" in Admin -> API Keys to send products it does not know, with their price.',
+			details: { productIds }
+		}
+	};
+}
+
 async function writeNewOrder(
 	params: WriteOneParams,
 	payments: OrderPaymentWrite[]
@@ -312,9 +338,14 @@ async function writeNewOrder(
 	}
 
 	try {
-		const { lines, warnings: productWarnings } = await resolveProducts(cmd.items, cmd.currency, {
-			trustExternalPricing
-		});
+		const {
+			lines,
+			warnings: productWarnings,
+			refusedProductIds
+		} = await resolveProducts(cmd.items, { trustExternalPricing });
+		if (refusedProductIds.length) {
+			return unknownProductsRefusal(cmd, refusedProductIds, trustExternalPricing);
+		}
 		warnings.push(...productWarnings);
 
 		const posSubtypes: (string | undefined)[] = [];

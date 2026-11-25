@@ -1,5 +1,4 @@
 import { collections } from '$lib/server/database';
-import type { Currency } from '$lib/types/Currency';
 import {
 	checkProductVariationsIntegrity,
 	exceedsMaximumPrice,
@@ -20,12 +19,7 @@ export type ResolvedLine = {
 	missing: boolean;
 };
 
-function stubMissingProduct(
-	productId: string,
-	customPrice: Price | undefined,
-	orderCurrency: Currency
-): Product {
-	const price = customPrice ?? { amount: 0, currency: orderCurrency };
+function stubMissingProduct(productId: string, price: Price): Product {
 	return {
 		_id: productId,
 		name: `Missing product ${productId}`,
@@ -53,11 +47,6 @@ function stubMissingProduct(
 	};
 }
 
-/**
- * Resolve catalog products for an order command.
- * Unknown ids become shipping:false stubs named `Missing product {id}` with price customPrice||0,
- * plus a PRODUCT_MISSING warning (order still created — D1).
- */
 /** Prices are only comparable within one currency; a differing currency is itself a divergence. */
 function samePrice(a: Price, b: Price): boolean {
 	return a.currency === b.currency && Math.abs(a.amount - b.amount) < 1e-9;
@@ -75,17 +64,25 @@ function isAllowedPayWhatYouWantPrice(product: Product, sent: Price): boolean {
 	return sent.amount >= minimum && !exceedsMaximumPrice(product, sent);
 }
 
+/**
+ * Resolve catalog products for an order command.
+ *
+ * A product be-BOP does not know is only accepted when the third-party system is the source of
+ * truth and sent a price above zero: it becomes a shipping:false stub named `Missing product {id}`
+ * at that price, with a PRODUCT_MISSING warning. Any other unknown product is listed in
+ * `refusedProductIds`, and the caller refuses the command before anything is written.
+ */
 export async function resolveProducts(
 	items: OrderWriteCommand['items'],
-	orderCurrency: Currency,
 	opts: { trustExternalPricing: boolean }
-): Promise<{ lines: ResolvedLine[]; warnings: ApiV1Warning[] }> {
+): Promise<{ lines: ResolvedLine[]; warnings: ApiV1Warning[]; refusedProductIds: string[] }> {
 	const ids = [...new Set(items.map((item) => item.productId))];
 	const found = await collections.products.find({ _id: { $in: ids } }).toArray();
 	const byId = new Map(found.map((product) => [product._id, product]));
 
 	const warnings: ApiV1Warning[] = [];
 	const lines: ResolvedLine[] = [];
+	const refusedProductIds = new Set<string>();
 
 	for (const item of items) {
 		const clientPrice = item.customPrice
@@ -130,6 +127,11 @@ export async function resolveProducts(
 			});
 		}
 		const missing = !existing;
+		// A price of zero, or below, is no price: it would open a free line on a product nobody knows.
+		if (missing && !(opts.trustExternalPricing && clientPrice && clientPrice.amount > 0)) {
+			refusedProductIds.add(item.productId);
+			continue;
+		}
 		if (missing) {
 			warnings.push({
 				code: 'PRODUCT_MISSING',
@@ -138,7 +140,8 @@ export async function resolveProducts(
 			});
 		}
 		lines.push({
-			product: existing ?? stubMissingProduct(item.productId, clientPrice, orderCurrency),
+			// Only an unknown product sent with its price gets here, so `clientPrice` is set.
+			product: existing ?? stubMissingProduct(item.productId, clientPrice as Price),
 			quantity: item.quantity,
 			...(customPrice && { customPrice }),
 			...(item.chosenVariations && { chosenVariations: item.chosenVariations }),
@@ -146,5 +149,5 @@ export async function resolveProducts(
 		});
 	}
 
-	return { lines, warnings };
+	return { lines, warnings, refusedProductIds: [...refusedProductIds] };
 }

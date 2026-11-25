@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import * as ordersModule from '$lib/server/orders';
 import { env } from '$env/dynamic/private';
 import { cleanDb } from '$lib/server/test-utils';
@@ -543,42 +543,142 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 		expect(notified?.skipNotifications).toBeUndefined();
 	});
 
-	it('creates with PRODUCT_MISSING warning and catalog-integrity-warning label', async () => {
-		const res = await writeBatch({
-			apiKey,
-			orders: [
-				paidCommand({
-					externalOrderId: 'missing-1',
-					items: [
-						{
-							productId: 'ghost-sku',
-							quantity: 1,
-							customPrice: { amountMinor: 250, currency: 'EUR' }
-						}
-					],
-					payment: {
-						method: 'point-of-sale',
-						status: 'paid',
-						amountMinor: 250,
-						currency: 'EUR'
-					}
-				})
-			]
+	describe('a product be-BOP does not know', () => {
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
 		});
-		expect(res.status).toBe('ok_with_warnings');
-		expect(res.results[0].status).toBe('created');
-		expect(res.results[0].warnings).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ code: 'PRODUCT_MISSING', productId: 'ghost-sku' })
-			])
-		);
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
 
-		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
-		expect(order?.items[0]?.product.name).toBe('Missing product ghost-sku');
-		expect(order?.items[0]?.product.shipping).toBe(false);
-		expect(order?.orderLabelIds).toContain(CATALOG_INTEGRITY_WARNING_LABEL_ID);
-		const label = await collections.labels.findOne({ _id: CATALOG_INTEGRITY_WARNING_LABEL_ID });
-		expect(label).toBeTruthy();
+		const unknownLine = (withPrice: boolean, amountMinor = 250) => ({
+			productId: 'ghost-sku',
+			quantity: 1,
+			...(withPrice && { customPrice: { amountMinor, currency: 'EUR' } })
+		});
+		const writeUnknown = (externalOrderId: string, withPrice: boolean, amountMinor?: number) =>
+			writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId,
+						items: [unknownLine(withPrice, amountMinor)],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 250, currency: 'EUR' }
+					})
+				]
+			});
+
+		async function expectRefused(
+			externalOrderId: string,
+			withPrice: boolean,
+			amountMinor?: number
+		) {
+			const res = await writeUnknown(externalOrderId, withPrice, amountMinor);
+
+			expect(res.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'VALIDATION_ERROR', details: { productIds: ['ghost-sku'] } }
+			});
+			expect(res.results[0].error?.message).toContain('ghost-sku');
+			expect(await collections.orders.countDocuments({})).toBe(0);
+			expect(
+				await collections.labels.findOne({ _id: CATALOG_INTEGRITY_WARNING_LABEL_ID })
+			).toBeNull();
+		}
+
+		describe('when be-BOP prices its own catalogue', () => {
+			beforeEach(() => {
+				runtimeConfig.apiV1.trustExternalPricing = false;
+			});
+
+			it('is refused when it is sent with a price', async () => {
+				await expectRefused('unknown-off-priced', true);
+			});
+
+			it('is refused when it is sent without a price', async () => {
+				await expectRefused('unknown-off-unpriced', false);
+			});
+
+			it('is refused when it is sent at a price of zero', async () => {
+				await expectRefused('unknown-off-zero', true, 0);
+			});
+
+			it('leaves a known product sent without a price at its catalogue price, not at zero', async () => {
+				const res = await writeBatch({
+					apiKey,
+					orders: [
+						paidCommand({
+							externalOrderId: 'known-off-unpriced',
+							items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }]
+						})
+					]
+				});
+
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.currencySnapshot.main.totalPrice.amount).toBe(
+					TEST_DIGITAL_PRODUCT.price.amount
+				);
+				expect(order?.status).toBe('paid');
+			});
+		});
+
+		describe('when the third-party system is the source of truth', () => {
+			beforeEach(() => {
+				runtimeConfig.apiV1.trustExternalPricing = true;
+			});
+
+			it('is refused when it is sent without a price', async () => {
+				await expectRefused('unknown-on-unpriced', false);
+			});
+
+			it('is refused when it is sent at a price of zero, which would be a free line', async () => {
+				await expectRefused('unknown-on-zero', true, 0);
+			});
+
+			it('is refused when it is sent at a negative price', async () => {
+				await expectRefused('unknown-on-negative', true, -250);
+			});
+
+			it('is written as a missing product at the price sent, and labelled, when it has one', async () => {
+				const res = await writeUnknown('unknown-on-priced', true);
+
+				expect(res.results[0].status).toBe('created');
+				expect(res.results[0].warnings).toEqual(
+					expect.arrayContaining([
+						expect.objectContaining({ code: 'PRODUCT_MISSING', productId: 'ghost-sku' })
+					])
+				);
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.items[0]?.product.name).toBe('Missing product ghost-sku');
+				expect(order?.items[0]?.product.shipping).toBe(false);
+				expect(order?.currencySnapshot.main.totalPrice.amount).toBe(2.5);
+				expect(order?.orderLabelIds).toContain(CATALOG_INTEGRITY_WARNING_LABEL_ID);
+				expect(
+					await collections.labels.findOne({ _id: CATALOG_INTEGRITY_WARNING_LABEL_ID })
+				).toBeTruthy();
+			});
+		});
+
+		it('refuses the whole command it is in, and only that command of a batch', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({ externalOrderId: 'batch-ok' }),
+					paidCommand({
+						externalOrderId: 'batch-mixed',
+						items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }, unknownLine(true)],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 350, currency: 'EUR' }
+					})
+				]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'failed']);
+			expect(res.results[1].error?.details).toEqual({ productIds: ['ghost-sku'] });
+			expect(await collections.orders.countDocuments({})).toBe(1);
+		});
 	});
 
 	it('fails the command when stock is insufficient', async () => {
@@ -608,6 +708,12 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 	});
 
 	it('mixes created / failed / warning statuses in one batch', async () => {
+		// A product be-BOP does not know only gets a warning when the third party sets the prices.
+		const previousTrust = runtimeConfig.apiV1.trustExternalPricing;
+		runtimeConfig.apiV1.trustExternalPricing = true;
+		onTestFinished(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previousTrust;
+		});
 		const res = await writeBatch({
 			apiKey,
 			orders: [

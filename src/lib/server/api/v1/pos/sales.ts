@@ -63,8 +63,8 @@ function isPermanentFailure(error?: { code: string; details?: Record<string, unk
 		// 408 and 429 are the two 4xx a later attempt can clear on its own.
 		return status >= 400 && status < 500 && status !== 408 && status !== 429;
 	}
-	// The one refusal decided before any write, so the only one carrying no HTTP status.
-	return error.code === 'CURRENCY_UNSUPPORTED';
+	// The refusals decided from the command alone, before any write, carry no HTTP status.
+	return error.code === 'CURRENCY_UNSUPPORTED' || error.code === 'VALIDATION_ERROR';
 }
 
 /** Either every sale has an outcome, or one was refused and the request fails. */
