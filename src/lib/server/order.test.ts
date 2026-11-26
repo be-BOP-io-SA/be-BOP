@@ -366,6 +366,37 @@ describe('order', () => {
 		expect(settledNext?.payments[0].invoice?.number).toBe(2);
 	});
 
+	it('refuses the second of two simultaneous settlements, and gives its number back', async () => {
+		const orderId = await createPosOrder('simultaneous-double-session');
+		const first = await collections.orders.findOne({ _id: orderId });
+		const second = await collections.orders.findOne({ _id: orderId });
+		if (!first || !second) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+
+		// Both run at once, so they can collide on the invoice counter and one of them be retried.
+		const results = await Promise.allSettled([
+			onOrderPayment(first, first.payments[0], first.payments[0].price),
+			onOrderPayment(second, second.payments[0], second.payments[0].price)
+		]);
+		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+		const refused = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+		expect(refused).toHaveLength(1);
+		expect(refused[0].reason).toMatchObject({ status: 400 });
+
+		const nextId = await createPosOrder('simultaneous-next-session');
+		const next = await collections.orders.findOne({ _id: nextId });
+		if (!next) {
+			throw new Error(`Order ${nextId} not found`);
+		}
+		await onOrderPayment(next, next.payments[0], next.payments[0].price);
+
+		const settled = await collections.orders.findOne({ _id: orderId });
+		const settledNext = await collections.orders.findOne({ _id: nextId });
+		expect(settled?.payments[0].invoice?.number).toBe(1);
+		expect(settledNext?.payments[0].invoice?.number).toBe(2);
+	});
+
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
 		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
 			sessionId: 'test-session-id'
