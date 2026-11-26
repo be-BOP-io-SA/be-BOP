@@ -2280,6 +2280,7 @@
 			"email": "E-Mail",
 			"emailOrNpub": "E-Mail oder öffentlicher Nostr-Schlüssel",
 			"message": "Bitte geben Sie eine Kontaktadresse an, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
+			"messageOptional": "Sie können eine Kontaktadresse angeben, um über Neuigkeiten zu Ihrer Bestellung informiert zu werden.",
 			"npub": "Öffentlicher Nostr-Schlüssel",
 			"optional": "(optional)",
 			"title": "Feed & Benachrichtigungen"

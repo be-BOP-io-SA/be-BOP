@@ -138,6 +138,8 @@ export async function load(params) {
 							| 'variationFamilies'
 							| 'bookingSpec.slotMinutes'
 							| 'subscriptionDuration'
+							| 'deposit'
+							| 'allowOrderWithoutContactAddress'
 						>
 					>({
 						_id: 1,
@@ -151,6 +153,8 @@ export async function load(params) {
 						shipping: 1,
 						availableDate: 1,
 						preorder: 1,
+						deposit: 1,
+						allowOrderWithoutContactAddress: 1,
 						deliveryFees: 1,
 						applyDeliveryFeesOnlyOnce: 1,
 						requireSpecificDeliveryFee: 1,

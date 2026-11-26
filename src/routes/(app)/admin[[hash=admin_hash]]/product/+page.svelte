@@ -48,6 +48,9 @@
 <a href="{data.adminPrefix}/product/action-settings" class="underline block"
 	>Product action settings</a
 >
+<a href="{data.adminPrefix}/product/no-contact" class="underline block"
+	>{t('admin.product.noContact.title')}</a
+>
 <a href="{data.adminPrefix}/product/seo" class="underline block">Product SEO options</a>
 <a href="{data.adminPrefix}/product/default-picture" class="underline block"
 	>{t('admin.product.productsDefaultPicture')}</a

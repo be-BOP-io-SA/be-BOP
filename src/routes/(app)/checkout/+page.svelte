@@ -100,6 +100,14 @@
 		: paymentOptions[0]?.value;
 	// The underlying PaymentMethod, for logic that keys on the method (discounts, POS, …).
 	$: baseMethod = paymentMethod?.startsWith('custom:') ? 'custom' : paymentMethod;
+	// Same rule as the server: a payment that never expires keeps the contact required, unless the
+	// shop allows it on that custom payment method
+	$: contactAddressOptional =
+		data.contactAddressOptional &&
+		baseMethod !== 'bank-transfer' &&
+		(baseMethod !== 'custom' ||
+			!!data.customPaymentMethods?.find((m) => `custom:${m.id}` === paymentMethod)
+				?.allowOrderWithoutContactAddress);
 
 	$: items = data.cart.items;
 	// Live discount preview: payment method, shipping country, and billing country feed into a
@@ -680,7 +688,11 @@
 			<section class="gap-4 flex flex-col">
 				<h2 class="font-light text-2xl">{t('checkout.notifications.title')}</h2>
 				<p>
-					{t('checkout.notifications.message')}
+					{t(
+						contactAddressOptional
+							? 'checkout.notifications.messageOptional'
+							: 'checkout.notifications.message'
+					)}
 				</p>
 
 				{#each feedItems as { key, label }}
@@ -693,10 +705,8 @@
 								modes={contactModes}
 								name="{key}Address"
 								bind:value={addresses[key]}
-								required={key === 'paymentStatus' &&
-									!data.hasPosOptions &&
-									!data.contactAddressOptional}
-								optional={data.contactAddressOptional}
+								required={key === 'paymentStatus' && !data.hasPosOptions && !contactAddressOptional}
+								optional={contactAddressOptional}
 							/>
 						</div>
 						{#if data.displayNewsletterCommercialProspection}

@@ -228,17 +228,25 @@ export function isPreorder(
  * delivery, deposit remainder, preorder availability.
  */
 export function contactAddressCanBeOptional(
-	product: Pick<Product, 'type' | 'shipping' | 'deposit' | 'preorder'>
+	product: Pick<Product, 'type' | 'shipping' | 'deposit' | 'preorder' | 'availableDate'>
 ): boolean {
 	return (
-		product.type !== 'subscription' && !product.shipping && !product.deposit && !product.preorder
+		product.type !== 'subscription' &&
+		!product.shipping &&
+		!product.deposit &&
+		!isPreorder(product.availableDate, product.preorder)
 	);
 }
 
 export function canOrderWithoutContactAddress(
 	product: Pick<
 		Product,
-		'allowOrderWithoutContactAddress' | 'type' | 'shipping' | 'deposit' | 'preorder'
+		| 'allowOrderWithoutContactAddress'
+		| 'type'
+		| 'shipping'
+		| 'deposit'
+		| 'preorder'
+		| 'availableDate'
 	>
 ): boolean {
 	return !!product.allowOrderWithoutContactAddress && contactAddressCanBeOptional(product);

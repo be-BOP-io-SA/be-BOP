@@ -751,10 +751,24 @@ export async function createOrder(
 
 	if (
 		!canBeNotified &&
-		!items.every((item) => canOrderWithoutContactAddress(item.product)) &&
 		paymentMethod !== 'point-of-sale' &&
 		paymentMethod !== null &&
-		!params.user.userHasPosOptions
+		!params.user.userHasPosOptions &&
+		// A payment that never expires holds the stock until someone can be reached about it, so it
+		// keeps the contact required, unless the shop allows it on that custom payment method
+		!(
+			// The deposit charged is the one the cart line carries, whatever the product says now
+			(
+				items.every(
+					(item) =>
+						canOrderWithoutContactAddress(item.product) && (item.depositPercentage ?? 100) >= 100
+				) &&
+				(paymentMethod === 'custom'
+					? runtimeConfig.customPaymentMethods.find((m) => m.id === params.customPaymentMethodId)
+							?.allowOrderWithoutContactAddress
+					: paymentMethodExpiration(paymentMethod) !== undefined)
+			)
+		)
 	) {
 		throw error(
 			400,

@@ -21,7 +21,16 @@
 	let formEl: HTMLFormElement;
 
 	function addMethod() {
-		methods = [...methods, { id: '', label: '', instructions: '', _key: nextKey++ }];
+		methods = [
+			...methods,
+			{
+				id: '',
+				label: '',
+				instructions: '',
+				allowOrderWithoutContactAddress: false,
+				_key: nextKey++
+			}
+		];
 	}
 
 	// Deletion persists immediately (submit the updated list) instead of waiting for Save.
@@ -78,7 +87,12 @@
 		value={JSON.stringify(
 			methods
 				.filter((m) => m.label.trim().length > 0 || m.instructions.trim().length > 0)
-				.map((m) => ({ id: m.id, label: m.label, instructions: m.instructions }))
+				.map((m) => ({
+					id: m.id,
+					label: m.label,
+					instructions: m.instructions,
+					allowOrderWithoutContactAddress: !!m.allowOrderWithoutContactAddress
+				}))
 		)}
 	/>
 
@@ -158,6 +172,15 @@
 					bind:value={method.instructions}
 					placeholder={t('customPaymentMethod.instructionsPlaceholder')}
 				></textarea>
+			</label>
+
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					class="form-checkbox"
+					bind:checked={method.allowOrderWithoutContactAddress}
+				/>
+				{t('admin.productForm.allowOrderWithoutContactAddress')}
 			</label>
 		</fieldset>
 	{/each}

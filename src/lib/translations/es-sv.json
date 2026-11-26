@@ -2280,6 +2280,7 @@
 			"email": "Correo electrónico",
 			"emailOrNpub": "Correo electrónico o clave pública de Nostr",
 			"message": "Por favor ingrese una dirección de contacto para recibir notificaciones de tu pedido.",
+			"messageOptional": "Puede ingresar una dirección de contacto para recibir notificaciones de tu pedido.",
 			"npub": "Clave pública de Nostr",
 			"optional": "(opcional)",
 			"title": "Feed y Notificaciones"

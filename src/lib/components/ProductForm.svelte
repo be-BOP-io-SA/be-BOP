@@ -9,6 +9,7 @@
 		DEFAULT_MAX_QUANTITY_PER_ORDER,
 		MAX_NAME_LIMIT,
 		MAX_SHORT_DESCRIPTION_LIMIT,
+		contactAddressCanBeOptional,
 		type Product
 	} from '$lib/types/Product';
 	import type { Tag } from '$lib/types/Tag';
@@ -406,6 +407,13 @@
 			enforce: false
 		};
 	}
+
+	// Judged on what the form currently says, not on the product as last saved
+	$: contactAddressEligible = contactAddressCanBeOptional({
+		...product,
+		deposit: allowDeposit ? deposit : undefined,
+		availableDate: availableDateStr ? new Date(availableDateStr) : undefined
+	});
 
 	function confirmDelete(event: Event) {
 		if (!confirm(t('admin.productForm.confirmDeleteProduct'))) {
@@ -1984,17 +1992,20 @@
 				{t('admin.productForm.advancedFeatures')}
 			</summary>
 			<div class="p-4 pt-0 space-y-6">
-				{#if product.type !== 'subscription' && !product.shipping && !allowDeposit && !product.preorder}
-					<label class="checkbox-label">
-						<input
-							type="checkbox"
-							name="allowOrderWithoutContactAddress"
-							checked={product.allowOrderWithoutContactAddress}
-							class="form-checkbox"
-						/>
-						{t('admin.productForm.allowOrderWithoutContactAddress')}
-					</label>
-				{/if}
+				<label
+					class="checkbox-label {contactAddressEligible ? '' : 'cursor-not-allowed text-gray-450'}"
+				>
+					<input
+						type="checkbox"
+						name="allowOrderWithoutContactAddress"
+						bind:checked={product.allowOrderWithoutContactAddress}
+						class="form-checkbox {contactAddressEligible
+							? ''
+							: 'cursor-not-allowed border-gray-450'}"
+						disabled={!contactAddressEligible}
+					/>
+					{t('admin.productForm.allowOrderWithoutContactAddress')}
+				</label>
 				<div>
 					<h4 class="text-lg font-medium text-gray-900 mb-3">
 						{t('admin.productForm.customCtaButtons')}

@@ -2280,6 +2280,7 @@
 			"email": "Email",
 			"emailOrNpub": "Email or Nostr public key",
 			"message": "Please fill in a contact address to be notified about your order news.",
+			"messageOptional": "You may fill in a contact address to be notified about your order news.",
 			"npub": "Nostr public key",
 			"optional": "(optional)",
 			"title": "Feed & Notifications"

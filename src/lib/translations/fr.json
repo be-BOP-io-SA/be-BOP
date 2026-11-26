@@ -2280,6 +2280,7 @@
 			"email": "E-mail",
 			"emailOrNpub": "E-mail ou clé publique Nostr",
 			"message": "Merci de remplir une adresse de contact pour être notifié des évolutions de votre commande.",
+			"messageOptional": "Vous pouvez remplir une adresse de contact pour être notifié des évolutions de votre commande.",
 			"npub": "Clé publique Nostr",
 			"optional": "(facultatif)",
 			"title": "Notifications"

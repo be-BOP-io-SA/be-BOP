@@ -61,22 +61,10 @@ export async function load({ parent, locals }) {
 	}
 	const contactAddressOptional =
 		parentData.cart.items.length > 0 &&
-		(
-			await collections.products
-				.find(
-					{ _id: { $in: parentData.cart.items.map((item) => item.product._id) } },
-					{
-						projection: {
-							allowOrderWithoutContactAddress: 1,
-							type: 1,
-							shipping: 1,
-							deposit: 1,
-							preorder: 1
-						}
-					}
-				)
-				.toArray()
-		).every(canOrderWithoutContactAddress);
+		parentData.cart.items.every(
+			(item) =>
+				canOrderWithoutContactAddress(item.product) && (item.depositPercentage ?? 100) >= 100
+		);
 
 	const personalInfoConnected = await collections.personalInfo.findOne(
 		userQuery(userIdentifier(locals)),
@@ -208,10 +196,13 @@ export async function load({ parent, locals }) {
 
 	return {
 		paymentMethods: methods,
-		customPaymentMethods: runtimeConfig.customPaymentMethods.map(({ id, label }) => ({
-			id,
-			label
-		})),
+		customPaymentMethods: runtimeConfig.customPaymentMethods.map(
+			({ id, label, allowOrderWithoutContactAddress }) => ({
+				id,
+				label,
+				allowOrderWithoutContactAddress
+			})
+		),
 		discountByContext,
 		relevantShipCountries,
 		relevantBillCountries,

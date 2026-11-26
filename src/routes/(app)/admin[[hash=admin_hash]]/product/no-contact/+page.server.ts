@@ -4,7 +4,14 @@ import { fail } from '@sveltejs/kit';
 
 type ProductOption = Pick<
 	Product,
-	'_id' | 'name' | 'allowOrderWithoutContactAddress' | 'type' | 'shipping' | 'deposit' | 'preorder'
+	| '_id'
+	| 'name'
+	| 'allowOrderWithoutContactAddress'
+	| 'type'
+	| 'shipping'
+	| 'deposit'
+	| 'preorder'
+	| 'availableDate'
 >;
 
 const projection = {
@@ -14,7 +21,8 @@ const projection = {
 	type: 1,
 	shipping: 1,
 	deposit: 1,
-	preorder: 1
+	preorder: 1,
+	availableDate: 1
 } as const;
 
 export const load = async () => {
@@ -60,13 +68,20 @@ export const actions = {
 			});
 		}
 
+		// Only the products whose box changed, so the others keep their place in the product list
 		const now = new Date();
 		await collections.products.updateMany(
-			{ _id: { $in: editable.filter((id) => allowed.has(id)) } },
+			{
+				_id: { $in: editable.filter((id) => allowed.has(id)) },
+				allowOrderWithoutContactAddress: { $ne: true }
+			},
 			{ $set: { allowOrderWithoutContactAddress: true, updatedAt: now } }
 		);
 		await collections.products.updateMany(
-			{ _id: { $in: editable.filter((id) => !allowed.has(id)) } },
+			{
+				_id: { $in: editable.filter((id) => !allowed.has(id)) },
+				allowOrderWithoutContactAddress: true
+			},
 			{ $set: { allowOrderWithoutContactAddress: false, updatedAt: now } }
 		);
 

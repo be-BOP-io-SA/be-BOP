@@ -94,7 +94,12 @@ const baseConfig = {
 	 * is available whenever at least one is configured; each order payment references the chosen one
 	 * by `customPaymentMethodId`.
 	 */
-	customPaymentMethods: [] as Array<{ id: string; label: string; instructions: string }>,
+	customPaymentMethods: [] as Array<{
+		id: string;
+		label: string;
+		instructions: string;
+		allowOrderWithoutContactAddress?: boolean;
+	}>,
 	subscriptionNumber: 0,
 	themeChangeNumber: 0,
 	isMaintenance: false,
