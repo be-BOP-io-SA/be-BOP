@@ -495,6 +495,17 @@ export async function cancelStalePendingPayments(
 		const stale = order.payments.find((p) => p._id.equals(_id));
 		if (stale) {
 			order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
+			// The customer has just been told the order is paid: no "payment cancelled" e-mail
+			// for an attempt nobody owes anymore. A payment cancelled by hand still notifies.
+			await collections.orders.updateOne(
+				{ _id: order._id, 'payments._id': _id },
+				{ $set: { 'payments.$.lastStatusNotified': 'canceled' } },
+				{ session }
+			);
+			const canceled = order.payments.find((p) => p._id.equals(_id));
+			if (canceled) {
+				canceled.lastStatusNotified = 'canceled';
+			}
 		}
 	}
 	return order;
