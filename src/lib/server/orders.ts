@@ -295,6 +295,7 @@ export async function onOrderPayment(
 
 			if (claimed.value) {
 				order = claimed.value;
+				order = await cancelStalePendingPayments(order, session);
 				await updateAfterOrderPaid(order, session);
 			}
 		}
@@ -369,6 +370,33 @@ export async function onOrderPayment(
 	}
 
 	return updated;
+}
+
+/** A fully paid order owes nothing anymore: no other attempt on it may go through (#2738). */
+export async function cancelStalePendingPayments(
+	order: Order,
+	session: ClientSession
+): Promise<Order> {
+	// `order` is replaced on each pass, so the payment is looked up again —
+	// `onOrderPaymentFailed` rejects a payment absent from the order it is given.
+	for (const { _id } of order.payments.filter((p) => p.status === 'pending')) {
+		const stale = order.payments.find((p) => p._id.equals(_id));
+		if (stale) {
+			order = await onOrderPaymentFailed(order, stale, 'canceled', { session });
+			// The customer has just been told the order is paid: no "payment cancelled" e-mail
+			// for an attempt nobody owes anymore. A payment cancelled by hand still notifies.
+			await collections.orders.updateOne(
+				{ _id: order._id, 'payments._id': _id },
+				{ $set: { 'payments.$.lastStatusNotified': 'canceled' } },
+				{ session }
+			);
+			const canceled = order.payments.find((p) => p._id.equals(_id));
+			if (canceled) {
+				canceled.lastStatusNotified = 'canceled';
+			}
+		}
+	}
+	return order;
 }
 
 export async function onOrderPaymentFailed(
