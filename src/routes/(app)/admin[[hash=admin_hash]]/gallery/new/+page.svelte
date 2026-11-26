@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { generateId } from '$lib/utils/generateId';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
@@ -20,14 +25,23 @@
 			submitting = true;
 			// Need to load here, or for some reason, some inputs disappear afterwards
 			const formData = new FormData(formElement);
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				galleryPictures.map(async (picture, i) => {
 					if (picture[0]) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0]);
-						formData.set(`secondary[${i}].pictureId`, pictureId);
+						const upload = await preUploadPicture(data.adminPrefix, picture[0]);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
+							return;
+						}
+						formData.set(`secondary[${i}].pictureId`, upload.pictureId);
 					}
 				})
 			);
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',
@@ -97,7 +111,8 @@
 	</label>
 	<label class="form-label">
 		{t('admin.gallery.galleryContent')}
-		<textarea name="principal.content" cols="30" rows="5" maxlength="10000" class="form-input" />
+		<textarea name="principal.content" cols="30" rows="5" maxlength="10000" class="form-input"
+		></textarea>
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
@@ -128,13 +143,8 @@
 		</label>
 		<label class="form-label">
 			{t('admin.gallery.gallerySubcontent', { number: i + 1 })}
-			<textarea
-				name="secondary[{i}].content"
-				cols="30"
-				rows="5"
-				maxlength="160"
-				class="form-input"
-			/>
+			<textarea name="secondary[{i}].content" cols="30" rows="5" maxlength="160" class="form-input"
+			></textarea>
 		</label>
 		<label class="form-label">
 			{t('admin.gallery.picture', { number: i + 1 })}

@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import { collections, withTransaction } from '$lib/server/database';
 import type { ClientSession } from 'mongodb';
 import { error } from '@sveltejs/kit';
@@ -101,6 +101,14 @@ export async function generatePicture(pictureId: string, opts?: PictureOptions):
 	await storePicture({ _id: pictureId, name: pendingPicture.name, upload }, opts);
 }
 
+export function pictureMime({
+	format,
+	compression
+}: Partial<Pick<Metadata, 'format' | 'compression'>>): string | false {
+	// sharp names AVIF by its HEIF container, which browsers do not display.
+	return format === 'heif' && compression === 'av1' ? 'image/avif' : mimeTypes.lookup(format ?? '');
+}
+
 /**
  * Same as generatePicture, for a file the server received itself.
  */
@@ -124,8 +132,7 @@ export async function storePicture(
 		throw error(400, 'Invalid image format');
 	}
 
-	// sharp names AVIF by its HEIF container, which browsers do not display.
-	const mime = format === 'heif' && compression === 'av1' ? 'image/avif' : mimeTypes.lookup(format);
+	const mime = pictureMime({ format, compression });
 
 	if (!mime) {
 		throw error(400, 'Invalid image format: ' + format);

@@ -246,7 +246,6 @@
 		{t('pos.useSelectForTags')}
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.pos.productTags')}
 
@@ -272,7 +271,6 @@
 					</button>
 				</div>
 
-				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label px-4 py-3">
 					<MultiSelect
 						--sms-options-bg="var(--body-mainPlan-backgroundColor)"
@@ -372,7 +370,6 @@
 		/>
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.pos.tabsManagement')}
 		<ManageOrderTabs bind:tabGroups nonEmptyPoolSlugs={data.nonEmptyPoolSlugs} />

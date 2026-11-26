@@ -55,7 +55,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={t('admin.label.iconPlaceholder')}
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	<input type="submit" class="btn btn-blue self-start text-white" value={t('admin.label.submit')} />
 </form>

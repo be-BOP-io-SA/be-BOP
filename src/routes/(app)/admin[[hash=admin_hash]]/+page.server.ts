@@ -6,7 +6,11 @@ import { adminPrefix } from '$lib/server/admin';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { rootDir } from '$lib/server/root-dir.js';
-import { enableTelemetry, disableTelemetry } from '$lib/server/telemetry-helpers';
+import {
+	canConfigureTelemetry,
+	enableTelemetry,
+	disableTelemetry
+} from '$lib/server/telemetry-helpers';
 import { isNostrConfigured } from '$lib/server/nostr';
 
 export async function load({ url, locals }) {
@@ -47,10 +51,11 @@ export async function load({ url, locals }) {
 		// 2. Beacon disabled AND has reminder date AND date has passed
 		// Note: nextPrompt=null means "never ask again" (don't show banner)
 		const showTelemetryBanner =
-			!telemetryConfig ||
-			(!telemetryConfig.enabled &&
-				telemetryConfig.nextPrompt !== null &&
-				new Date() >= telemetryConfig.nextPrompt);
+			canConfigureTelemetry(locals.user.role) &&
+			(!telemetryConfig ||
+				(!telemetryConfig.enabled &&
+					telemetryConfig.nextPrompt !== null &&
+					new Date() >= telemetryConfig.nextPrompt));
 
 		return {
 			files,
@@ -68,7 +73,11 @@ export async function load({ url, locals }) {
 const TELEMETRY_CHOICES = ['accept', 'decline', 'hide'] as const;
 
 export const actions = {
-	telemetry: async ({ request }) => {
+	telemetry: async ({ request, locals }) => {
+		if (!canConfigureTelemetry(locals.user?.role)) {
+			throw error(403, 'You are not allowed to change the telemetry setting');
+		}
+
 		const formData = await request.formData();
 
 		const schema = z.object({

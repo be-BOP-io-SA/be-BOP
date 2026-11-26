@@ -30,6 +30,7 @@
 		}[];
 	} | null;
 
+	export let removedContent: string[] = [];
 	export let slug = cmsPage?._id || '';
 	let pageContent = cmsPage?.content || '';
 	let title = cmsPage?.title || '';
@@ -119,7 +120,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			class="form-input block w-full"
 			value={shortDescription}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
@@ -198,13 +199,18 @@
 			{t('admin.cmsForm.advancedHtmlWarning')}
 		</p>
 	{/if}
+	{#if removedContent.length && !cmsPage?.displayRawContent}
+		<p class="text-red-500" role="alert">
+			{t('admin.cmsForm.removedContentWarning', { items: removedContent.join(', ') })}
+		</p>
+	{/if}
 	<label class="block w-full mt-4">
 		{t('admin.cmsForm.content')}
 		{#if !advancedHtmlEdition}
 			<Editor
 				scriptSrc="/tinymce/tinymce.js"
 				bind:value={pageContent}
-				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+				conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 			/>
 		{/if}
 		<label class="checkbox-label my-2">
@@ -260,7 +266,7 @@
 			placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 			class="form-input block w-full"
 			bind:value={pageContent}
-		/>
+		></textarea>
 	</label>
 
 	<label class="checkbox-label">
@@ -279,7 +285,7 @@
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={mobileContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
@@ -293,7 +299,7 @@
 				placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 				class="form-input block w-full"
 				bind:value={mobileContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<label class="checkbox-label">
@@ -312,7 +318,7 @@
 				<Editor
 					scriptSrc="/tinymce/tinymce.js"
 					bind:value={employeeContent}
-					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+					conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR, license_key: 'gpl' }}
 				/>
 			{/if}
 
@@ -326,7 +332,7 @@
 				placeholder={t('admin.cmsForm.htmlContentPlaceholder')}
 				class="form-input block w-full"
 				bind:value={employeeContent}
-			/>
+			></textarea>
 		</label>
 	{/if}
 	<div class="flex flex-row justify-between gap-2">

@@ -3,7 +3,8 @@ import {
 	generateNodelessAddress,
 	isBitcoinNodelessConfigured,
 	isZPubValid,
-	isAddressUsed
+	isAddressUsed,
+	MAX_NON_HARDENED_INDEX
 } from '$lib/server/bitcoin-nodeless.js';
 import { collections } from '$lib/server/database.js';
 import { defaultConfig, runtimeConfig } from '$lib/server/runtime-config';
@@ -12,8 +13,55 @@ import { z } from 'zod';
 import type { Actions } from './$types';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
+import { isUniqueConstraintError } from '$lib/server/utils/isUniqueConstraintError';
 
 type FieldErrors = Record<string, string>;
+
+// A stored config with no key derives no address, so it is safe to replace.
+const KEYLESS_CONFIG_FILTER = {
+	$or: [
+		{ 'data.format': { $ne: 'bip48' }, 'data.publicKey': { $in: ['', null] } },
+		{ 'data.format': 'bip48', 'data.xpubs.1': { $exists: false } }
+	]
+};
+
+// Never replaces a config that has a key: rewinding its stored index would reuse addresses.
+async function storeNewConfig(data: typeof runtimeConfig.bitcoinNodeless): Promise<boolean> {
+	const replaced = await collections.runtimeConfig.updateOne(
+		{ _id: 'bitcoinNodeless', ...KEYLESS_CONFIG_FILTER },
+		{ $set: { data, updatedAt: new Date() } }
+	);
+	if (!replaced.matchedCount) {
+		try {
+			await collections.runtimeConfig.insertOne({
+				_id: 'bitcoinNodeless',
+				data,
+				updatedAt: new Date()
+			});
+		} catch (err) {
+			if (isUniqueConstraintError(err)) {
+				return false;
+			}
+			throw err;
+		}
+	}
+	runtimeConfig.bitcoinNodeless = data;
+	return true;
+}
+
+const PREVIEWED_ADDRESSES = 5;
+
+type AddressSupply = 'enough' | 'low' | 'last' | 'exhausted';
+
+function addressSupplyOf(derivableCount: number): AddressSupply {
+	if (derivableCount === 0) {
+		return 'exhausted';
+	}
+	if (derivableCount === 1) {
+		return 'last';
+	}
+	return derivableCount < PREVIEWED_ADDRESSES ? 'low' : 'enough';
+}
 
 // Array paths become `field[N]` keys (e.g. ['xpubs', 2] → 'xpubs[2]') to match
 // the `name="xpubs[{i}]"` input attribute for inline rendering under each input.
@@ -35,15 +83,23 @@ export async function load() {
 		return {
 			bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 			nextAddresses: [],
-			hasAlreadyUsedNextAddresses: false
+			hasAlreadyUsedNextAddresses: false,
+			addressSupply: 'enough' as AddressSupply,
+			maxDerivationIndex: MAX_NON_HARDENED_INDEX
 		};
 	}
 
 	const ADDRESS_CHECK_TIMEOUT_MS = 3000;
+	const { derivationIndex } = runtimeConfig.bitcoinNodeless;
+	const derivableCount = Math.max(
+		0,
+		Math.min(PREVIEWED_ADDRESSES, MAX_NON_HARDENED_INDEX - derivationIndex + 1)
+	);
+	const addressSupply = addressSupplyOf(derivableCount);
 
 	const nextAddresses = await Promise.all(
-		Array.from({ length: 5 }, async (_, i) => {
-			const index = runtimeConfig.bitcoinNodeless.derivationIndex + i;
+		Array.from({ length: derivableCount }, async (_, i) => {
+			const index = derivationIndex + i;
 			const address = generateNodelessAddress(index);
 
 			const isUsed = await Promise.race([
@@ -58,7 +114,9 @@ export async function load() {
 	return {
 		bitcoinNodeless: runtimeConfig.bitcoinNodeless,
 		nextAddresses,
-		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed)
+		hasAlreadyUsedNextAddresses: nextAddresses.some((addr) => addr.isUsed),
+		addressSupply,
+		maxDerivationIndex: MAX_NON_HARDENED_INDEX
 	};
 }
 
@@ -73,7 +131,7 @@ export const actions: Actions = {
 
 		const baseSchema = z.object({
 			mempoolUrl: z.string().url(),
-			derivationIndex: z.number({ coerce: true }).min(0),
+			derivationIndex: z.number({ coerce: true }).int().min(0).max(MAX_NON_HARDENED_INDEX),
 			format: z.enum(['bip84', 'bip48']),
 			skipUsedAddresses: z.boolean({ coerce: true }).default(false)
 		});
@@ -114,18 +172,9 @@ export const actions: Actions = {
 				derivationPath: "m/84'/0'/0'" as const
 			};
 
-			runtimeConfig.bitcoinNodeless = data;
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'bitcoinNodeless' },
-				{
-					$set: {
-						data,
-						updatedAt: new Date()
-					}
-				},
-				{ upsert: true }
-			);
+			if (!(await storeNewConfig(data))) {
+				return fail(409, { alreadySetUp: true });
+			}
 		} else {
 			if (parsed.xpubs.length !== parsed.n) {
 				return fail(400, {
@@ -170,18 +219,9 @@ export const actions: Actions = {
 				derivationPath: "m/48'/0'/0'/2'" as const
 			};
 
-			runtimeConfig.bitcoinNodeless = data;
-
-			await collections.runtimeConfig.updateOne(
-				{ _id: 'bitcoinNodeless' },
-				{
-					$set: {
-						data,
-						updatedAt: new Date()
-					}
-				},
-				{ upsert: true }
-			);
+			if (!(await storeNewConfig(data))) {
+				return fail(409, { alreadySetUp: true });
+			}
 		}
 	},
 	async update({ request }) {

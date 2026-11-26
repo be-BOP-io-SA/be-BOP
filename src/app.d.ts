@@ -35,6 +35,8 @@ declare global {
 			sso?: Array<{
 				provider: string;
 				email?: string;
+				/** Whether the provider attested the address. Only then may it identify a customer. */
+				emailVerified?: boolean;
 				avatarUrl?: string;
 				name: string;
 				id: string;

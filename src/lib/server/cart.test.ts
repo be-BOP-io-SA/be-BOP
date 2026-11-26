@@ -4,7 +4,8 @@ import { cleanDb } from './test-utils';
 import { ObjectId } from 'mongodb';
 import { addToCartInDb, restoreFromPendingSnapshot } from './cart';
 import { createOrder } from './orders';
-import { HttpError_1 } from '@sveltejs/kit';
+// SvelteKit 2 exports `HttpError` as a type only; `isHttpError` is how you recognise one.
+import { isHttpError } from '@sveltejs/kit';
 import {
 	TEST_DIGITAL_PRODUCT,
 	TEST_PRODUCT_STOCK,
@@ -32,14 +33,14 @@ describe('cart', () => {
 	});
 
 	it('should fail to add a product to the cart when no stock', async () => {
-		await expect(
-			addToCartInDb(TEST_DIGITAL_PRODUCT, 10, {
-				user: {
-					sessionId: 'test-session-id'
-				},
-				mode: 'eshop'
-			})
-		).rejects.toThrow(HttpError_1);
+		const err = await addToCartInDb(TEST_DIGITAL_PRODUCT, 10, {
+			user: {
+				sessionId: 'test-session-id'
+			},
+			mode: 'eshop'
+		}).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
 	});
 
 	it('should prevent adding a product when reserved by another user', async () => {
@@ -49,14 +50,14 @@ describe('cart', () => {
 			},
 			mode: 'eshop'
 		});
-		await expect(
-			addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
-				user: {
-					sessionId: 'test-session-id2'
-				},
-				mode: 'eshop'
-			})
-		).rejects.toThrow(HttpError_1);
+		const err = await addToCartInDb(TEST_DIGITAL_PRODUCT, TEST_PRODUCT_STOCK, {
+			user: {
+				sessionId: 'test-session-id2'
+			},
+			mode: 'eshop'
+		}).catch((e) => e);
+
+		expect(isHttpError(err)).toBe(true);
 	});
 
 	it('should allow checking out a product when the reservation is expired', async () => {
@@ -106,6 +107,46 @@ describe('cart', () => {
 				}
 			)
 		).resolves.toBeDefined();
+	});
+
+	describe('pay what you want with variations', () => {
+		const PWYW_WITH_SIZES = {
+			...TEST_DIGITAL_PRODUCT_UNLIMITED,
+			_id: 'test-pwyw-sizes',
+			alias: ['test-pwyw-sizes'],
+			payWhatYouWant: true,
+			variations: [
+				{ name: 'size', value: 'S', price: 0 },
+				{ name: 'size', value: 'XXL', price: 30 }
+			]
+		};
+
+		beforeEach(async () => {
+			await collections.products.insertOne(PWYW_WITH_SIZES);
+		});
+
+		it('floors the chosen price at the base price plus the option surcharge', async () => {
+			await addToCartInDb(PWYW_WITH_SIZES, 1, {
+				user: { sessionId: 'pwyw-1' },
+				mode: 'eshop',
+				customPrice: { amount: 100, currency: 'EUR' },
+				chosenVariations: { size: 'XXL' }
+			});
+
+			const cart = await collections.carts.findOne({ 'user.sessionId': 'pwyw-1' });
+			expect(cart?.items[0].customPrice?.amount).toBe(130);
+		});
+
+		it('refuses an option the product does not offer', async () => {
+			const err = await addToCartInDb(PWYW_WITH_SIZES, 1, {
+				user: { sessionId: 'pwyw-2' },
+				mode: 'eshop',
+				customPrice: { amount: 100, currency: 'EUR' },
+				chosenVariations: { size: 'XXXXL' }
+			}).catch((e) => e);
+
+			expect(isHttpError(err)).toBe(true);
+		});
 	});
 
 	describe('typed error codes', () => {

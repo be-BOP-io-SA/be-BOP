@@ -181,7 +181,7 @@
 				on:click={() => (sidebarOpen = false)}
 				aria-label={t('admin.nav.closeMenu')}
 				tabindex="-1"
-			/>
+			></button>
 		{/if}
 
 		<aside

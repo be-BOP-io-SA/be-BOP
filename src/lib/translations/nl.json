@@ -171,8 +171,6 @@
 			"productsAliases": "Productaliassen",
 			"productsTags": "Producttags",
 			"productsDefaultPicture": "Standaardafbeelding voor producten",
-			"exportCatalog": "Catalogus exporteren",
-			"importCatalog": "Catalogus importeren",
 			"defaultActionSettingsTitle": "Standaardactie-instellingen",
 			"actionColumn": "Actie",
 			"eshopAnyoneColumn": "Webshop (iedereen)",
@@ -191,7 +189,6 @@
 			"selectTagPlaceholder": "Selecteer een tag",
 			"previous": "Vorige",
 			"next": "Volgende",
-			"exportError": "Fout {status}: {message}",
 			"type": {
 				"resource": "Bron",
 				"subscription": "Abonnement",
@@ -332,15 +329,6 @@
 			"assistSameAsMainFont": "Zelfde als hoofdlettertype",
 			"assistGenerate": "Thema genereren"
 		},
-		"stripe": {
-			"secretKey": "Geheime sleutel",
-			"publicKey": "Openbare sleutel",
-			"currency": "Valuta",
-			"testing": "Testen…",
-			"testConnection": "Verbinding testen",
-			"testSuccess": "Verbinding geslaagd. De Stripe-inloggegevens werken.",
-			"testFailed": "Verbinding mislukt: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Winkel",
@@ -403,28 +391,6 @@
 			"enableLabel": "Mijn online bedrijf heeft leeftijdsbeperking en -validatie nodig",
 			"legalReason": "Wettelijke reden"
 		},
-		"backup": {
-			"title": "Back-up",
-			"createLink": "Back-up maken",
-			"importLink": "Back-up importeren",
-			"exportTitle": "Gegevens exporteren",
-			"exportButton": "Exporteren",
-			"exportError": "Fout {status}: {message}",
-			"importSuccess": "Gegevens geïmporteerd",
-			"importWarning": "Sommige bestanden zijn beschadigd",
-			"importErrorMessage": "Sommige bestanden zijn niet geïmporteerd",
-			"importTitle": "Back-up importeren",
-			"uploadFile": "Upload je bestand",
-			"importType": "Importtype",
-			"importTypeGlobal": "Globaal",
-			"importTypeCatalog": "Catalogus",
-			"importTypeShopConfig": "Winkelconfiguratie",
-			"specificImport": "Specifieke import",
-			"orders": "Bestellingen",
-			"passedChallenges": "Afgelopen challenges",
-			"importFiles": "Afbeeldingen en digitale bestanden importeren",
-			"importButton": "Importeren"
-		},
 		"bitcoind": {
 			"walletNamePrompt": "Walletnaam",
 			"errorDumpingWallet": "Fout bij het exporteren van de wallet: {error}",
@@ -466,44 +432,6 @@
 			"txid": "Txid:",
 			"noTransactionsYet": "Nog geen transacties"
 		},
-		"btcpayServer": {
-			"invoices": "Facturen",
-			"serverUrl": "Server-URL",
-			"storeId": "Winkel-ID",
-			"apiKey": "API-sleutel",
-			"lightningWarningPrefix": "Zorg ervoor dat u lightning inschakelt in",
-			"storeSettingsLink": "uw winkelinstellingen",
-			"lightningLinkFallbackStore": "Als de bovenstaande link niet werkt, controleer dan de opgegeven server-URL en winkel-ID.",
-			"apiKeyManagePrefix": "U kunt uw API-sleutels beheren in",
-			"accountSettingsLink": "uw accountinstellingen",
-			"apiKeyPermissionsPrefix": "Zorg ervoor dat u de",
-			"apiKeyPermissionsMiddle": "en",
-			"apiKeyPermissionsSuffix": "machtigingen opneemt.",
-			"apiKeyLinkFallback": "Als de bovenstaande link niet werkt, controleer dan de opgegeven server-URL.",
-			"ariaLightningSettings": "Lightning-instellingen in uw BTCPay Server-winkel",
-			"serverUrlPlaceholder": "bijv. https://mainnet.demo.btcpayserver.org",
-			"storeIdPlaceholder": "bijv. 7ceW79TUirU5J32KdWJh7VFzVcKqFCVDgBAk3vXjJrJQ",
-			"enableLightningPrefix": "Zorg ervoor dat lightning is ingeschakeld in",
-			"storeSettingsLinkText": "uw winkelinstellingen",
-			"lightningSettingsAriaLabel": "Lightning-instellingen in uw BTCPay Server-winkel",
-			"checkServerUrlAndStoreId": "Als de bovenstaande link niet werkt, controleer dan de opgegeven server-URL en winkel-ID.",
-			"apiKeyPlaceholder": "bijv. 5VBP0koD4gJB9L1zKUEbpUMi2cYyE3wxahHL3Vi6",
-			"manageApiKeysPrefix": "U kunt uw API-sleutels beheren in",
-			"accountSettingsLinkText": "uw accountinstellingen",
-			"includePermissionsPrefix": "Zorg ervoor dat u de",
-			"includePermissionsAnd": "en",
-			"includePermissionsSuffix": "machtigingen opneemt.",
-			"checkServerUrl": "Als de bovenstaande link niet werkt, controleer dan de opgegeven server-URL."
-		},
-		"blink": {
-			"intro": "Ontvang Lightning-betalingen op uw Blink-account. Configureer <0>een</0> van de twee onderstaande opties. Een Lightning-adres heeft geen API-sleutel nodig en werkt zowel voor beheerde Blink-accounts als voor zelfbeheerde (Spark) adressen. Alleen BTC-wallets worden ondersteund.",
-			"option1Title": "Optie 1 — Lightning-adres (geen API-sleutel)",
-			"lnAddress": "Lightning-adres",
-			"option2Title": "Optie 2 — API-sleutel (beheerd account)",
-			"apiKey": "API-sleutel",
-			"walletId": "Wallet-ID (optioneel — standaard de standaard-BTC-wallet van uw account)",
-			"invoices": "Facturen"
-		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Voer uw publieke sleutel(s) in. be-BOP kan nieuwe adressen genereren en ontvangen tegoeden controleren, maar u behoudt volledige controle over de tegoeden in uw eigen wallet.",
@@ -536,7 +464,11 @@
 			"nextAddressesDescription": "Dit worden de volgende adressen die door be-BOP worden gegenereerd",
 			"warning": "Waarschuwing:",
 			"alreadyUsedAddressWarning": "Ten minste één adres is al gebruikt. Gebruik een specifieke wallet-XPub voor uw be-BOP of definieer een ander afleidingsadres om dubbel gebruik van uw adres te voorkomen.",
-			"alreadyUsed": "al gebruikt"
+			"keyRunningOutWarning": "Deze sleutel heeft bijna geen ontvangstadressen meer. Verwijder deze configuratie en stel een nieuwe sleutel in om bitcoinbetalingen te blijven ontvangen.",
+			"keyExhaustedWarning": "Deze sleutel heeft geen ontvangstadres meer, dus bitcoinbetalingen mislukken. Verwijder deze configuratie en stel een nieuwe sleutel in.",
+			"keyLastAddressWarning": "Deze sleutel heeft alleen nog zijn laatste ontvangstadres. Verwijder deze configuratie en stel een nieuwe sleutel in om bitcoinbetalingen te blijven ontvangen.",
+			"alreadyUsed": "al gebruikt",
+			"alreadySetUpError": "Bitcoin nodeless is al ingesteld. Verwijder de configuratie om een andere sleutel te gebruiken."
 		},
 		"challenge": {
 			"addChallenge": "Uitdaging toevoegen",
@@ -610,6 +542,9 @@
 			"associatedProduct": "Bijbehorend product:",
 			"add": "Toevoegen",
 			"uploading": "Uploaden...",
+			"uploadFailed": "Het bestand kon niet naar de opslag worden verzonden. Controleer de S3-instellingen en probeer het opnieuw.",
+			"uploadTooLarge": "Het bestand is groter dan {max} MB. Kies een kleiner bestand.",
+			"uploadSessionExpired": "Uw sessie is verlopen. Log opnieuw in en verstuur het bestand nogmaals.",
 			"backToProduct": "Terug naar product",
 			"backToFiles": "Terug naar bestanden",
 			"downloadFile": "Bestand downloaden",
@@ -993,18 +928,6 @@
 			"delete": "Verwijderen",
 			"confirmDelete": "Wilt u deze ranglijst verwijderen?"
 		},
-		"osb": {
-			"shopId": "Winkel-ID",
-			"restApiPassword": "REST API-wachtwoord",
-			"hmacKeyOptional": "HMAC-SHA-256-sleutel (optioneel)",
-			"currencyFixed": "Valuta: XPF (vast)"
-		},
-		"paypal": {
-			"clientId": "Client-ID",
-			"secret": "Geheime sleutel",
-			"sandboxCredentials": "Deze gegevens zijn voor de sandbox-omgeving",
-			"currency": "Valuta"
-		},
 		"login": {
 			"login": "Login",
 			"loginPlaceholder": "Voer uw login in",
@@ -1022,6 +945,7 @@
 			"recoveryTitle": "Wachtwoord herstellen",
 			"recoveryLoginPlaceholder": "Voer beheerderslogin in",
 			"recoveryDisclaimer": "Er wordt een e-mail voor het opnieuw instellen van het wachtwoord verzonden naar de herstelgegevens van de gebruiker of naar het e-mailadres van de winkel.",
+			"recoverySentIfExists": "Als deze login bestaat, is er een link om het wachtwoord opnieuw in te stellen verzonden naar het herstel-e-mailadres of de herstel-npub ervan, of naar het e-mailadres van de winkel.",
 			"recoverySentToShopEmail": "Er is een link om het wachtwoord opnieuw in te stellen verzonden naar het e-mailadres van de winkel.",
 			"recoverySentToUserEmail": "Er is een link om het wachtwoord opnieuw in te stellen verzonden naar het herstel-e-mailadres van de gebruiker.",
 			"recoverySentToNpub": "Er is een link om het wachtwoord opnieuw in te stellen verzonden naar de herstel-npub van de gebruiker.",
@@ -1057,6 +981,7 @@
 			"privateKeyEnvVarsDescription": "De Nostr-privésleutel wordt momenteel beheerd door uw omgevingsconfiguratie, die voorrang heeft op onderstaand formulier. Om deze te wijzigen, werkt u de volgende omgevingswaarden bij of verwijdert u ze (bijvoorbeeld in het be-BOP-configuratiebestand of de instellingen van uw hostingprovider) en start u be-BOP vervolgens opnieuw op.",
 			"configurePrivateKeyDescription": "Configureer uw Nostr-privésleutel.",
 			"privateKeyNsecFormat": "Privésleutel (nsec-formaat)",
+			"privateKeyIsSet": "Privésleutel is ingesteld",
 			"savePrivateKey": "Privésleutel opslaan",
 			"deleteKeyFirstToSave": "Verwijder eerst de privésleutel om een nieuwe op te slaan",
 			"generateNewKey": "Nieuwe sleutel genereren",
@@ -1226,6 +1151,7 @@
 			"bitcoindViaEnvVars": "Bitcoind via omgevingsvariabelen",
 			"preferredLightningProcessor": "Voorkeurs-Lightning-verwerker",
 			"lndViaEnvVars": "LND via omgevingsvariabelen",
+			"processorViaEnvVars": "{processor} via omgevingsvariabelen",
 			"timing": "Timing",
 			"subscriptionDuration": "Abonnementsduur",
 			"subscriptionReminder": "Abonnementsherinnering",
@@ -1373,6 +1299,9 @@
 			"delete": "Verwijderen"
 		},
 		"picture": {
+			"uploadFailed": "De afbeelding kon niet naar de opslag worden verzonden. Controleer de S3-instellingen en probeer het opnieuw.",
+			"uploadTooLarge": "De afbeelding is groter dan {max} MB. Kies een kleiner bestand.",
+			"uploadSessionExpired": "Uw sessie is verlopen. Log opnieuw in en verstuur de afbeelding nogmaals.",
 			"listTitle": "Lijst met afbeeldingen zonder gekoppeld product of widget",
 			"newPicture": "Nieuwe afbeelding",
 			"bulkNameEditor": "Bulkeditor voor afbeeldingsnamen",
@@ -1674,15 +1603,6 @@
 			"noteFakeMode": "Schakel de \"nep\"-modus in voor ontwikkeling/testen zonder echte SMTP-server",
 			"noteOverrides": "Deze instellingen overschrijven omgevingsvariabelen wanneer ze zijn geconfigureerd"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "API-sleutel",
-			"invoices": "Facturen"
-		},
-		"sumup": {
-			"apiKey": "API-sleutel",
-			"merchantCode": "Handelaarscode",
-			"currency": "Valuta"
-		},
 		"productForm": {
 			"allowSameDayBooking": "Reservering op dezelfde dag toestaan",
 			"maxHourSameDayBooking": "Uiterste tijd voor reservering op dezelfde dag (tijdzone van het schema)",
@@ -1854,11 +1774,6 @@
 			"phaseReminderHint": "0 = geen herinnering",
 			"addPhase": "Fase toevoegen"
 		},
-		"taler": {
-			"backendUrl": "Backend-URL",
-			"backendApiKey": "Backend-API-sleutel",
-			"currency": "Valuta"
-		},
 		"specification": {
 			"addSpecification": "Specificatie toevoegen",
 			"listTitle": "Lijst met specificaties",
@@ -1913,6 +1828,7 @@
 			"addCustomMetaBalise": "Aangepaste meta-tag toevoegen",
 			"useAdvancedHtmlEdition": "Geavanceerde HTML-bewerking gebruiken",
 			"advancedHtmlWarning": "Waarschuwing: gebruik op eigen risico, alleen als u een web-Jedi of een be-BOP McGyver bent. Gebruik dit nooit op een reeds bestaande CMS-pagina, anders riskeert u het verlies van uw CMS-inhoud.",
+			"removedContentWarning": "Bezoekers zien een deel van deze inhoud niet, het wordt verwijderd wanneer de pagina wordt weergegeven: {items}. Een superbeheerder kan geavanceerde HTML-bewerking inschakelen om alles te behouden.",
 			"showTips": "Tips tonen",
 			"tipsProduct": "Om producten toe te voegen, voeg een alinea toe met alleen <code class=\"font-mono\">[Product=slug]</code>, waarbij <code class=\"font-mono\">slug</code> de slug van uw product is. U kunt de weergaveoptie zo opgeven: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Om afbeeldingen toe te voegen, voeg een alinea toe met alleen <code class=\"font-mono\">[Picture=slug]</code>. U kunt ook de breedte, hoogte en pasvorm instellen: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> of <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> En ook msubstitute (vervangende afbeelding op mobiel), positie <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",
@@ -2170,6 +2086,9 @@
 			"priceAmount": "Prijsbedrag",
 			"pricePlaceholder": "Prijs"
 		},
+		"paymentProcessor": {
+			"invoices": "Facturen"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Geen verwerkers geconfigureerd. Configureer ze in het tabblad Betalingsinstellingen hierboven",
 			"or": "of",
@@ -2269,7 +2188,20 @@
 		"maxQuantityReached": "Maximale hoeveelheid per bestelling bereikt ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Boekingen voor vandaag zijn niet beschikbaar voor dit product.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Boekingen voor vandaag zijn niet meer mogelijk na {maxHour}.",
+			"NOT_FOR_SALE": "Dit product kan niet aan het winkelmandje worden toegevoegd.",
+			"NOT_PWYW": "U kunt de prijs van dit product niet zelf kiezen.",
+			"BOOKING_INFO_REQUIRED": "Kies eerst een tijd en duur voor de boeking.",
+			"MAX_PRICE_EXCEEDED": "De prijs mag niet hoger zijn dan {max} {currency}.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "U kunt de prijs van een abonnement niet zelf kiezen.",
+			"NOT_PREORDER": "Dit product is nog niet beschikbaar en kan niet worden voorbesteld.",
+			"MAX_ITEMS_REACHED": "Uw winkelmandje heeft de maximale grootte bereikt. Verwijder artikelen om er meer toe te voegen.",
+			"OUT_OF_STOCK": "Dit product is niet op voorraad.",
+			"STANDALONE_QTY_ONE": "U kunt maar één exemplaar van dit product bestellen.",
+			"VARIATION_INVALID": "Kies een van de opties die voor dit product worden aangeboden.",
+			"MAX_PER_ORDER": "U kunt maximaal {max} exemplaren van dit product bestellen.",
+			"INVALID_QUANTITY": "Voer een geldige hoeveelheid in.",
+			"INVALID_PRICE": "Voer een geldige prijs in."
 		}
 	},
 	"cartFromUrl": {
@@ -2346,6 +2278,9 @@
 		"multiplePaymentMethodsHelpText": "Bij de volgende stap kunt u de betaalmethoden instellen.",
 		"noDeliveryInCountry": "Voor sommige artikelen in uw winkelwagentje is bezorging in uw land niet mogelijk.",
 		"paymentGenerationFailed": "De betaling kon niet worden gestart. Probeer het binnen enkele ogenblikken opnieuw, of neem contact op met de verkoper als het probleem aanhoudt.",
+		"paymentTimeoutOutOfRange": "De betaaltermijn moet minstens 1 minuut zijn.",
+		"cartAlreadyCheckedOut": "Deze winkelwagen is al besteld, dus er is geen tweede bestelling geplaatst. U vindt uw bestelling in uw account of in het bevestigingsbericht.",
+		"subscriptionAtTill": "Abonnementen worden niet aan de kassa verkocht: de klant neemt het abonnement via de productpagina. Verwijder het abonnement om de rest af te rekenen.",
 		"note": {
 			"label": "Laat een briefje achter voor de verkoper",
 			"title": "Opmerking"
@@ -2814,9 +2749,11 @@
 		"paymentAmount": "Te betalen bedrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Uw paischement is mislukt, u kunt een nieuwe paangement proberen",
+		"discountTiedToPaymentMethod": "Deze bestelling kreeg korting voor de huidige betaalmethode. Plaats een nieuwe bestelling om op een andere manier te betalen.",
 		"paymentDoneCustomerCTA": "Ik ben klaar",
 		"paymentExpiresAt": "Betalingstermijn: <0></0>",
 		"paymentIban": "IBAN waarnaar de overboeking moet worden verzonden",
+		"paymentConfirming": "Uw betaling wordt bevestigd…",
 		"paymentLink": "Klik hier om met pin te betalen",
 		"paymentLinkGeneric": "Klik hier om mee te betalen",
 		"paymentPaidAt": "Betaling gedaan op {date}",
@@ -3333,14 +3270,14 @@
 			"title": "Een woord van be-BOP:",
 			"description1": "Om de gratis be-BOP-software te ondersteunen, kunt u het bestaan van uw winkel openbaar maken.",
 			"description2": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URI van uw winkel en uw toestemming om hierover te communiceren. Uw privégegevens en die van uw klanten worden niet gedeeld.",
-			"description3": "Uw bijdrage wordt gebruikt voor anonieme statistieken over het aantal be-BOP-gebruikers (dat niet automatisch wordt gevolgd omdat wij privacy en toestemming respecteren), en om af en toe communicatie- en promotiecampagnes te voeren over wereldwijd ingezette be-BOPs. Een eerste notificatie wordt verzonden naar de Nostr-bot van be-BOP.io, vervolgens wekelijks zolang uw be-BOP actief is. U kunt dit regelmatige bericht later uitschakelen in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"description3": "Uw bijdrage wordt gebruikt voor anonieme statistieken over het aantal be-BOP-gebruikers (dat niet automatisch wordt gevolgd omdat wij privacy en toestemming respecteren), en om af en toe communicatie- en promotiecampagnes te voeren over wereldwijd ingezette be-BOPs. Een eerste notificatie wordt verzonden naar de Nostr-bot van be-BOP.io, vervolgens wekelijks zolang uw be-BOP actief is. U kunt dit regelmatige bericht later uitschakelen in <0>/admin/SEO</0>.",
 			"question": "Accepteert u om het bestaan van uw be-BOP te delen?",
 			"acceptButton": "Delen",
 			"declineButton": "Herinner me over 30 dagen",
 			"configureNostrButton": "Nostr configureren",
 			"accepted": {
 				"thankYou": "Bedankt dat u ervoor heeft gekozen om het bestaan van uw winkel te delen met be-BOP.io voor statistische en promotionele doeleinden!",
-				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> gaan om deze optionele telemetrie uit te schakelen.",
+				"message": "Er worden geen gegevens naar be-BOP.io SA verzonden, behalve de URL van uw winkel en uw toestemming om hierover te communiceren. U kunt naar <0>/admin/seo</0> gaan om deze optionele telemetrie uit te schakelen.",
 				"autoHideCountdown": "Dit bericht verdwijnt over {seconds} seconden..."
 			},
 			"declined": {

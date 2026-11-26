@@ -1,4 +1,5 @@
 import { getProcessor } from './pp';
+import { toCurrency } from '$lib/utils/toCurrency';
 
 const TEST_TIMEOUT_MS = 15_000;
 
@@ -33,13 +34,17 @@ export async function testProcessorConnection(
 		return { ok: false, reason: 'Processor is not configured (missing credentials).' };
 	}
 	const testId = `be-bop-connection-test-${Date.now()}`;
+	// createPayment is handed an amount already in the processor's own currency, exactly
+	// as the checkout does — a raw 1 EUR would be minted verbatim in the wrong currency.
+	const currency = pp.settlementCurrency();
+	const toPay = { amount: toCurrency(currency, 1, 'EUR'), currency };
 	try {
 		await Promise.race([
 			pp.createPayment({
 				orderId: testId,
 				orderNumber: 0,
 				paymentId: testId,
-				toPay: { amount: 1, currency: 'EUR' }
+				toPay
 			}),
 			new Promise<never>((_, reject) =>
 				setTimeout(

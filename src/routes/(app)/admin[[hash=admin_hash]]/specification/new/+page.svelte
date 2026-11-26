@@ -49,7 +49,7 @@
 		maxlength={MAX_CONTENT_LIMIT}
 		placeholder={t('admin.specification.contentPlaceholder')}
 		class="form-input block w-full"
-	/>
+	></textarea>
 	<input
 		type="submit"
 		class="btn btn-blue self-start text-white"

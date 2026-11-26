@@ -29,21 +29,7 @@
 				</p>
 			{/if}
 			{#if form?.success}
-				{#if form.email}
-					{#if form.isBackupEmail}
-						<p class="text-green-500">{t('admin.login.recoverySentToShopEmail')}</p>
-					{:else}
-						<p class="text-green-500">
-							{t('admin.login.recoverySentToUserEmail')}
-						</p>
-					{/if}
-				{/if}
-				{#if form.npub}
-					<p class="text-green-500">{t('admin.login.recoverySentToNpub')}</p>
-				{/if}
-			{/if}
-			{#if form?.failedFindUser}
-				<p class="text-red-500">{t('admin.login.recoveryUserNotFound')}</p>
+				<p class="text-green-500">{t('admin.login.recoverySentIfExists')}</p>
 			{/if}
 		</div>
 		<div class="flex justify-center gap-4 mt-2">

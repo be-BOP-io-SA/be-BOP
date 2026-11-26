@@ -51,7 +51,7 @@ export async function load({ locals }) {
 		productActionSettings: runtimeConfig.productActionSettings,
 		priceHistoryEnabled: runtimeConfig.priceHistoryEnabled,
 		availablePaymentMethods: paymentMethods({ includePOS: true }),
-		role: locals.user?.roleId ? collections.roles.findOne({ _id: locals.user.roleId }) : null,
+		role: locals.user?.roleId ? await collections.roles.findOne({ _id: locals.user.roleId }) : null,
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
@@ -63,7 +63,7 @@ export async function load({ locals }) {
 		// running a few minutes fast would otherwise warn late, or not at all.
 		serverNow: new Date().toISOString(),
 		backOfficeBookmarks: locals.user
-			? collections.users
+			? await collections.users
 					.findOne(
 						{ _id: locals.user._id },
 						{ projection: { 'userSettings.backOfficeBookmarks': 1 } }

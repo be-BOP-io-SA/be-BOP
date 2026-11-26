@@ -112,7 +112,7 @@
 				maxlength={MAX_CONTENT_LIMIT}
 				placeholder={t('admin.form.messagePlaceholder')}
 				class="form-input block w-full"
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			{t('admin.form.disclaimerCheckboxLabel')}
@@ -146,7 +146,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={t('admin.form.messagePlaceholder')}
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	<input type="submit" class="btn btn-blue self-start text-white" value={t('admin.form.submit')} />
 </form>

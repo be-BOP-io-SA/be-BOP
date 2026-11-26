@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import { csvCell } from '$lib/utils/csvCell';
 
 	export let data;
 	export let form;
@@ -112,9 +113,7 @@
 		const headers = csvColumns.map((col) => col.header);
 		const csvRows = tableData.map((row) => csvColumns.map((col) => row[col.key]));
 
-		const csvContent = [headers, ...csvRows]
-			.map((row) => row.map((field) => `"${field}"`).join(','))
-			.join('\n');
+		const csvContent = [headers, ...csvRows].map((row) => row.map(csvCell).join(',')).join('\n');
 
 		downloadCSV(csvContent, 'subscriptions.csv');
 	}
@@ -418,7 +417,7 @@
 					placeholder="email,npub,paidUntil&#10;user@example.com,,2025-12-31&#10;,npub1xyz...,2026-01-15"
 					disabled={isSubmitting}
 					required
-				/>
+				></textarea>
 			</label>
 
 			<div class="flex gap-2 pt-2">
