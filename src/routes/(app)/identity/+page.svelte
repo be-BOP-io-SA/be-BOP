@@ -8,11 +8,18 @@
 	const { t, sortedCountryCodes, countryName } = useI18n();
 
 	let country = data.personalInfoConnected?.address?.country ?? 'CH';
+	// The browser fires `submit` only once the form is valid: from then on a second click would
+	// send the same save again, so the button stays disabled until the page reloads.
+	let submitting = false;
 </script>
 
 <main class="mx-auto max-w-7xl py-10 px-6 body-mainPlan">
 	<div class="w-full rounded-xl body-mainPlan border-gray-300 p-6 md:grid gap-4 md:gap-2 flex">
-		<form method="post" class="col-span-2 flex gap-4 flex-col">
+		<form
+			method="post"
+			class="col-span-2 flex gap-4 flex-col"
+			on:submit={() => (submitting = true)}
+		>
 			<section class="gap-4 grid grid-cols-6 w-4/5">
 				<h1 class="font-light text-2xl col-span-6">{t('identity.personalInformation')}</h1>
 
@@ -129,6 +136,7 @@
 					type="submit"
 					class="btn btn-black self-start justify-self-start p-1 col-span-6"
 					value={t('identity.cta.update')}
+					disabled={submitting}
 				/>
 			</section>
 		</form>

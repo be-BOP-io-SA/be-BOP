@@ -108,13 +108,16 @@ export async function saveSignedInConsent(params: {
 		return;
 	}
 	if (optinIds.length) {
-		await collections.consentRecords.insertOne({
-			_id: new ObjectId(),
-			...addressFields(address),
-			optinIds,
-			createdAt: now,
-			updatedAt: now
-		});
+		// One write that creates or updates: two saves of a first choice at once (a double submit)
+		// would otherwise both insert, and the second would fail on the unique address index.
+		await collections.consentRecords.updateOne(
+			addressFields(address),
+			{
+				$set: { optinIds, updatedAt: now },
+				$setOnInsert: { _id: new ObjectId(), createdAt: now }
+			},
+			{ upsert: true }
+		);
 	}
 }
 
