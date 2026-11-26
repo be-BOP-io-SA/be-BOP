@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
-import { collections } from './database';
+import { collections, withTransaction } from './database';
+import { migrations } from './migrations';
 import { ObjectId } from 'mongodb';
 import {
 	TEST_DIGITAL_PRODUCT,
@@ -529,6 +530,65 @@ describe('order', () => {
 			expect((await collections.orders.findOne({ _id: orderId }))?.payments[0].method).toBe(
 				'point-of-sale'
 			);
+		});
+	});
+
+	describe('attempts left pending on a fully paid order (#2738)', () => {
+		/** A POS order with a second pending attempt, as a skipped payment call leaves one. */
+		async function orderWithStrandedAttempt(sessionId: string) {
+			const orderId = await createOrder(
+				[{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }],
+				'point-of-sale',
+				{ locale: 'en', user: { sessionId }, shippingAddress: null, userVatCountry: 'FR' }
+			);
+			const order = await collections.orders.findOne({ _id: orderId });
+			if (!order) {
+				throw new Error(`Order ${orderId} not found`);
+			}
+			const stranded = { ...order.payments[0], _id: new ObjectId() };
+			await collections.orders.updateOne({ _id: orderId }, { $push: { payments: stranded } });
+			const withStranded = await collections.orders.findOne({ _id: orderId });
+			if (!withStranded) {
+				throw new Error(`Order ${orderId} not found`);
+			}
+			return { order: withStranded, strandedId: stranded._id };
+		}
+
+		it('cancels the other attempt, without notifying it, when the order is paid', async () => {
+			const { order, strandedId } = await orderWithStrandedAttempt('stranded-at-payment');
+
+			await onOrderPayment(order, order.payments[0], order.payments[0].price);
+
+			const stored = await collections.orders.findOne({ _id: order._id });
+			const stranded = stored?.payments.find((p) => p._id.equals(strandedId));
+			expect(stored?.status).toBe('paid');
+			expect(stranded?.status).toBe('canceled');
+			// Equal to the status, so the notification lock sends no "payment cancelled" e-mail.
+			expect(stranded?.lastStatusNotified).toBe('canceled');
+		});
+
+		it('cancels at deploy, without notifying, the attempts left on past paid orders', async () => {
+			const { order, strandedId } = await orderWithStrandedAttempt('stranded-before-deploy');
+			await onOrderPayment(order, order.payments[0], order.payments[0].price);
+			// Put the attempt back the way the code before #2738 left it on a paid order.
+			await collections.orders.updateOne(
+				{ _id: order._id, 'payments._id': strandedId },
+				{ $set: { 'payments.$.status': 'pending', 'payments.$.lastStatusNotified': 'pending' } }
+			);
+
+			const migration = migrations.find((m) =>
+				m._id.equals(new ObjectId('6ae41fff6f246a84e7340f05'))
+			);
+			if (!migration) {
+				throw new Error('Migration for #2738 not found');
+			}
+			await withTransaction((session) => migration.run(session));
+
+			const stored = await collections.orders.findOne({ _id: order._id });
+			const stranded = stored?.payments.find((p) => p._id.equals(strandedId));
+			expect(stored?.status).toBe('paid');
+			expect(stranded?.status).toBe('canceled');
+			expect(stranded?.lastStatusNotified).toBe('canceled');
 		});
 	});
 });
