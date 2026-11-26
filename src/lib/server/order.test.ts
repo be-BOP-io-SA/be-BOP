@@ -476,9 +476,13 @@ describe('order', () => {
 		expect(afterFirst.status).toBe('paid');
 		expect(afterFirst.paidEffectsAppliedAt).toBeInstanceOf(Date);
 
-		// Replay the same settled payment: the order stays paid and the marker does not move.
-		await onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price);
+		// Replay the same settled payment: it is refused, the order stays paid and the marker does
+		// not move.
+		await expect(
+			onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price)
+		).rejects.toMatchObject({ status: 400 });
 		const afterSecond = await collections.orders.findOne({ _id: orderId });
+		expect(afterSecond?.status).toBe('paid');
 		expect(afterSecond?.paidEffectsAppliedAt?.getTime()).toBe(
 			afterFirst.paidEffectsAppliedAt?.getTime()
 		);
