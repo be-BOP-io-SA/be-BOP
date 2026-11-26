@@ -12,6 +12,8 @@
 	$: qrUrl = `${$page.url.pathname}/payment/${payment.id}/qrcode`;
 	// The card QR is the one a shop can choose to hide on the terminal.
 	$: showQr = presentation?.kind === 'qr' && !(payment.method === 'card' && hideCreditCardQrCode);
+	// Paid to an address on a chain, then confirmed block after block.
+	$: onChain = payment.method === 'bitcoin' || payment.method === 'zcash';
 </script>
 
 <svelte:head>
@@ -31,7 +33,7 @@
 		{:else}
 			<img src={qrUrl} class="w-96 h-96" alt="QR code" />
 		{/if}
-		{#if payment.method === 'bitcoin'}
+		{#if onChain}
 			<p class="text-sm text-gray-600">
 				{t('order.clickQR')}
 			</p>
@@ -47,13 +49,13 @@
 	<!-- Payment instruction text -->
 	{#if payment.method !== 'point-of-sale'}
 		<div class="payment-instruction">
-			{#if payment.method === 'bitcoin' && payment.awaitingConfirmation}
+			{#if onChain && payment.awaitingConfirmation}
 				<p class="text-green-600">
 					{t('order.awaitingConfirmationBitcoin', { count: payment.confirmationBlocksRequired })}
 				</p>
 			{:else}
 				<p>{t('order.payToComplete')}</p>
-				{#if payment.method === 'bitcoin'}
+				{#if onChain}
 					<p>{t('order.payToCompleteBitcoin', { count: payment.confirmationBlocksRequired })}</p>
 				{/if}
 			{/if}

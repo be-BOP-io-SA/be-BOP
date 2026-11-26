@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		CRYPTO_CURRENCIES,
 		FRACTION_DIGITS_PER_CURRENCY,
 		SATOSHIS_PER_BTC,
 		type Currency
@@ -7,6 +8,7 @@
 	import { toCurrency } from '$lib/utils/toCurrency';
 	import IconBitcoin from './icons/IconBitcoin.svelte';
 	import IconSatoshi from './icons/IconSatoshi.svelte';
+	import IconZcash from './icons/IconZcash.svelte';
 	import { currencies } from '$lib/stores/currencies';
 
 	export let amount: number;
@@ -47,8 +49,8 @@
 		return [actualAmount, actualCurrency || 'BTC'] as const;
 	})() as [number, Currency];
 
-	// Helper: check if currency is crypto (SAT or BTC)
-	$: isCrypto = displayedCurrency === 'SAT' || displayedCurrency === 'BTC';
+	// Helper: check if currency is crypto (SAT, BTC or ZEC)
+	$: isCrypto = CRYPTO_CURRENCIES.includes(displayedCurrency);
 
 	// Determine decimal places based on currency
 	$: maximumFractionDigits = FRACTION_DIGITS_PER_CURRENCY[displayedCurrency];
@@ -81,6 +83,8 @@
 			<IconSatoshi class="min-w-[1em]" />
 		{:else if displayedCurrency === 'BTC'}
 			<IconBitcoin class="min-w-[1em]" />
+		{:else if displayedCurrency === 'ZEC'}
+			<IconZcash class="min-w-[1em]" />
 		{/if}
 
 		{displayed}

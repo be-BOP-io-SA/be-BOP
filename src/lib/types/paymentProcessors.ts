@@ -25,6 +25,8 @@ const METHOD_RANK: Record<PaymentMethod, number> = {
 	card: 0,
 	lightning: 1,
 	bitcoin: 2,
+	// Right after bitcoin, without renumbering the others.
+	zcash: 2.5,
 	paypal: 3,
 	taler: 4,
 	osb: 5,

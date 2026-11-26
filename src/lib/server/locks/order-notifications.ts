@@ -31,6 +31,7 @@ import type { PaymentMethod } from '../payment-methods';
  */
 const PENDING_PAYMENT_TEMPLATE = {
 	bitcoin: 'order.payment.pending.bitcoin',
+	zcash: 'order.payment.pending.zcash',
 	lightning: 'order.payment.pending.lightning',
 	card: 'order.payment.pending.card',
 	'bank-transfer': 'order.payment.pending.bank-transfer',
@@ -174,6 +175,11 @@ async function handleOrderNotification(order: Order): Promise<void> {
 								payment.price.amount,
 								payment.price.currency
 							).toLocaleString('en-US', { maximumFractionDigits: 8 })} BTC to ${payment.address}`;
+						} else if (payment.method === 'zcash') {
+							// A zcash payment is priced in ZEC, its settlement currency.
+							content += `\n\nPlease send ${payment.price.amount.toLocaleString('en-US', {
+								maximumFractionDigits: 8
+							})} ZEC to ${payment.address}`;
 						} else if (payment.method === 'lightning') {
 							content += `\n\nPlease pay this invoice: ${payment.address}`;
 						} else if (payment.method === 'card') {

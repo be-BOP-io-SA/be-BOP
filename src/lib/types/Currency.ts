@@ -4,6 +4,7 @@ import type { Price } from './Order';
 export const CURRENCIES = [
 	'BTC',
 	'SAT',
+	'ZEC',
 	'AED',
 	'AFN',
 	'ALL',
@@ -163,20 +164,23 @@ export const CURRENCIES = [
 export type Currency = (typeof CURRENCIES)[number];
 
 /**
- * Everything a card or bank provider can settle in — the list without the two bitcoin units.
+ * Everything a card or bank provider can settle in — the list without the crypto currencies.
  * Spelled out here because four settings forms were each filtering `CURRENCIES` themselves,
  * with the same cast, to say the same thing.
  */
-export const FIAT_CURRENCIES = CURRENCIES.filter((c) => c !== 'BTC' && c !== 'SAT') as [
-	Currency,
-	...Currency[]
-];
+export const FIAT_CURRENCIES = CURRENCIES.filter(
+	(c) => c !== 'BTC' && c !== 'SAT' && c !== 'ZEC'
+) as [Currency, ...Currency[]];
 
 export const SATOSHIS_PER_BTC = 100_000_000;
+
+/** 1 ZEC = 100 000 000 zatoshis, the smallest unit of Zcash. */
+export const ZATOSHIS_PER_ZEC = 100_000_000;
 
 export const FRACTION_DIGITS_PER_CURRENCY = Object.freeze({
 	BTC: 8,
 	SAT: 0,
+	ZEC: 8,
 	AED: 2,
 	AFN: 2,
 	ALL: 2,
@@ -439,8 +443,8 @@ export function readStoredPrice(storedPrice: Price): Price {
  */
 export const UNDERLYING_CURRENCY = 'SAT';
 
-// Crypto currencies (BTC, SAT)
-const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT'];
+// Crypto currencies (BTC, SAT, ZEC)
+export const CRYPTO_CURRENCIES: Currency[] = ['BTC', 'SAT', 'ZEC'];
 
 export function sortCurrencies(...prioritized: (Currency | null | undefined)[]): Currency[] {
 	const priority = [...prioritized.filter((c): c is Currency => !!c), ...CRYPTO_CURRENCIES].filter(
