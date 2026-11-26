@@ -2127,6 +2127,7 @@
 			"email": "Correo electrónico",
 			"npub": "npub",
 			"updatedAt": "Última actualización",
+			"acceptedAt": "Aceptada el",
 			"empty": "Ningún cliente aceptó esta autorización.",
 			"exportCsv": "Exportar en CSV",
 			"copyBcc": "Copiar la lista de correos para el campo CCO",

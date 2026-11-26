@@ -3,7 +3,11 @@ import { collections } from '$lib/server/database';
 import { fail } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
-import { consentOptinLabel } from '$lib/server/consentOptins';
+import {
+	consentOptinLabel,
+	consentOptinVersion,
+	newConsentOptinVersions
+} from '$lib/server/consentOptins';
 
 const optinSchema = z.object({
 	label: z.string().trim().min(1),
@@ -34,7 +38,7 @@ export const load = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
 		const parsed = parseForm(await request.formData());
 		if (!parsed.success) {
 			return fail(400, { error: parsed.error.message });
@@ -51,6 +55,7 @@ export const actions: Actions = {
 			label: parsed.data.label,
 			enabled: parsed.data.enabled,
 			sortOrder: (last?.sortOrder ?? -1) + 1,
+			versions: [consentOptinVersion({ label: parsed.data.label }, locals)],
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
@@ -58,7 +63,7 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const id = String(formData.get('id') ?? '');
 		const parsed = parseForm(formData);
@@ -66,13 +71,29 @@ export const actions: Actions = {
 			return fail(400, { error: parsed.error.message });
 		}
 
-		const result = await collections.consentOptins.updateOne(
-			{ _id: id, deletedAt: { $exists: false } },
-			{ $set: { label: parsed.data.label, enabled: parsed.data.enabled, updatedAt: new Date() } }
-		);
-		if (result.matchedCount === 0) {
+		const optin = await collections.consentOptins.findOne({
+			_id: id,
+			deletedAt: { $exists: false }
+		});
+		if (!optin) {
 			return fail(404, { error: 'Opt-in not found' });
 		}
+		// A new wording is kept next to the previous ones, so an audit can tell what each customer
+		// accepted: the acceptances given for the previous wording stay.
+		const relabeled = parsed.data.label !== optin.label;
+		await collections.consentOptins.updateOne(
+			{ _id: id },
+			{
+				$set: { label: parsed.data.label, enabled: parsed.data.enabled, updatedAt: new Date() },
+				...(relabeled && {
+					$push: {
+						versions: {
+							$each: newConsentOptinVersions(optin, { ...optin, label: parsed.data.label }, locals)
+						}
+					}
+				})
+			}
+		);
 
 		return { success: true };
 	},

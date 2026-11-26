@@ -2127,6 +2127,7 @@
 			"email": "E-mail",
 			"npub": "npub",
 			"updatedAt": "Dernière mise à jour",
+			"acceptedAt": "Acceptée le",
 			"empty": "Aucun client n'a accepté cet optin.",
 			"exportCsv": "Exporter en CSV",
 			"copyBcc": "Copier la liste d'e-mails pour le champ Cci :",

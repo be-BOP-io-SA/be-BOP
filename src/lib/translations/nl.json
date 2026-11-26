@@ -2127,6 +2127,7 @@
 			"email": "E-mail",
 			"npub": "npub",
 			"updatedAt": "Laatste update",
+			"acceptedAt": "Geaccepteerd op",
 			"empty": "Geen enkele klant ging akkoord met deze opt-in.",
 			"exportCsv": "Exporteren als CSV",
 			"copyBcc": "E-maillijst kopiëren voor het Bcc-veld",

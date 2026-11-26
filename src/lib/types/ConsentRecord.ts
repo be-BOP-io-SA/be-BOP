@@ -11,4 +11,9 @@ export interface ConsentRecord extends Timestamps {
 	email?: string;
 	npub?: string;
 	optinIds: string[];
+	/**
+	 * When each opt-in in `optinIds` was accepted, by opt-in id. Missing for answers given before
+	 * this date was kept, whose acceptance date is unknown.
+	 */
+	acceptedAt?: Record<string, Date>;
 }

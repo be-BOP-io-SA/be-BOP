@@ -30,6 +30,8 @@ export const load = async ({ url, locals }) => {
 		customers: customers.map((customer) => ({
 			email: customer.email ?? '',
 			npub: customer.npub ?? '',
+			// Empty for an answer given before acceptance dates were kept.
+			acceptedAt: (selectedId && customer.acceptedAt?.[selectedId]?.toISOString()) || '',
 			updatedAt: customer.updatedAt.toISOString()
 		}))
 	};

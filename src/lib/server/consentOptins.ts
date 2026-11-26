@@ -21,13 +21,64 @@ import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import type { LanguageKey } from '$lib/translations';
-import type { ConsentOptin } from '$lib/types/ConsentOptin';
+import type { ConsentOptin, ConsentOptinVersion } from '$lib/types/ConsentOptin';
 import type { ConsentRecord } from '$lib/types/ConsentRecord';
 
 export type ConsentAddress = { kind: 'email' | 'npub'; address: string };
 
 function addressFields(address: ConsentAddress): { email: string } | { npub: string } {
 	return address.kind === 'email' ? { email: address.address } : { npub: address.address };
+}
+
+/** The wording an opt-in has now, to append to its `versions` when it is saved. */
+export function consentOptinVersion(
+	optin: Pick<ConsentOptin, 'label' | 'translations'>,
+	locals: { user?: { _id: ObjectId; alias?: string } }
+): ConsentOptinVersion {
+	return {
+		label: optin.label,
+		translations: optin.translations ?? {},
+		savedAt: new Date(),
+		...(locals.user && { savedBy: { userId: locals.user._id, alias: locals.user.alias } })
+	};
+}
+
+/**
+ * The versions to append when an opt-in gets a new wording. An opt-in saved before versions were
+ * kept also gets its original wording first, dated from its creation.
+ */
+export function newConsentOptinVersions(
+	optin: Pick<ConsentOptin, 'label' | 'translations' | 'versions' | 'createdAt'>,
+	next: Pick<ConsentOptin, 'label' | 'translations'>,
+	locals: { user?: { _id: ObjectId; alias?: string } }
+): ConsentOptinVersion[] {
+	return [
+		...(optin.versions
+			? []
+			: [{ label: optin.label, translations: optin.translations ?? {}, savedAt: optin.createdAt }]),
+		consentOptinVersion(next, locals)
+	];
+}
+
+/**
+ * The acceptance date of each accepted opt-in: kept for one already accepted, `now` for one just
+ * ticked. An opt-in no longer accepted loses its date.
+ */
+function acceptanceDates(
+	record: Pick<ConsentRecord, 'optinIds' | 'acceptedAt'> | null,
+	optinIds: string[],
+	now: Date
+): Record<string, Date> {
+	const dates: Record<string, Date> = {};
+	for (const id of optinIds) {
+		const known = record?.optinIds.includes(id) ? record.acceptedAt?.[id] : undefined;
+		if (known) {
+			dates[id] = known;
+		} else if (!record?.optinIds.includes(id)) {
+			dates[id] = now;
+		}
+	}
+	return dates;
 }
 
 export function consentOptinLabel(
@@ -99,10 +150,17 @@ export async function saveSignedInConsent(params: {
 	];
 	const now = new Date();
 	const otherKind = address.kind === 'email' ? 'npub' : 'email';
+	const acceptedAt = acceptanceDates(record, optinIds, now);
 
 	if (record) {
 		await collections.consentRecords.updateOne({ _id: record._id }, [
-			{ $set: { optinIds: { $literal: optinIds }, updatedAt: now } },
+			{
+				$set: {
+					optinIds: { $literal: optinIds },
+					acceptedAt: { $literal: acceptedAt },
+					updatedAt: now
+				}
+			},
 			{ $unset: otherKind }
 		]);
 		return;
@@ -113,7 +171,7 @@ export async function saveSignedInConsent(params: {
 		await collections.consentRecords.updateOne(
 			addressFields(address),
 			{
-				$set: { optinIds, updatedAt: now },
+				$set: { optinIds, acceptedAt, updatedAt: now },
 				$setOnInsert: { _id: new ObjectId(), createdAt: now }
 			},
 			{ upsert: true }
@@ -151,6 +209,7 @@ export async function saveFirstConsent(params: {
 			_id: new ObjectId(),
 			...addressFields(address),
 			optinIds,
+			acceptedAt: acceptanceDates(null, optinIds, now),
 			createdAt: now,
 			updatedAt: now
 		});

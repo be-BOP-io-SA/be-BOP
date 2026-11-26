@@ -2127,6 +2127,7 @@
 			"email": "E-mail",
 			"npub": "npub",
 			"updatedAt": "Ultimo aggiornamento",
+			"acceptedAt": "Accettata il",
 			"empty": "Nessun cliente ha accettato questo consenso.",
 			"exportCsv": "Esporta in CSV",
 			"copyBcc": "Copia l'elenco e-mail per il campo Ccn",

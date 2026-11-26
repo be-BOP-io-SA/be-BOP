@@ -95,6 +95,60 @@ describe('consent opt-ins', () => {
 		});
 	});
 
+	describe('acceptance dates', () => {
+		it('dates each opt-in when it is accepted, and keeps that date on later saves', async () => {
+			await cleanDb();
+			await saveSignedInConsent({ address: EMAIL, displayedIds: DISPLAYED, acceptedIds: ['x'] });
+			const first = await findConsentRecord(EMAIL);
+			const acceptedX = first?.acceptedAt?.x;
+			expect(acceptedX).toBeInstanceOf(Date);
+
+			await saveSignedInConsent({
+				address: EMAIL,
+				displayedIds: DISPLAYED,
+				acceptedIds: ['x', 'y']
+			});
+
+			const second = await findConsentRecord(EMAIL);
+			expect(second?.acceptedAt?.x?.getTime()).toBe(acceptedX?.getTime());
+			expect(second?.acceptedAt?.y).toBeInstanceOf(Date);
+		});
+
+		it('drops the date of an opt-in the customer unticks', async () => {
+			await cleanDb();
+			await saveSignedInConsent({ address: EMAIL, displayedIds: DISPLAYED, acceptedIds: ['x'] });
+
+			await saveSignedInConsent({ address: EMAIL, displayedIds: DISPLAYED, acceptedIds: [] });
+
+			const record = await findConsentRecord(EMAIL);
+			expect(record?.optinIds).toEqual([]);
+			expect(record?.acceptedAt?.x).toBeUndefined();
+		});
+
+		it('leaves undated an answer given before acceptance dates were kept', async () => {
+			await cleanDb();
+			await insertRecord({ email: EMAIL.address, optinIds: ['x'] });
+
+			await saveSignedInConsent({
+				address: EMAIL,
+				displayedIds: DISPLAYED,
+				acceptedIds: ['x', 'y']
+			});
+
+			const record = await findConsentRecord(EMAIL);
+			expect(record?.acceptedAt?.x).toBeUndefined();
+			expect(record?.acceptedAt?.y).toBeInstanceOf(Date);
+		});
+
+		it('dates the first choice of a visitor who is not signed in', async () => {
+			await cleanDb();
+
+			await saveFirstConsent({ address: EMAIL, displayedIds: DISPLAYED, acceptedIds: ['x'] });
+
+			expect((await findConsentRecord(EMAIL))?.acceptedAt?.x).toBeInstanceOf(Date);
+		});
+	});
+
 	describe('migration of the existing answers', () => {
 		it('gathers a customer file holding an e-mail and an npub into one record with both', async () => {
 			await cleanDb();

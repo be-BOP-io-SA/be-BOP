@@ -28,8 +28,18 @@
 
 	function exportCsv() {
 		const rows = [
-			[t('admin.consent.email'), t('admin.consent.npub'), t('admin.consent.updatedAt')],
-			...data.customers.map((customer) => [customer.email, customer.npub, customer.updatedAt])
+			[
+				t('admin.consent.email'),
+				t('admin.consent.npub'),
+				t('admin.consent.acceptedAt'),
+				t('admin.consent.updatedAt')
+			],
+			...data.customers.map((customer) => [
+				customer.email,
+				customer.npub,
+				customer.acceptedAt,
+				customer.updatedAt
+			])
 		];
 		const csv = rows.map((row) => row.map(csvField).join(',')).join('\n');
 		const link = document.createElement('a');
@@ -92,6 +102,7 @@
 				<tr class="text-left">
 					<th class="p-2">{t('admin.consent.email')}</th>
 					<th class="p-2">{t('admin.consent.npub')}</th>
+					<th class="p-2">{t('admin.consent.acceptedAt')}</th>
 					<th class="p-2">{t('admin.consent.updatedAt')}</th>
 				</tr>
 			</thead>
@@ -100,6 +111,7 @@
 					<tr class="border-t">
 						<td class="p-2 break-all">{customer.email}</td>
 						<td class="p-2 break-all">{customer.npub}</td>
+						<td class="p-2 whitespace-nowrap">{formatDate(customer.acceptedAt)}</td>
 						<td class="p-2 whitespace-nowrap">{formatDate(customer.updatedAt)}</td>
 					</tr>
 				{/each}

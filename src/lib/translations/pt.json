@@ -2127,6 +2127,7 @@
 			"email": "E-mail",
 			"npub": "npub",
 			"updatedAt": "Última atualização",
+			"acceptedAt": "Aceite em",
 			"empty": "Nenhum cliente aceitou este consentimento.",
 			"exportCsv": "Exportar em CSV",
 			"copyBcc": "Copiar a lista de e-mails para o campo Bcc",

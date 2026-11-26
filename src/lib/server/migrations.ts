@@ -90,6 +90,7 @@ export async function ensureDefaultConsentOptins(session?: ClientSession): Promi
 					enabled: true,
 					sortOrder: optin.sortOrder,
 					translations,
+					versions: [{ label: defaultLanguageText('en', optin.key), translations, savedAt: now }],
 					createdAt: now,
 					updatedAt: now
 				}

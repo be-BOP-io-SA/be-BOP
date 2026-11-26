@@ -2127,6 +2127,7 @@
 			"email": "E-mail",
 			"npub": "npub",
 			"updatedAt": "Last update",
+			"acceptedAt": "Accepted on",
 			"empty": "No customer accepted this opt-in.",
 			"exportCsv": "Export CSV",
 			"copyBcc": "Copy e-mail list as cci: entry",
