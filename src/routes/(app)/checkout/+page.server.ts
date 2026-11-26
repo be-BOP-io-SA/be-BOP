@@ -387,6 +387,7 @@ export const actions = {
 		const rawAddress = String(formData.get('paymentStatusAddress') ?? '').trim();
 		let npubAddress: string | undefined;
 		let email: string | undefined;
+		let typedConsentAddress: ConsentAddress | null = null;
 		if (rawAddress) {
 			const addressResult = validateEmailOrNpub(
 				rawAddress,
@@ -395,6 +396,7 @@ export const actions = {
 			if ('error' in addressResult) {
 				throw error(400, 'Invalid notification address');
 			}
+			typedConsentAddress = addressResult;
 			if (addressResult.kind === 'email') {
 				email = addressResult.address;
 			} else {
@@ -508,12 +510,6 @@ export const actions = {
 			throw error(400, 'You must acknowledge that you offer delivery fees and add a justification');
 		}
 
-		let typedConsentAddress: ConsentAddress | null = null;
-		if (email) {
-			typedConsentAddress = { kind: 'email', address: email };
-		} else if (npubAddress) {
-			typedConsentAddress = { kind: 'npub', address: npubAddress };
-		}
 		await recordConsentChoice({ locals, formData, typedAddress: typedConsentAddress });
 		const physicalFullyPaid =
 			locals.user?.hasPosOptions && runtimeConfig.defaultOnLocation

@@ -24,8 +24,10 @@ import { runtimeConfig } from './runtime-config';
 import type { LanguageKey } from '$lib/translations';
 import type { ConsentOptin, ConsentOptinVersion } from '$lib/types/ConsentOptin';
 import type { ConsentRecord } from '$lib/types/ConsentRecord';
+import type { ParsedContactAddress } from '$lib/utils/contactAddress';
 
-export type ConsentAddress = { kind: 'email' | 'npub'; address: string };
+/** A valid contact address, in the shape `parseContactAddress` reads it. */
+export type ConsentAddress = Exclude<ParsedContactAddress, { error: unknown }>;
 
 function addressFields(address: ConsentAddress): { email: string } | { npub: string } {
 	return address.kind === 'email' ? { email: address.address } : { npub: address.address };
