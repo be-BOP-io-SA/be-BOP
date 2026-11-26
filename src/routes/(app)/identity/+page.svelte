@@ -7,7 +7,9 @@
 
 	const { t, sortedCountryCodes, countryName } = useI18n();
 
-	let country = data.personalInfoConnected?.address?.country ?? 'CH';
+	// No country until the customer picks one: saving the page without touching the address must
+	// not record a country nobody chose. An empty choice is not sent, so nothing is saved for it.
+	let country = data.personalInfoConnected?.address?.country ?? '';
 	// The browser fires `submit` only once the form is valid: from then on a second click would
 	// send the same save again, so the button stays disabled until the page reloads.
 	let submitting = false;
@@ -59,6 +61,7 @@
 				<label class="form-label col-span-3">
 					{t('address.country')}
 					<select name="address.country" class="form-input">
+						<option value="" selected={!country}></option>
 						{#each sortedCountryCodes() as code}
 							<option value={code} selected={code === country}>{countryName(code)}</option>
 						{/each}
