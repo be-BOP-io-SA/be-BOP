@@ -1,6 +1,7 @@
 import { adminPrefix } from '$lib/server/admin.js';
 import { isBitcoinConfigured } from '$lib/server/bitcoind';
 import { collections } from '$lib/server/database.js';
+import { ALLOW_ENV_OVERRIDE } from '$lib/server/env-config.js';
 import { isLndConfigured } from '$lib/server/lnd.js';
 import { isPaidOrderWebhookEnabled } from '$lib/server/order-paid-webhook';
 import { paymentMethods } from '$lib/server/payment-methods.js';
@@ -55,6 +56,7 @@ export async function load({ locals }) {
 		adminPrefix: adminPrefix(),
 		isBitcoinConfigured,
 		isLndConfigured: isLndConfigured(),
+		allowEnvOverride: ALLOW_ENV_OVERRIDE === 'true' || ALLOW_ENV_OVERRIDE === '1',
 		allowPaidOrderWebhook: isPaidOrderWebhookEnabled(),
 		s3IsConfigured: !!s3IsConfigured(),
 		disabledAdminEntries: runtimeConfig.disabledAdminEntries,
