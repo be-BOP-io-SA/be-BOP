@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "Correo electrónico: {email}",
-			"identityPrefill": "Se Puede rellenar previamente la dirección postal y la dirección de contacto. Al hacer pedidos, esta información se rellenará automáticamente. Si crea una cuenta más tarde, esta información se guardará para futuros pedidos.",
+			"identityPrefill": "Puede rellenar previamente su dirección postal y elegir las solicitudes comerciales que acepta. Al hacer un pedido, estos datos se rellenarán previamente.",
 			"npub": "Npub: {npub}",
 			"title": "Sesión",
 			"userId": "Id de usuario: {userId}"

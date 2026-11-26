@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "E-Mail: {email}",
-			"identityPrefill": "Sie können Ihre Postanschrift und Ihre Kontaktadresse vorausfüllen. Wenn Sie eine Bestellung aufgeben, werden diese Informationen vorausgefüllt. Wenn Sie sich später entscheiden, ein Konto zu erstellen, werden diese Informationen für zukünftige Bestellungen gespeichert.",
+			"identityPrefill": "Sie können Ihre Postanschrift vorausfüllen und die Kontaktaufnahmen wählen, denen Sie zustimmen. Wenn Sie eine Bestellung aufgeben, werden diese Angaben vorausgefüllt.",
 			"npub": "Npub: {npub}",
 			"title": "Sitzung",
 			"userId": "Benutzer-ID: {userId}"

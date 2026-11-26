@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "Email: {email}",
-			"identityPrefill": "Pode pré-preencher a sua morada postal e a sua morada de contacto. Se fizer uma encomenda, estas informações serão pré-preenchidas. Se decidir criar uma conta mais tarde, estas informações serão guardadas para encomendas futuras.",
+			"identityPrefill": "Pode pré-preencher a sua morada postal e escolher as solicitações que aceita. Se fizer uma encomenda, estas informações serão pré-preenchidas.",
 			"npub": "Npub: {npub}",
 			"title": "Sessão",
 			"userId": "ID do utilizador: {userId}"

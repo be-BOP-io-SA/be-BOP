@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "Email: {email}",
-			"identityPrefill": "Puoi precompilare il tuo indirizzo postale e il tuo indirizzo di contatto. Se effettui un ordine, queste informazioni saranno precompilate. Se decidi di creare un account in seguito, queste informazioni verranno salvate per ordini futuri.",
+			"identityPrefill": "Puoi precompilare il tuo indirizzo postale e scegliere le sollecitazioni che accetti. Se effettui un ordine, queste informazioni saranno precompilate.",
 			"npub": "Npub: {npub}",
 			"title": "Sessione",
 			"userId": "UserId: {userId}"

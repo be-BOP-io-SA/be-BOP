@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "E-mail: {email}",
-			"identityPrefill": "U kunt uw postadres en uw contactadres vooraf invullen. \nAls u een bestelling plaatst, zijn deze gegevens vooraf ingevuld. \nAls u later besluit een account aan te maken, worden deze gegevens bewaard voor toekomstige bestellingen.",
+			"identityPrefill": "U kunt uw postadres vooraf invullen en kiezen welke benaderingen u accepteert. Als u een bestelling plaatst, worden deze gegevens vooraf ingevuld.",
 			"npub": "Npub: {npub}",
 			"title": "Sessie",
 			"userId": "Gebruikers-ID: {userId}"

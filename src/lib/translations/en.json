@@ -2130,7 +2130,7 @@
 			"acceptedAt": "Accepted on",
 			"empty": "No customer accepted this opt-in.",
 			"exportCsv": "Export CSV",
-			"copyBcc": "Copy e-mail list as cci: entry",
+			"copyBcc": "Copy the e-mail list for the Bcc field",
 			"copied": "Copied",
 			"count": "Customers: {count}",
 			"optinsTab": "Opt-ins",
@@ -2668,7 +2668,7 @@
 		},
 		"session": {
 			"email": "Email: {email}",
-			"identityPrefill": "You can pre-fill your postal address and your contact address. If you make an order, these informations will be pre-filled. If you decide to create an account later, these informations will be saved for future orders.",
+			"identityPrefill": "You can pre-fill your postal address, and choose the solicitations you accept. If you place an order, this information will be pre-filled.",
 			"npub": "Npub: {npub}",
 			"title": "Session",
 			"userId": "UserId: {userId}"
