@@ -2,11 +2,11 @@ import { ClientSession, ObjectId, type Filter } from 'mongodb';
 import { collections, withTransaction } from './database';
 import { marked } from 'marked';
 import { env } from '$env/dynamic/private';
-import type { Order, OrderPayment } from '$lib/types/Order';
+import type { Order, OrderPayment, Price } from '$lib/types/Order';
 import { Lock } from './lock';
 import { ORIGIN } from '$lib/server/env-config';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
-import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY } from '$lib/types/Currency';
+import { CURRENCIES, FRACTION_DIGITS_PER_CURRENCY, type Currency } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	DEFAULT_CMS_PAGES,
@@ -16,6 +16,11 @@ import {
 import { isPublicZeroCriteriaDiscount, publicDiscountPriceSnapshot } from './discount';
 import { defaultLanguageText } from './i18n-defaults';
 import { languages, type LanguageKey } from '$lib/translations';
+
+/** Matches an order whose VAT field is still one object, not yet the list the order now stores. */
+function holdsSingleVat(path: string) {
+	return { $expr: { $eq: [{ $type: `$${path}` }, 'object'] } };
+}
 
 // An upsert rather than find-then-insert: every instance seeds at start-up, and two starting
 // together on an empty database would otherwise both insert and one would hit a duplicate key.
@@ -410,7 +415,7 @@ export const migrations = [
 		_id: new ObjectId('65bd8fc40914f6a599ede07d'),
 		run: async (session: ClientSession) => {
 			await collections.orders.updateMany(
-				{ 'vat.price.currency': { $type: 'string' } },
+				holdsSingleVat('vat'),
 				[
 					{
 						$set: {
@@ -435,7 +440,7 @@ export const migrations = [
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.main.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.main.vat'),
 				[
 					{
 						$set: {
@@ -446,7 +451,7 @@ export const migrations = [
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.priceReference.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.priceReference.vat'),
 				[
 					{
 						$set: {
@@ -457,7 +462,7 @@ export const migrations = [
 				{ session }
 			);
 			await collections.orders.updateMany(
-				{ 'currencySnapshot.secondary.vat.currency': { $type: 'string' } },
+				holdsSingleVat('currencySnapshot.secondary.vat'),
 				[
 					{
 						$set: {
@@ -1094,8 +1099,341 @@ export const migrations = [
 				}
 			);
 		}
+	},
+	{
+		_id: new ObjectId('6b05e1289d7ea34515b6ec08'),
+		name: 'Reconstruct items.vatRate from the recorded VAT amounts, unwrap order.vat and currencySnapshot vat lists damaged by the VAT-to-array migration, and label the orders that cannot be reconstructed',
+		run: async (session: ClientSession) => {
+			const damaged = [
+				{ 'items.vatRate': { $type: 'array' } },
+				{ 'vat.0': { $type: 'array' } },
+				...VAT_SNAPSHOTS.map((key) => ({ [`currencySnapshot.${key}.vat.0`]: { $type: 'array' } }))
+			];
+			let labelReady = false;
+			for await (const order of collections.orders.find({ $or: damaged }, { session })) {
+				// Already listed and labelled: a rerun has nothing to say about it again.
+				if (order.orderLabelIds?.includes(VAT_REPAIR_LABEL._id)) {
+					continue;
+				}
+				const set: Record<string, unknown> = {};
+				const lines = unwrapVatList(order.vat ?? []);
+				const recorded: RecordedVat = {};
+				for (const key of VAT_SNAPSHOTS) {
+					const amounts = order.currencySnapshot?.[key]?.vat;
+					if (amounts) {
+						recorded[key] = unwrapVatList(amounts);
+						if (recorded[key] !== amounts) {
+							set[`currencySnapshot.${key}.vat`] = recorded[key];
+						}
+					}
+				}
+				const wrappedVat = !!order.vat && lines !== order.vat;
+				if (wrappedVat) {
+					// Same reduction as the migration dropping the SAT amounts, which skipped these lists.
+					set.vat = lines.map(({ rate, country }) => ({ rate, country }));
+				}
+
+				// An order with its own item rates, hit through a snapshot only, has nothing to rebuild.
+				let notReconstructed: string | undefined;
+				if (wrappedVat || order.items.some((item) => Array.isArray(item.vatRate))) {
+					const result = reconstructItemRates(order.items, order.currencySnapshot, lines, recorded);
+					if ('rates' in result) {
+						set.items = order.items.map((item, i) => ({ ...item, vatRate: result.rates[i] }));
+					} else {
+						notReconstructed = result.reason;
+					}
+				}
+
+				if (notReconstructed) {
+					warnVatRepair(order, notReconstructed);
+					if (!labelReady) {
+						await ensureVatRepairLabel(session);
+						labelReady = true;
+					}
+				}
+				const update = {
+					...(Object.keys(set).length && { $set: set }),
+					...(notReconstructed && { $addToSet: { orderLabelIds: VAT_REPAIR_LABEL._id } })
+				};
+				if (Object.keys(update).length) {
+					await collections.orders.updateOne({ _id: order._id }, update, { session });
+				}
+			}
+		}
 	}
 ];
+
+const VAT_SNAPSHOTS = ['main', 'priceReference', 'secondary'] as const;
+
+type RecordedVat = Partial<Record<(typeof VAT_SNAPSHOTS)[number], Price[]>>;
+
+/** Shown in the admin order list and filterable there; the id is fixed so a rerun never adds a second one. */
+const VAT_REPAIR_LABEL = { _id: 'vat-rate-to-check', color: '#ea580c', icon: '🧾' };
+const VAT_REPAIR_LABEL_NAME_KEY = 'admin.label.vatRateToCheck';
+
+/** The label exists only once an order needs it, and a label the shop already holds under that id is kept. */
+async function ensureVatRepairLabel(session: ClientSession) {
+	const now = new Date();
+	await collections.labels.updateOne(
+		{ _id: VAT_REPAIR_LABEL._id },
+		{
+			$setOnInsert: {
+				name: defaultLanguageText(await defaultLanguage(session), VAT_REPAIR_LABEL_NAME_KEY),
+				color: VAT_REPAIR_LABEL.color,
+				icon: VAT_REPAIR_LABEL.icon,
+				translations: Object.fromEntries(
+					(Object.keys(languages) as LanguageKey[]).map((language) => [
+						language,
+						{ name: defaultLanguageText(language, VAT_REPAIR_LABEL_NAME_KEY) }
+					])
+				),
+				createdAt: now,
+				updatedAt: now
+			}
+		},
+		{ upsert: true, session }
+	);
+}
+
+/** Names an order by its number only: its id opens the order page. */
+function warnVatRepair(order: { number: number }, reason: string) {
+	console.warn(
+		`Order number ${order.number}: item VAT rates could not be reconstructed (${reason})`
+	);
+}
+
+/** A list wrapped in a second one gets back to one level; any other list is returned as is. */
+function unwrapVatList<T>(list: T[]): T[] {
+	const [first] = list;
+	return list.length === 1 && Array.isArray(first) ? (first as T[]) : list;
+}
+
+/** The smallest amount a price is stored with, which rounds item prices before they are summed. */
+function storageUnit(currency: Currency) {
+	return currency === 'SAT' ? 1 : 1e-8;
+}
+
+/** Half a satoshi, the rounding of amounts summed in the internal unit, in a currency; 0 for fiat. */
+function satUnitIn(currency: Currency) {
+	return currency === 'SAT' ? 1 : currency === 'BTC' ? 1e-8 : 0;
+}
+
+/** How many assignments of rates to item groups are tried, at most. */
+const MAX_VAT_ASSIGNMENTS = 50_000;
+
+/**
+ * The rate of each item, when the VAT amounts recorded per rate leave one possible answer.
+ *
+ * Items sharing a VAT profile and a shipping flag share a rate, which is one of the order's VAT
+ * lines, or 0 for an item exempt at customs. An assignment is kept when the amounts it gives per
+ * line (items plus the delivery fee, whose rate and tax mode are not recorded) match the recorded
+ * amounts of every currency, within what rounding can move them. Nothing is guessed: with no
+ * assignment or several, no rate is returned. Only the order's own data is read, never a VAT
+ * profile or a rate table that may have changed since.
+ */
+function reconstructItemRates(
+	items: Order['items'],
+	currencySnapshot: Order['currencySnapshot'] | undefined,
+	lines: Array<{ rate: unknown }>,
+	recorded: RecordedVat
+): { rates: number[] } | { reason: string } {
+	const rates = lines.map((line) => line.rate);
+	if (!rates.length || rates.some((rate) => typeof rate !== 'number')) {
+		return { reason: 'the order has no VAT line with a rate' };
+	}
+	const lineRates = rates as number[];
+	if (new Set(lineRates).size !== lineRates.length) {
+		return { reason: 'two VAT lines share a rate' };
+	}
+	const keys = VAT_SNAPSHOTS.filter((key) => recorded[key]?.length);
+	if (!keys.length || keys.some((key) => recorded[key]?.length !== lineRates.length)) {
+		return { reason: 'the recorded VAT amounts are missing or do not match the VAT lines' };
+	}
+	if (items.some((item) => item.booking)) {
+		return { reason: 'the order has a booking item' };
+	}
+
+	if (!items.length) {
+		return { reason: 'the order has no item' };
+	}
+	const currencies = keys.map((key) => recorded[key]?.[0]?.currency as Currency);
+	if (currencies.some((currency) => !(currency in FRACTION_DIGITS_PER_CURRENCY))) {
+		return { reason: 'the VAT amounts are in an unknown currency' };
+	}
+
+	// What rounding can move a recorded amount by, per currency: one unit of it, plus, for every
+	// item, half a unit of the currency the item is priced in (its VAT was rounded alone before
+	// the cart summed it unrounded, and the sum is rounded once more), converted into that currency
+	// through the item's own recorded prices.
+	const maxRate = Math.max(...lineRates);
+	const tolerance = currencies.map((currency) =>
+		Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY[currency])
+	);
+	const lineRounding = keys.map(() => 0);
+
+	const groups: Array<{
+		itemIndexes: number[];
+		bases: number[];
+		ships: boolean;
+		mayBeExempt: boolean;
+	}> = [];
+	const groupOf = new Map<string, number>();
+	for (const [i, item] of items.entries()) {
+		const source = item.customPrice ?? item.product?.price;
+		const bases = keys.map((key, k) => {
+			const snapshot = item.currencySnapshot?.[key];
+			const price = snapshot?.customPrice ?? snapshot?.price;
+			if (!price || typeof price.amount !== 'number' || price.currency !== currencies[k]) {
+				return undefined;
+			}
+			const billed =
+				Math.max(item.quantity - (item.freeQuantity ?? 0), 0) *
+				(1 - (item.discountPercentage ?? 0) / 100);
+			if (price.amount * billed > 0) {
+				if (!source || !(source.amount > 0) || !(source.currency in FRACTION_DIGITS_PER_CURRENCY)) {
+					return undefined;
+				}
+				const halfSourceUnit = 0.5 * Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY[source.currency]);
+				const inCurrency = (halfSourceUnit * price.amount) / source.amount;
+				tolerance[k] +=
+					inCurrency +
+					0.5 * storageUnit(currencies[k]) * billed * (maxRate / 100) +
+					0.5 * satUnitIn(currencies[k]);
+				lineRounding[k] = Math.max(lineRounding[k], inCurrency);
+			}
+			return price.amount * billed;
+		});
+		if (bases.some((base) => base === undefined)) {
+			return { reason: 'an item has no recorded price in the currency of the VAT amounts' };
+		}
+		const groupKey = `${item.product?.vatProfileId ?? ''}|${item.product?.shipping}`;
+		let group = groupOf.get(groupKey);
+		if (group === undefined) {
+			group = groups.length;
+			groupOf.set(groupKey, group);
+			groups.push({
+				itemIndexes: [],
+				bases: keys.map(() => 0),
+				ships: item.product?.shipping === true,
+				mayBeExempt: item.product?.shipping !== false
+			});
+		}
+		groups[group].itemIndexes.push(i);
+		for (const [k, base] of bases.entries()) {
+			groups[group].bases[k] += base as number;
+		}
+	}
+
+	const deliveryFees = keys.map((key) => currencySnapshot?.[key]?.shippingPrice);
+	if (deliveryFees.some((fee, k) => fee && fee.currency !== currencies[k])) {
+		return { reason: 'the delivery fee is not in the currency of the VAT amounts' };
+	}
+	const feeAmounts = deliveryFees.map((fee) => fee?.amount ?? 0);
+	// The delivery fee is priced in the main currency, and its VAT is rounded in it as items' is.
+	const mainFee = currencySnapshot?.main?.shippingPrice;
+	const mainFeeUnit =
+		mainFee && mainFee.currency in FRACTION_DIGITS_PER_CURRENCY
+			? Math.pow(10, -FRACTION_DIGITS_PER_CURRENCY[mainFee.currency])
+			: 0;
+	for (const [k, fee] of feeAmounts.entries()) {
+		if (fee > 0) {
+			tolerance[k] +=
+				0.5 * mainFeeUnit * (mainFee && mainFee.amount > 0 ? fee / mainFee.amount : 1);
+		}
+		// The sum of the lines is rounded once as well, and the margin covers float noise.
+		tolerance[k] += lineRounding[k] + 1e-9;
+	}
+
+	const options = groups.map((group) => [
+		...lineRates,
+		...(group.mayBeExempt && !lineRates.includes(0) ? [0] : [])
+	]);
+	const combinations = options.reduce((count, rates) => count * rates.length, 1);
+	if (combinations > MAX_VAT_ASSIGNMENTS) {
+		return { reason: 'too many item groups to try every assignment' };
+	}
+
+	const fitting = new Set<string>();
+	const assignment: number[] = [];
+	const fits = (): boolean => {
+		const exempt = groups.map((_, g) => assignment[g] === 0 && !lineRates.includes(0));
+		// At customs every shipping item is exempt and so is the delivery fee, which then has no VAT.
+		if (exempt.some(Boolean) && groups.some((group, g) => group.ships && !exempt[g])) {
+			return false;
+		}
+		// The delivery fee's own rate and whether its price includes VAT are not recorded: try each,
+		// and a fee without VAT (a rate of 0 leaves no line).
+		const deliveries =
+			!feeAmounts.some((fee) => fee > 0) || exempt.some(Boolean)
+				? [undefined]
+				: [
+						undefined,
+						...lineRates.flatMap((rate) => [
+							{ rate, included: false },
+							{ rate, included: true }
+						])
+				  ];
+		return deliveries.some((delivery) =>
+			keys.every((key, k) =>
+				lineRates.every((rate, j) => {
+					const itemsAtRate = groups.reduce(
+						(total, group, g) => total + (assignment[g] === rate ? group.bases[k] : 0),
+						0
+					);
+					const fee =
+						delivery?.rate === rate
+							? delivery.included
+								? feeAmounts[k] / (1 + rate / 100)
+								: feeAmounts[k]
+							: 0;
+					const amount = recorded[key]?.[j]?.amount;
+					return (
+						typeof amount === 'number' &&
+						Math.abs(((itemsAtRate + fee) * rate) / 100 - amount) <= tolerance[k]
+					);
+				})
+			)
+		);
+	};
+	const search = (g: number) => {
+		if (g === groups.length) {
+			if (fits()) {
+				fitting.add(assignment.join(','));
+			}
+			return;
+		}
+		for (const rate of options[g]) {
+			assignment[g] = rate;
+			search(g + 1);
+		}
+	};
+	search(0);
+
+	if (fitting.size === 0) {
+		return { reason: 'no assignment of rates fits the recorded VAT amounts' };
+	}
+	if (fitting.size > 1) {
+		return { reason: 'several assignments of rates fit the recorded VAT amounts' };
+	}
+	const [chosen] = [...fitting].map((key) => key.split(',').map(Number));
+	// A group with a single possible rate is not told by the amounts but by the list of lines, which
+	// lacks any rate whose VAT rounded to nothing: its own VAT has to be large enough to be seen.
+	for (const [g, group] of groups.entries()) {
+		if (
+			options[g].length === 1 &&
+			group.bases.some((base, k) => (base * chosen[g]) / 100 <= tolerance[k])
+		) {
+			return { reason: 'an item group has too small a VAT amount to tell its rate by' };
+		}
+	}
+	const result: number[] = [];
+	for (const [g, group] of groups.entries()) {
+		for (const i of group.itemIndexes) {
+			result[i] = chosen[g];
+		}
+	}
+	return { rates: result };
+}
 
 /**
  * Migrations cannot import runtimeConfig: runtime-config.ts imports runMigrations, which

@@ -813,7 +813,8 @@
 			"delete": "Löschen",
 			"selectLanguage": "Sprache auswählen",
 			"editLabelTab": "Label bearbeiten",
-			"translationsTab": "Übersetzungen"
+			"translationsTab": "Übersetzungen",
+			"vatRateToCheck": "MwSt.-Satz prüfen"
 		},
 		"lnd": {
 			"title": "Lightning-Node",

@@ -813,7 +813,8 @@
 			"delete": "Excluir",
 			"selectLanguage": "Selecionar idioma",
 			"editLabelTab": "Editar label",
-			"translationsTab": "Traduções"
+			"translationsTab": "Traduções",
+			"vatRateToCheck": "Taxa de IVA a verificar"
 		},
 		"lnd": {
 			"title": "Nó Lightning",

@@ -813,7 +813,8 @@
 			"delete": "Supprimer",
 			"selectLanguage": "Sélectionner la langue",
 			"editLabelTab": "Modifier le label",
-			"translationsTab": "Traductions"
+			"translationsTab": "Traductions",
+			"vatRateToCheck": "Taux de TVA à vérifier"
 		},
 		"lnd": {
 			"title": "Nœud Lightning",

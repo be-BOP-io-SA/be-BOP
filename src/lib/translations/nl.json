@@ -813,7 +813,8 @@
 			"delete": "Verwijderen",
 			"selectLanguage": "Selecteer taal",
 			"editLabelTab": "Label bewerken",
-			"translationsTab": "Vertalingen"
+			"translationsTab": "Vertalingen",
+			"vatRateToCheck": "Btw-tarief te controleren"
 		},
 		"lnd": {
 			"title": "Lightning-node",
