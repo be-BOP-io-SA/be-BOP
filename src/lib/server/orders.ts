@@ -26,7 +26,6 @@ import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
-	currentFundingReminderSeconds,
 	freeProductsForUser,
 	generateSubscriptionNumber,
 	resolveSubscriptionDuration
@@ -60,6 +59,7 @@ import {
 } from './orderBookkeeping';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
+import { subscriptionOccupiesSlot, subscriptionsAwaitingPayment } from './saleLock';
 import { handleOrderTabAfterPayment } from './orderTab';
 import { subscriptionRightsQuery, userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
@@ -1033,29 +1033,21 @@ export async function createOrder(
 			{ session: params.session }
 		);
 
-		if (existingSubscription) {
-			const reminderSeconds = currentFundingReminderSeconds(existingSubscription, product);
-			if (subSeconds(existingSubscription.paidUntil, reminderSeconds) > new Date()) {
-				throw error(
-					400,
-					'You already have an active subscription for this product: ' +
-						product.name +
-						', which is not due for renewal yet.'
-				);
-			}
+		// The same rule the cart applies, see `subscriptionsAwaitingPayment`.
+		if (existingSubscription && subscriptionOccupiesSlot(existingSubscription, product)) {
+			throw error(
+				400,
+				'You already have an active subscription for this product: ' +
+					product.name +
+					', which is not due for renewal yet.'
+			);
 		}
 
-		// `payment` was replaced by the `payments` array long ago, so this filter matched nothing
-		// and the guard never fired — letting a buyer stack unpaid orders that each snapshot the
-		// pricing schedule's intro phase, then pay them all at the intro price.
+		// Unpaid orders each snapshot the pricing schedule's intro phase: letting them stack would
+		// let a buyer pay them all at the intro price.
 		if (
-			await collections.orders.countDocuments(
-				{
-					...userQuery(subscriptionUser),
-					'items.product._id': product._id,
-					status: 'pending'
-				},
-				{ limit: 1 }
+			(await subscriptionsAwaitingPayment(subscriptionUser, [product._id], params.session)).has(
+				product._id
 			)
 		) {
 			throw error(400, 'You already have a pending order for this product: ' + product.name);

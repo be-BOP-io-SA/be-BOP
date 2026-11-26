@@ -275,6 +275,37 @@ export function subscriptionOccupiesSlot(
 	);
 }
 
+/**
+ * The subscription products this person already has an order awaiting payment for. With
+ * `subscriptionOccupiesSlot` on the subscription they hold, this is the whole of "one
+ * subscription per person", read the same way when adding to the cart and when placing the
+ * order.
+ */
+export async function subscriptionsAwaitingPayment(
+	user: UserIdentifier,
+	productIds: string[],
+	session?: ClientSession
+): Promise<Set<string>> {
+	const rows = await collections.orders
+		.aggregate<{ _id: string }>(
+			[
+				{
+					$match: {
+						...userQuery(user),
+						'items.product._id': { $in: productIds },
+						status: 'pending'
+					}
+				},
+				{ $unwind: '$items' },
+				{ $match: { 'items.product._id': { $in: productIds } } },
+				{ $group: { _id: '$items.product._id' } }
+			],
+			{ session }
+		)
+		.toArray();
+	return new Set(rows.map((row) => row._id));
+}
+
 /** True when at least one rule could possibly apply — lets callers skip every query. */
 export function hasSaleLocks(product: ProductWithSaleLocks): boolean {
 	return (
@@ -380,29 +411,10 @@ export async function evaluateSaleLocks(
 	const subscriptionIds = products
 		.filter((product) => product.type === 'subscription' && !capWaivedForSellerOn(product))
 		.map((product) => product._id);
-	const pendingSubscriptionOrderIds = new Set<string>();
-	if (subscriptionIds.length && user) {
-		const rows = await collections.orders
-			.aggregate<{ _id: string }>(
-				[
-					{
-						$match: {
-							...userQuery(user),
-							'items.product._id': { $in: subscriptionIds },
-							status: 'pending'
-						}
-					},
-					{ $unwind: '$items' },
-					{ $match: { 'items.product._id': { $in: subscriptionIds } } },
-					{ $group: { _id: '$items.product._id' } }
-				],
-				{ session }
-			)
-			.toArray();
-		for (const row of rows) {
-			pendingSubscriptionOrderIds.add(row._id);
-		}
-	}
+	const pendingSubscriptionOrderIds =
+		subscriptionIds.length && user
+			? await subscriptionsAwaitingPayment(user, subscriptionIds, session)
+			: new Set<string>();
 
 	for (const product of products) {
 		const productLocks = locksFor(product, user, {
