@@ -101,22 +101,12 @@
 				{#if data.signedInAddress.kind === 'email'}
 					<label class="form-label col-span-6">
 						{t('checkout.notifications.email')}
-						<input
-							type="email"
-							class="form-input"
-							value={data.signedInAddress.address}
-							readonly
-						/>
+						<input type="email" class="form-input" value={data.signedInAddress.address} readonly />
 					</label>
 				{:else}
 					<label class="form-label col-span-6">
 						{t('checkout.notifications.npub')}
-						<input
-							type="text"
-							class="form-input"
-							value={data.signedInAddress.address}
-							readonly
-						/>
+						<input type="text" class="form-input" value={data.signedInAddress.address} readonly />
 					</label>
 				{/if}
 				{#each data.consentOptins as optin (optin.id)}
