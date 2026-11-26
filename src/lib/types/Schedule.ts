@@ -125,6 +125,14 @@ export function timeToMinutes(time: string) {
 	return hours * 60 + minutes;
 }
 
+/**
+ * The closing minute of a day spec. `00:00` means the end of the day, not minute zero — reading
+ * it literally makes every same-day booking pass, since none can reach minute 1440.
+ */
+export function closingMinute(end: string): number {
+	return end === '00:00' ? 24 * 60 : timeToMinutes(end);
+}
+
 export const dayList = [
 	'monday',
 	'tuesday',

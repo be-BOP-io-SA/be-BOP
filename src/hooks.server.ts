@@ -5,7 +5,13 @@ import { ObjectId } from 'mongodb';
 import { addYears } from 'date-fns';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { flatten } from 'flat';
-import { adminPrefix as _adminPrefix } from '$lib/server/admin';
+import {
+	adminPathPrefix,
+	adminPrefix as _adminPrefix,
+	isAdminAuthPath,
+	routedPathname
+} from '$lib/server/admin';
+
 import { isAdminPathDisabled } from '$lib/server/admin-disabled';
 import '$lib/server/locks';
 import '$lib/server/sdk/pp-registry';
@@ -16,6 +22,7 @@ import GitHub from '@auth/core/providers/github';
 import Google from '@auth/core/providers/google';
 import Facebook from '@auth/core/providers/facebook';
 import Twitter from '@auth/core/providers/twitter';
+import { withProviderAccountId } from '$lib/server/sso-token';
 import {
 	FACEBOOK_ID,
 	FACEBOOK_SECRET,
@@ -58,13 +65,19 @@ for (const key of locales) {
 
 export const handleError = (({ error, event }) => {
 	console.error('handleError', error);
-	if (typeof error === 'object' && error) {
+	// A validation failure is the caller's input, not our bug, and anyone can send one unthrottled.
+	if (typeof error === 'object' && error && !(error instanceof ZodError)) {
 		collections.errors
 			.insertOne({
 				_id: new ObjectId(),
-				url: event.url.href,
+				url: event.url.href.slice(0, 2048),
 				method: event.request.method,
-				...error
+				...(error instanceof Error && {
+					name: error.name,
+					message: error.message.slice(0, 2048),
+					stack: error.stack?.slice(0, 8192)
+				}),
+				createdAt: new Date()
 			})
 			.catch();
 	}
@@ -103,7 +116,14 @@ const addSecurityHeaders: Handle = async ({ event, resolve }) => {
 	// SAMEORIGIN for invoice generation
 	response.headers.set('X-Frame-Options', 'SAMEORIGIN');
 
-	// Possible to enable CSP / XSS Protection directly in SvelteKit config
+	// No script-src: analytics snippets, payment widgets and raw CMS pages load scripts from
+	// hosts only operators know. These directives close plugin, <base> and framing injection
+	// without breaking any of them. No form-action either: browsers apply it to the redirect
+	// a checkout POST answers with, which leads to the payment provider's page.
+	response.headers.set(
+		'Content-Security-Policy',
+		"object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+	);
 
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
@@ -128,16 +148,22 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 
 	const adminPrefix = _adminPrefix();
 
-	const isAdminLoginLogoutUrl = /^\/admin(-.+?)?\/(login|logout)(\/|$)/.test(event.url.pathname);
-
 	const method = event.request.method.toLowerCase();
 
 	if (method === 'post' || method === 'put' || method === 'patch' || method === 'delete') {
 		rateLimit(event.locals.clientIp, 'method.' + method, 30, { minutes: 1 });
 	}
 
-	const adminPath = /^(\/admin(-.+?)?)(\/|$)/.exec(event.url.pathname);
+	let guardPath: string;
+	try {
+		guardPath = routedPathname(event.url.pathname);
+	} catch {
+		throw error(400, 'Malformed URL');
+	}
+
+	const adminPath = adminPathPrefix(guardPath);
 	const isAdminUrl = !!adminPath;
+	const isAdminLoginLogoutUrl = isAdminAuthPath(guardPath);
 
 	const slug = event.url.pathname.split('/')[1] ? event.url.pathname.split('/')[1] : 'home';
 
@@ -239,14 +265,14 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			event.locals.countryCode = session.pos.countryCodeOverwrite;
 		}
 	}
-	if (adminPath && adminPath[1] !== adminPrefix) {
+	if (adminPath && adminPath !== adminPrefix) {
 		if (!event.locals.user || event.locals.user.roleId === CUSTOMER_ROLE_ID) {
 			throw error(403, 'Wrong admin prefix. Make sure to type the correct admin URL.');
 		}
 		return new Response(null, {
 			status: 307,
 			headers: {
-				location: event.url.href.replace(adminPath[1], adminPrefix)
+				location: event.url.href.replace(adminPath, adminPrefix)
 			}
 		});
 	}
@@ -275,19 +301,19 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 			throw error(403, 'Your role does not exist in DB.');
 		}
 
-		if (isAdminPathDisabled(event.url.pathname, runtimeConfig.disabledAdminEntries)) {
+		if (isAdminPathDisabled(guardPath, runtimeConfig.disabledAdminEntries)) {
 			throw error(404, 'This admin section is disabled on this deployment.');
 		}
 
 		// User-self endpoints (per-user prefs) only need an admin login, no role permission.
-		const normalizedAdminPath = event.url.pathname.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
+		const normalizedAdminPath = guardPath.replace(/^\/admin-[a-zA-Z0-9]+/, '/admin');
 		const isUserSelfAdminEndpoint = normalizedAdminPath === '/admin/back-office-bookmark';
 
 		if (
 			!isUserSelfAdminEndpoint &&
 			!isAllowedOnPage(
 				event.locals.user.role,
-				event.url.pathname,
+				guardPath,
 				['get', 'head', 'options'].includes(method) ? 'read' : 'write'
 			)
 		) {
@@ -299,7 +325,8 @@ const handleGlobal: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	if (event.url.pathname.startsWith('/pos/') || event.url.pathname === '/pos') {
+	const isPosUrl = guardPath.startsWith('/pos/') || guardPath === '/pos';
+	if (isPosUrl) {
 		if (!event.locals.user) {
 			throw redirect(303, '/admin/login');
 		}
@@ -376,6 +403,9 @@ const handleSsoCookie: Handle = async ({ event, resolve }) => {
 			provider,
 			id: ssoSession.user.id,
 			email: ssoSession.user.email ?? undefined,
+			// The Auth.js providers wired below are the large ones, which only release an address
+			// they own; the risk this flag guards against is a self-hosted OIDC server.
+			emailVerified: true,
 			avatarUrl: ssoSession.user.image ?? undefined,
 			name: ssoSession.user.name
 		};
@@ -504,6 +534,7 @@ const handleSSO = authProviders
 				}
 			},
 			callbacks: {
+				jwt: async ({ token, account }) => withProviderAccountId(token, account),
 				/**
 				 * Get the user's ID from the token and add it to the session
 				 */
@@ -520,7 +551,7 @@ const handleSSO = authProviders
 	: null;
 
 export const handle = handleSSO
-	? sequence(addSecurityHeaders, handleGlobal, handleSSO, handleSsoCookie)
+	? sequence(addSecurityHeaders, handleGlobal, handleSSO.handle, handleSsoCookie)
 	: sequence(addSecurityHeaders, handleGlobal);
 
 // Kick-off autoconfiguration of phoenixd

@@ -14,6 +14,7 @@ import {
 } from '$lib/server/phoenixd.js';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { updateLightningInvoiceDescription } from '$lib/server/actions.js';
+import { omit } from '$lib/utils/omit.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -29,7 +30,7 @@ export const load = async () => {
 			configManagedByEnvVars,
 			dockerIp: dockerIp?.address,
 			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
-			phoenixd: runtimeConfig.phoenixd
+			phoenixd: omit(runtimeConfig.phoenixd, 'password')
 		};
 	}
 
@@ -42,7 +43,7 @@ export const load = async () => {
 			bolt12Address,
 			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 			nodeInfo,
-			phoenixd: runtimeConfig.phoenixd,
+			phoenixd: omit(runtimeConfig.phoenixd, 'password'),
 			configManagedByEnvVars
 		};
 	} catch (err) {
@@ -51,7 +52,7 @@ export const load = async () => {
 			bolt12Address: null,
 			lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
 			nodeInfo: null,
-			phoenixd: runtimeConfig.phoenixd,
+			phoenixd: omit(runtimeConfig.phoenixd, 'password'),
 			configManagedByEnvVars
 		};
 	}
@@ -65,6 +66,10 @@ export const actions = {
 		const res = await phoenixdDetected(url);
 
 		if (res) {
+			// The stored password must never be sent to a server it was not entered for
+			if (url !== runtimeConfig.phoenixd.url) {
+				runtimeConfig.phoenixd.password = '';
+			}
 			runtimeConfig.phoenixd.enabled = true;
 			runtimeConfig.phoenixd.url = url;
 			await collections.runtimeConfig.updateOne(

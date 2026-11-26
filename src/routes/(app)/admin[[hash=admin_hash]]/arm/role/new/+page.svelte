@@ -27,7 +27,6 @@
 		<input class="form-checkbox" type="checkbox" name="hasPosOptions" />
 		{t('admin.arm.hasPosAccess')}
 	</label>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.arm.readWriteAccess')}
 		<MultiSelect
@@ -38,7 +37,6 @@
 		/>
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.arm.readAccess')}
 		<MultiSelect
@@ -49,7 +47,6 @@
 		/>
 	</label>
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.arm.forbiddenAccess')}
 		<MultiSelect

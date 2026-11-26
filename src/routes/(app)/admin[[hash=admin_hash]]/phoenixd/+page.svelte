@@ -97,13 +97,7 @@
 		{#if !data.configManagedByEnvVars}
 			<label class="form-label">
 				{t('admin.phoenixd.httpPasswordLabel')}
-				<input
-					type="password"
-					name="password"
-					class="form-input"
-					value={data.phoenixd.password}
-					required
-				/>
+				<input type="password" name="password" class="form-input" required />
 			</label>
 		{:else}
 			<div class="bg-gray-100 p-3 rounded">

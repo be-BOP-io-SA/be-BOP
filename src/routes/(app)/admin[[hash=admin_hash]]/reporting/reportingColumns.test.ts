@@ -24,6 +24,12 @@ describe('toCsv', () => {
 		);
 	});
 
+	it('disarms a formula typed by a buyer', () => {
+		expect(toCsv(['x'], [['=HYPERLINK("https://evil")']])).toBe(
+			`x\n"'=HYPERLINK(""https://evil"")"`
+		);
+	});
+
 	it('outputs only the header without rows', () => {
 		expect(toCsv(['a', 'b'], [])).toBe('a,b');
 	});

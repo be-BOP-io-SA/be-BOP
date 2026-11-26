@@ -31,6 +31,7 @@ COPY --link --chown=1000 src src
 COPY --link --chown=1000 assets assets
 COPY --link --chown=1000 static static
 COPY --link --chown=1000 docs docs
+COPY --link --chown=1000 scripts/patch-body-size-limit.mjs scripts/
 COPY --link --chown=1000 tsconfig.json *.config.js *.config.ts entrypoint.sh .env ./
 
 EXPOSE 3000
