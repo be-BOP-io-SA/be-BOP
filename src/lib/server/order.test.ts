@@ -551,15 +551,22 @@ describe('order', () => {
 			body: { message: expect.stringContaining('Missing npub') }
 		};
 		let previousMethods: typeof runtimeConfig.customPaymentMethods;
+		let previousIdentity: typeof runtimeConfig.sellerIdentity;
 
 		beforeEach(async () => {
 			previousMethods = runtimeConfig.customPaymentMethods;
 			runtimeConfig.customPaymentMethods = [COUNTER, CHEQUE];
+			// A shop only takes bank transfers once it has given its bank account
+			previousIdentity = runtimeConfig.sellerIdentity;
+			runtimeConfig.sellerIdentity = {
+				bank: { iban: 'FR7630001007941234567890185', bic: 'BDFEFRPP' }
+			} as typeof runtimeConfig.sellerIdentity;
 			await collections.products.insertOne(NO_CONTACT_PRODUCT);
 		});
 
 		afterEach(() => {
 			runtimeConfig.customPaymentMethods = previousMethods;
+			runtimeConfig.sellerIdentity = previousIdentity;
 		});
 
 		function order(
