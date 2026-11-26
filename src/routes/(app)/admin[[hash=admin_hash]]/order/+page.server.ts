@@ -1,11 +1,16 @@
 import { collections } from '$lib/server/database';
+import { loadAllCheckoutFields } from '$lib/server/checkoutFields';
 import { paymentMethods } from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { escapeForRegex } from '$lib/utils/escapeForRegex';
 
 import type { Filter } from 'mongodb';
 import { z } from 'zod';
+
+/** More rows than an admin would ever fill; anything beyond is ignored. */
+const MAX_CUSTOM_FIELD_FILTERS = 20;
 
 export async function load({ url, locals }) {
 	const methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions, includePOS: true });
@@ -22,9 +27,32 @@ export async function load({ url, locals }) {
 		employeeAlias: z.string().optional(),
 		posSubtype: z.string().optional()
 	});
+	const customFieldRowSchema = z.object({
+		slug: z.string().trim().optional().default(''),
+		value: z.string().trim().optional().default('')
+	});
 
 	const searchParams = Object.fromEntries(url.searchParams.entries());
 	const result = querySchema.parse(searchParams);
+
+	// The custom field rows are read key by key, `customFields[n].slug` and
+	// `customFields[n].value` only, with `n` bounded.
+	const customFieldRows = new Map<number, Record<string, string>>();
+	for (const [key, value] of url.searchParams) {
+		const match = /^customFields\[(\d{1,2})\]\.(slug|value)$/.exec(key);
+		if (match) {
+			const index = Number(match[1]);
+			if (index < MAX_CUSTOM_FIELD_FILTERS) {
+				customFieldRows.set(index, { ...customFieldRows.get(index), [match[2]]: value });
+			}
+		}
+	}
+
+	// A row left half empty filters nothing.
+	const customFieldFilters = [...customFieldRows.entries()]
+		.sort(([a], [b]) => a - b)
+		.map(([, row]) => customFieldRowSchema.parse(row))
+		.filter((filter) => filter.slug && filter.value);
 	const {
 		skip,
 		orderNumber,
@@ -64,6 +92,18 @@ export async function load({ url, locals }) {
 	if (label) {
 		query['orderLabelIds'] = label;
 	}
+	if (customFieldFilters.length) {
+		// One $elemMatch per row, so each row has to match its own answer.
+		query.$and = customFieldFilters.map((filter) => ({
+			customCheckoutFields: {
+				$elemMatch: {
+					slug: filter.slug,
+					value: { $regex: `^${escapeForRegex(filter.value)}$`, $options: 'i' }
+				}
+			}
+		}));
+	}
+
 	if (employeeAlias === 'System') {
 		query['user.userAlias'] = { $exists: false };
 	} else if (employeeAlias) {
@@ -81,6 +121,7 @@ export async function load({ url, locals }) {
 		.find({})
 		.sort({ sortOrder: 1 })
 		.toArray();
+	const checkoutFields = await loadAllCheckoutFields();
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -114,6 +155,11 @@ export async function load({ url, locals }) {
 			alias: user.alias
 		})),
 		posSubtype,
-		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name }))
+		posSubtypes: posSubtypes.map((s) => ({ slug: s.slug, name: s.name })),
+		// An Address field answers with a whole address, which this filter cannot search yet (#2816).
+		checkoutFields: checkoutFields
+			.filter((field) => field.type !== 'address')
+			.map((field) => ({ slug: field.slug, name: field.name, disabled: !!field.disabled })),
+		customFieldFilters
 	};
 }
