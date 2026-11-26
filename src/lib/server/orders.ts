@@ -26,7 +26,6 @@ import { runtimeConfig } from './runtime-config';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import {
 	buildPricingScheduleSnapshot,
-	currentFundingReminderSeconds,
 	freeProductsForUser,
 	generateSubscriptionNumber,
 	resolveSubscriptionDuration
@@ -60,8 +59,9 @@ import {
 } from './orderBookkeeping';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
+import { subscriptionOccupiesSlot, subscriptionsAwaitingPayment } from './saleLock';
 import { handleOrderTabAfterPayment } from './orderTab';
-import { userQuery } from './user';
+import { subscriptionRightsQuery, userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { escapeHtml } from '$lib/utils/escapeHtml';
@@ -810,7 +810,11 @@ export async function createOrder(
 		}
 	}
 
-	await checkCartItems(items, params.cart);
+	// The address typed at checkout answers the lists of a visitor who is not signed in.
+	await checkCartItems(
+		items,
+		params.cart && { user: params.cart.user, checkoutAddress: email || npubAddress || '' }
+	);
 
 	const isDigital = products.every((product) => !product.shipping);
 	const shippingPrice = {
@@ -851,7 +855,7 @@ export async function createOrder(
 
 	const paidSubs = await collections.paidSubscriptions
 		.find({
-			...userQuery(params.user),
+			...subscriptionRightsQuery(params.user, email || npubAddress),
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
@@ -865,6 +869,7 @@ export async function createOrder(
 		deliveryCountry: params.userVatCountry,
 		billingCountry: params.billingAddress?.country,
 		userContactAddresses: collectUserAddresses(params.user),
+		checkoutAddress: email || npubAddress,
 		cartItems: items.map((i) => ({
 			productId: i.product._id,
 			quantity: i.quantity,
@@ -926,7 +931,8 @@ export async function createOrder(
 		discount: discountInfo,
 		freeProductUnits: await freeProductsForUser(
 			params.user,
-			items.map((item) => item.product._id)
+			items.map((item) => item.product._id),
+			email || npubAddress
 		),
 		userCountry: params.userVatCountry,
 		vatExempted,
@@ -940,7 +946,7 @@ export async function createOrder(
 			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
-					...userQuery(params.user),
+					...subscriptionRightsQuery(params.user, email || npubAddress),
 					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
 					paidUntil: { $gt: new Date() }
 				})
@@ -1028,29 +1034,21 @@ export async function createOrder(
 			{ session: params.session }
 		);
 
-		if (existingSubscription) {
-			const reminderSeconds = currentFundingReminderSeconds(existingSubscription, product);
-			if (subSeconds(existingSubscription.paidUntil, reminderSeconds) > new Date()) {
-				throw error(
-					400,
-					'You already have an active subscription for this product: ' +
-						product.name +
-						', which is not due for renewal yet.'
-				);
-			}
+		// The same rule the cart applies, see `subscriptionsAwaitingPayment`.
+		if (existingSubscription && subscriptionOccupiesSlot(existingSubscription, product)) {
+			throw error(
+				400,
+				'You already have an active subscription for this product: ' +
+					product.name +
+					', which is not due for renewal yet.'
+			);
 		}
 
-		// `payment` was replaced by the `payments` array long ago, so this filter matched nothing
-		// and the guard never fired — letting a buyer stack unpaid orders that each snapshot the
-		// pricing schedule's intro phase, then pay them all at the intro price.
+		// Unpaid orders each snapshot the pricing schedule's intro phase: letting them stack would
+		// let a buyer pay them all at the intro price.
 		if (
-			await collections.orders.countDocuments(
-				{
-					...userQuery(subscriptionUser),
-					'items.product._id': product._id,
-					status: 'pending'
-				},
-				{ limit: 1 }
+			(await subscriptionsAwaitingPayment(subscriptionUser, [product._id], params.session)).has(
+				product._id
 			)
 		) {
 			throw error(400, 'You already have a pending order for this product: ' + product.name);

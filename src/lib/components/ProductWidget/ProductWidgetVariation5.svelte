@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SaleLockedLink from './SaleLockedLink.svelte';
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 
@@ -61,6 +62,8 @@
 						/>
 					</div>
 				</div>
+			{:else if product.saleLocked}
+				<SaleLockedLink href={productUrl} />
 			{/if}
 		</div>
 

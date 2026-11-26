@@ -1,14 +1,17 @@
 import {
 	addToCartInDb,
-	checkCartItems,
+	cartErrorBody,
+	cartLocks,
 	getCartFromDb,
 	restoreFromPendingSnapshot,
-	type CartErrorCode
+	type CartErrorBody
 } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
+import { SALE_LOCK_CODES } from '$lib/server/saleLock';
+import { cartErrorKey } from '$lib/cartErrorKey';
 import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
@@ -43,12 +46,6 @@ export type CartFromUrlState =
 	| { mode: 'errors'; errors: AddError[]; snapshotId: string }
 	| { mode: 'invalidUrl' };
 
-type AddErrorBody = {
-	code?: CartErrorCode;
-	message?: string;
-	params?: Record<string, string | number>;
-};
-
 function parsePairsFrom(slugs: string[], qtys: string[]): SlugQty[] | null {
 	if (!slugs.length || slugs.length !== qtys.length) {
 		return null;
@@ -72,28 +69,16 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 	return locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 }
 
-function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | null): AddError {
-	switch (body.code) {
-		case 'NOT_FOR_SALE':
-			return { slug, key: 'product.notForSale', product };
-		case 'OUT_OF_STOCK':
-			return { slug, key: 'product.outOfStock', product };
-		case 'MAX_ITEMS_REACHED':
-			return { slug, key: 'cart.reachedMaxPerLine', product };
-		case 'VARIATION_INVALID':
-			return { slug, key: 'cartFromUrl.errors.reasonVariationRequired', product };
-		case 'BOOKING_INFO_REQUIRED':
-			return { slug, key: 'cartFromUrl.errors.reasonBookingRequired', product };
-		case 'MAX_PER_ORDER':
-			return {
-				slug,
-				key: 'cart.maxQuantityReached',
-				...(body.params && { params: body.params }),
-				product
-			};
-		default:
-			return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
+function mapAddError(slug: string, body: CartErrorBody, product: ProductBadge | null): AddError {
+	if (!body.code) {
+		return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 	}
+	return {
+		slug,
+		key: cartErrorKey(body.code),
+		...(body.params && { params: body.params }),
+		product
+	};
 }
 
 async function resolveProductsBySlug(
@@ -178,9 +163,7 @@ async function attemptAddAll(
 				await addToCartInDb(product, quantity, { user, mode });
 			}
 		} catch (e) {
-			const body =
-				typeof e === 'object' && e && 'body' in e ? (e as { body?: AddErrorBody }).body ?? {} : {};
-			errors.push(mapAddError(slug, body, badge));
+			errors.push(mapAddError(slug, cartErrorBody(e) ?? {}, badge));
 		}
 	}
 	return errors;
@@ -246,7 +229,8 @@ export async function load({ parent, locals, url }) {
 
 	const parentData = await parent();
 
-	// Resolve stock for cart items FIRST (needed for checkCartItems)
+	// Resolve stock for cart items first: the refusals below read it. The sale lock settings,
+	// customer list included, are read by the evaluator itself.
 	const cartItemsWithResolvedStock = await Promise.all(
 		parentData.cart.items.map(async (item) => ({
 			...item,
@@ -254,23 +238,22 @@ export async function load({ parent, locals, url }) {
 		}))
 	);
 
-	if (parentData.cart) {
-		try {
-			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
-		} catch (err) {
-			if (
-				typeof err === 'object' &&
-				err &&
-				'body' in err &&
-				typeof err.body === 'object' &&
-				err.body &&
-				'message' in err.body &&
-				typeof err.body.message === 'string'
-			) {
-				return { errorMessage: err.body.message };
-			}
-		}
-	}
+	// One reading of every refusal the cart holds, the one checkout and order creation make too.
+	const saleLocks = [
+		...(await cartLocks(cartItemsWithResolvedStock, { user: userIdentifier(locals) })).entries()
+	].map(([productId, productLocks]) => ({
+		locks: productLocks,
+		name:
+			parentData.cart.items.find((item) => item.product._id === productId)?.product.name ??
+			productId
+	}));
+
+	// A quantity the cart itself refused — the "+" button or the quantity field — comes back here
+	// with its reason, because the cart is left unchanged and the banner has nothing to report.
+	const refusedLockParam = url.searchParams.get('lock');
+	const refusedLock = (SALE_LOCK_CODES as readonly string[]).includes(refusedLockParam ?? '')
+		? (refusedLockParam as (typeof SALE_LOCK_CODES)[number])
+		: undefined;
 
 	const [cmsBasketTop, cmsBasketBottom] = await Promise.all([
 		collections.cmsPages.findOne(
@@ -365,6 +348,8 @@ export async function load({ parent, locals, url }) {
 			items: cartItemsWithResolvedStock
 		},
 		hasPromoDiscounts,
+		saleLocks,
+		...(refusedLock && { refusedLock }),
 		appliedPromoCode: cartInDb?.promoCode,
 		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		...(cartFromUrl && { cartFromUrl }),

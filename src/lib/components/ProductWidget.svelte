@@ -22,7 +22,9 @@
 	export { className as class };
 	export let displayOption = 'img-0';
 	$: canAddToCart =
-		canBuy && (!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
+		canBuy &&
+		!product.saleLocked &&
+		(!product.availableDate || product.availableDate <= new Date() || !!product.preorder);
 	const widgets = {
 		'img-0': {
 			component: ProductWidgetVariation0

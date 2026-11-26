@@ -16,17 +16,17 @@ import {
 import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { checkCartItems, getCartFromDb } from '$lib/server/cart.js';
+import {
+	CART_ERROR_CODES,
+	cartErrorBody,
+	checkCartItems,
+	getCartFromDb
+} from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
+import { checkoutPrices } from '$lib/server/checkoutPrices';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
-import {
-	collectUserAddresses,
-	getActivePercentageDiscounts,
-	isAuthenticated,
-	selectBestDiscount,
-	webChannelForUser
-} from '$lib/server/discount';
+import { isAuthenticated, webChannelForUser } from '$lib/server/discount';
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { rateLimit } from '$lib/server/rateLimit.js';
@@ -44,6 +44,8 @@ import {
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
+	// Resolve stock for cart items first: the refusals below read it. The sale lock settings,
+	// customer list included, are read by the evaluator itself.
 	const cartItemsWithResolvedStock = await Promise.all(
 		parentData.cart.items.map(async (item) => ({
 			...item,
@@ -116,60 +118,15 @@ export async function load({ parent, locals }) {
 			? 'employee'
 			: undefined;
 
-	// Precompute auto discount per payment method so the frontend can switch live
-	const activeDiscounts = await getActivePercentageDiscounts();
-	const paidSubs = await collections.paidSubscriptions
-		.find({ ...userQuery(userIdentifier(locals)), paidUntil: { $gt: new Date() } })
-		.toArray();
-	const user = userIdentifier(locals);
-	const discountItemsForEval = cartItemsWithResolvedStock.map((i) => ({
-		product: i.product,
-		quantity: i.quantity,
-		...(i.customPrice && { customPrice: i.customPrice })
-	}));
-	const baseDiscountContext = {
-		userSubscriptionIds: paidSubs.map((s) => s.productId),
+	// The discounts depend on the address typed in the contact field for a visitor who is not
+	// signed in: the page asks `/checkout/prices` again each time it changes.
+	const contactAddressCounts = !isAuthenticated(userIdentifier(locals));
+	const { discountByContext, relevantShipCountries, relevantBillCountries } = await checkoutPrices({
+		locals,
+		items: cartItemsWithResolvedStock,
 		promoCode: parentData.cart.promoCode,
-		channel: webChannelForUser(locals.user?.hasPosOptions),
-		userContactAddresses: collectUserAddresses(user),
-		cartItems: cartItemsWithResolvedStock.map((i) => ({
-			productId: i.product._id,
-			quantity: i.quantity,
-			tagIds: i.product.tagIds
-		})),
-		isLoggedIn: isAuthenticated(user)
-	};
-	// Countries that can influence discount eligibility, split by condition axis.
-	// Any other country produces the same result (condition fails), so we only vary these.
-	// '' sentinel = "country not relevant to this axis".
-	const relevantShipCountries = [
-		...new Set(activeDiscounts.flatMap((d) => (d.deliveryCountry ? [d.deliveryCountry] : [])))
-	];
-	const relevantBillCountries = [
-		...new Set(activeDiscounts.flatMap((d) => (d.billingCountry ? [d.billingCountry] : [])))
-	];
-	const shipKeys: Array<CountryAlpha2 | ''> = ['', ...relevantShipCountries];
-	const billKeys: Array<CountryAlpha2 | ''> = ['', ...relevantBillCountries];
-
-	// Key format: `${ship}|${bill}|${method}`. Frontend normalizes each chosen country to ''
-	// unless it appears in the corresponding relevant list, then looks up the precomputed best.
-	const discountByContext: Record<string, Record<string, number>> = Object.fromEntries(
-		shipKeys.flatMap((ship) =>
-			billKeys.flatMap((bill) =>
-				methods.flatMap((method) => {
-					const best = selectBestDiscount(activeDiscounts, discountItemsForEval, {
-						...baseDiscountContext,
-						...(ship && { deliveryCountry: ship }),
-						...(bill && { billingCountry: bill }),
-						paymentMethod: method
-					});
-					return best
-						? [[`${ship}|${bill}|${method}`, Object.fromEntries(best.discountByProduct)]]
-						: [];
-				})
-			)
-		)
-	);
+		methods
+	});
 
 	const posSubtypes = await collections.posPaymentSubtypes
 		.find({ disabled: { $ne: true } })
@@ -193,6 +150,7 @@ export async function load({ parent, locals }) {
 			label
 		})),
 		discountByContext,
+		contactAddressCounts,
 		relevantShipCountries,
 		relevantBillCountries,
 		reportingTags,
@@ -708,6 +666,18 @@ export const actions = {
 				);
 			});
 		} catch (err) {
+			// A typed cart error means the cart itself is no longer orderable. The cart page says
+			// why, in the customer's own language, and keeps their cart intact; a raw 400 page
+			// says nothing and loses them.
+			const refusal = cartErrorBody(err);
+			// A list is answered on the address typed here, so the refusal is told here: the cart
+			// cannot know it.
+			if (refusal?.code === 'NOT_WHITELISTED') {
+				return fail(400, { notOnList: true });
+			}
+			if (refusal?.code && CART_ERROR_CODES.includes(refusal.code)) {
+				throw redirect(303, '/cart');
+			}
 			if (err instanceof PaymentGenerationError) {
 				console.error('PaymentGenerationError on /checkout:', err.method, err.reason);
 				await notifySuperAdminPaymentFailure({

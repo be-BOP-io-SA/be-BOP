@@ -2,6 +2,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
@@ -113,8 +114,35 @@
 	$: billKey = data.relevantBillCountries?.includes(effectiveBillingCountry)
 		? effectiveBillingCountry
 		: '';
+	// For a visitor who is not signed in, the address typed below may be on a discount's list, and
+	// decides whether this browser session's subscriptions still count: the server recomputes the
+	// prices for it, so the price shown is the one the order charges.
+	let pricesForAddress:
+		| { discountByContext: typeof data.discountByContext; freeProductUnits: Record<string, number> }
+		| undefined;
+	let pricesTimer: ReturnType<typeof setTimeout> | undefined;
+	$: askPricesForAddress(addresses.paymentStatus);
+	function askPricesForAddress(typed: string | undefined) {
+		const address = typed?.trim() ?? '';
+		clearTimeout(pricesTimer);
+		if (!browser || !data.contactAddressCounts || !address) {
+			pricesForAddress = undefined;
+			return;
+		}
+		pricesTimer = setTimeout(async () => {
+			const response = await fetch('/checkout/prices', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ address })
+			});
+			if (response.ok && (addresses.paymentStatus?.trim() ?? '') === address) {
+				pricesForAddress = await response.json();
+			}
+		}, 400);
+	}
+	$: discountTable = pricesForAddress?.discountByContext ?? data.discountByContext;
 	$: contextDiscountMap = baseMethod
-		? data.discountByContext?.[`${shipKey}|${billKey}|${baseMethod}`]
+		? discountTable?.[`${shipKey}|${billKey}|${baseMethod}`]
 		: undefined;
 	$: effectiveItems = items.map((item) => {
 		const isPosManual = !!item.discountJustification;
@@ -122,7 +150,10 @@
 			return item;
 		}
 		const dynamicDiscount = contextDiscountMap?.[item.product._id];
-		const discountPercentage = dynamicDiscount ?? item.discountPercentage;
+		// Once recomputed for the typed address, the cart's own discount no longer applies: it may
+		// come from a subscription or a list this address does not have.
+		const discountPercentage =
+			dynamicDiscount ?? (pricesForAddress ? undefined : item.discountPercentage);
 		return discountPercentage !== undefined ? { ...item, discountPercentage } : item;
 	});
 	$: orderDeliveryFees = computeDeliveryFees(
@@ -163,7 +194,7 @@
 		bebopCountry: data.vatCountry,
 		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
-		freeProductUnits: data.cart.freeProductUnits,
+		freeProductUnits: pricesForAddress?.freeProductUnits ?? data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
 		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
@@ -337,6 +368,11 @@
 			{#if form?.subscriptionAtTill}
 				<div class="alert-error">
 					{t('checkout.subscriptionAtTill')}
+				</div>
+			{/if}
+			{#if form?.notOnList}
+				<div class="alert-error">
+					{t('cart.error.NOT_WHITELISTED')}
 				</div>
 			{/if}
 			<input type="hidden" name="cartId" value={data.cartId} />
