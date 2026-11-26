@@ -11,6 +11,8 @@ export { default as osb } from './osb/declaration';
 export { default as paypal } from './paypal/declaration';
 export { default as phoenixd } from './phoenixd/declaration';
 export { default as pointOfSale } from './point-of-sale/declaration';
+export { default as sattleme } from './sattleme/declaration';
+export { default as sattlemeOnchain } from './sattleme-onchain/declaration';
 export { default as stripe } from './stripe/declaration';
 export { default as sumup } from './sumup/declaration';
 export { default as swissBitcoinPay } from './swiss-bitcoin-pay/declaration';
