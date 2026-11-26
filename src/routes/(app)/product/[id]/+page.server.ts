@@ -29,7 +29,9 @@ import {
 	discountTargetsProduct,
 	evaluateDiscountConditions,
 	getActivePercentageDiscounts,
-	isAuthenticated
+	isAuthenticated,
+	isExcludedFromCatalogDiscounts,
+	type DiscountTargetProduct
 } from '$lib/server/discount';
 import type { Discount } from '$lib/types/Discount';
 
@@ -47,18 +49,22 @@ function productPageDiscount(discount: PercentageDiscount) {
 }
 
 async function fetchApplicableDiscount(
-	productId: string,
-	productTagIds: string[],
+	product: DiscountTargetProduct,
 	userSubscriptionIds: string[],
 	user?: UserIdentifier | null
 ) {
+	const productId = product._id;
+	const productTagIds = product.tagIds ?? [];
 	// 1. Existing: subscription-based lookup. Discount applies if product matches by id, by tag,
-	//    or the discount targets the whole catalog.
-	const productTargetMatch = [
-		{ wholeCatalog: true },
-		{ productIds: productId },
-		...(productTagIds.length ? [{ requiredTagIds: { $in: productTagIds } }] : [])
-	];
+	//    or the discount targets the whole catalog — the last two never for a free,
+	//    pay-what-you-want or subscription product (same rule as discountTargetsProduct).
+	const productTargetMatch = isExcludedFromCatalogDiscounts(product)
+		? [{ productIds: productId }]
+		: [
+				{ wholeCatalog: true },
+				{ productIds: productId },
+				...(productTagIds.length ? [{ requiredTagIds: { $in: productTagIds } }] : [])
+		  ];
 	const subscriptionDiscount = await collections.discounts.findOne<PercentageDiscount>(
 		{
 			$and: [
@@ -79,7 +85,7 @@ async function fetchApplicableDiscount(
 	// 2. Auto discounts (condition-based, no subscription needed)
 	const activeDiscounts = await getActivePercentageDiscounts();
 	const applicable = activeDiscounts
-		.filter((d) => discountTargetsProduct(d, { _id: productId, tagIds: productTagIds }))
+		.filter((d) => discountTargetsProduct(d, product))
 		.filter((d) =>
 			evaluateDiscountConditions(d, {
 				userSubscriptionIds,
@@ -295,8 +301,7 @@ export const load = async ({ params, url, parent, locals }) => {
 		.reduce((acc, idAndCount) => acc + idAndCount[1], 0);
 	const freeProductsAvailable = totalFreeProducts - freeProductsInCart;
 	const discount = await fetchApplicableDiscount(
-		productId,
-		product.tagIds ?? [],
+		product,
 		userSubscriptions.map((sub) => sub.productId),
 		userIdentifier(locals)
 	);

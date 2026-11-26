@@ -26,7 +26,16 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	const product = await collections.products.findOne(
 		{ _id: params.id },
-		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1, actionSettings: 1 } }
+		{
+			projection: {
+				price: 1,
+				payWhatYouWant: 1,
+				free: 1,
+				bookingSpec: 1,
+				actionSettings: 1,
+				type: 1
+			}
+		}
 	);
 	// The admin price-history tab reads this endpoint for products the shop does not show yet.
 	const canReadAdminProduct =
@@ -50,7 +59,12 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 	// many orders are scanned; the CSV export covers the full history for auditors.
 	const rangeParam = url.searchParams.get('range') ?? '1m';
 	const windowDays = isCsv ? null : rangeParam in RANGE_DAYS ? RANGE_DAYS[rangeParam] : 30;
-	const history = await getProductPriceHistory(params.id, product.price.currency, windowDays);
+	const history = await getProductPriceHistory(
+		params.id,
+		product.price.currency,
+		windowDays,
+		product.type !== 'subscription'
+	);
 
 	if (isCsv) {
 		const header = 'series,date,price,currency';

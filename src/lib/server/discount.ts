@@ -47,11 +47,19 @@ export async function getActivePercentageDiscounts(): Promise<Discount[]> {
  * Each non-empty condition must pass. Empty/undefined = "true" (no filter).
  */
 export function evaluateDiscountConditions(discount: Discount, ctx: DiscountContext): boolean {
-	if (
-		discount.subscriptionIds?.length &&
-		!discount.subscriptionIds.some((id) => ctx.userSubscriptionIds.includes(id))
-	) {
-		return false;
+	if (discount.subscriptionIds?.length) {
+		const hasActiveSubscription = discount.subscriptionIds.some((id) =>
+			ctx.userSubscriptionIds.includes(id)
+		);
+		// Buying the subscription right now counts, when the shop allows it: otherwise a new
+		// customer has to order the membership, come back logged in, and order again (#2718).
+		const isSubscribingNow =
+			!!discount.acceptSubscriptionInCart &&
+			discount.subscriptionIds.some((id) => ctx.cartItems.some((item) => item.productId === id));
+
+		if (!hasActiveSubscription && !isSubscribingNow) {
+			return false;
+		}
 	}
 
 	if (discount.promoCode && discount.promoCode.toLowerCase() !== ctx.promoCode?.toLowerCase()) {
@@ -112,7 +120,7 @@ export function evaluateDiscountConditions(discount: Discount, ctx: DiscountCont
 }
 
 interface SelectBestItem {
-	product: Pick<Product, '_id' | 'price' | 'tagIds'>;
+	product: Pick<Product, '_id' | 'price' | 'tagIds' | 'type' | 'free' | 'payWhatYouWant'>;
 	quantity: number;
 	customPrice?: { amount: number };
 }
@@ -125,6 +133,22 @@ interface DiscountSavings {
 	totalSaved: number;
 }
 
+export type DiscountTargetProduct = Pick<
+	Product,
+	'_id' | 'tagIds' | 'type' | 'free' | 'payWhatYouWant'
+>;
+
+/**
+ * Free products, pay-what-you-want products and subscriptions are never reached by a discount
+ * on the whole catalog or on a tag, as the admin form says. The product list a discount picks
+ * from already leaves them out, so they can never be discounted at all.
+ */
+export function isExcludedFromCatalogDiscounts(
+	product: Pick<Product, 'type' | 'free' | 'payWhatYouWant'>
+): boolean {
+	return product.type === 'subscription' || !!product.free || !!product.payWhatYouWant;
+}
+
 /**
  * True if the discount targets a given product — either via wholeCatalog,
  * an explicit productIds entry, or any of the requiredTagIds matching the
@@ -133,12 +157,15 @@ interface DiscountSavings {
  */
 export function discountTargetsProduct(
 	discount: Pick<Discount, 'wholeCatalog' | 'productIds' | 'requiredTagIds'>,
-	product: { _id: string; tagIds?: string[] }
+	product: DiscountTargetProduct
 ): boolean {
-	if (discount.wholeCatalog) {
+	if (discount.productIds.includes(product._id)) {
 		return true;
 	}
-	if (discount.productIds.includes(product._id)) {
+	if (isExcludedFromCatalogDiscounts(product)) {
+		return false;
+	}
+	if (discount.wholeCatalog) {
 		return true;
 	}
 	return discount.requiredTagIds?.some((t) => product.tagIds?.includes(t)) ?? false;
@@ -149,8 +176,12 @@ function computeDiscountSavings(
 	discount: PercentageDiscount,
 	items: SelectBestItem[]
 ): DiscountSavings {
-	const eligibleItems = items.filter((item) =>
-		discountTargetsProduct(discount, { _id: item.product._id, tagIds: item.product.tagIds })
+	const eligibleItems = items.filter(
+		(item) =>
+			// A discount brought by a subscription never discounts that subscription itself, whether
+			// it is already held or bought in the same order.
+			!discount.subscriptionIds?.includes(item.product._id) &&
+			discountTargetsProduct(discount, item.product)
 	);
 
 	const discountByProduct = new Map(

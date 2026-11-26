@@ -241,7 +241,8 @@ export function buildPaid(sales: PaidSale[], now: number, priceDigits = 2): Paid
  */
 async function loadPriceFacts(
 	productId: string,
-	target: Currency
+	target: Currency,
+	reachedByWholeCatalog: boolean
 ): Promise<{ segments: BaseSegment[]; windows: PublicDiscountWindow[] }> {
 	const baseLogs = await collections.accountingLogs
 		.find({ objectType: 'product', objectId: productId, eventType: 'productPriceUpdate' })
@@ -264,7 +265,11 @@ async function loadPriceFacts(
 		.find({
 			eventType: 'discountPublicPriceChange',
 			objectType: 'discount',
-			$or: [{ 'after.wholeCatalog': true }, { 'after.productIds': productId }]
+			$or: [
+				// A whole-catalog discount never reaches a subscription (see discountTargetsProduct).
+				...(reachedByWholeCatalog ? [{ 'after.wholeCatalog': true }] : []),
+				{ 'after.productIds': productId }
+			]
 		})
 		.sort({ createdAt: 1 })
 		.toArray();
@@ -387,7 +392,8 @@ async function loadPaidSales(
 export async function getProductPriceHistory(
 	productId: string,
 	productCurrency: Currency,
-	windowDays: number | null = null
+	windowDays: number | null = null,
+	reachedByWholeCatalog = true
 ): Promise<PriceHistory> {
 	const now = Date.now();
 	// Catalogue (history tab): the product's own currency, as defined & saved in the price logs.
@@ -398,7 +404,7 @@ export async function getProductPriceHistory(
 	// Bound the (heavy) paid-orders query to the requested window; null = all history.
 	const since = windowDays && windowDays > 0 ? subDays(new Date(now), windowDays) : null;
 	const [{ segments, windows }, sales] = await Promise.all([
-		loadPriceFacts(productId, productCurrency),
+		loadPriceFacts(productId, productCurrency, reachedByWholeCatalog),
 		loadPaidSales(productId, paidCurrency, useAccounting, since)
 	]);
 

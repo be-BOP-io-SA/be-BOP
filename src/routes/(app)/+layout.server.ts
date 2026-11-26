@@ -127,6 +127,7 @@ export async function load(params) {
 							| 'applyDeliveryFeesOnlyOnce'
 							| 'requireSpecificDeliveryFee'
 							| 'payWhatYouWant'
+							| 'free'
 							| 'standalone'
 							| 'maxQuantityPerOrder'
 							| 'stock'
@@ -155,6 +156,7 @@ export async function load(params) {
 						applyDeliveryFeesOnlyOnce: 1,
 						requireSpecificDeliveryFee: 1,
 						payWhatYouWant: 1,
+						free: 1,
 						standalone: 1,
 						maxQuantityPerOrder: 1,
 						stock: 1,
