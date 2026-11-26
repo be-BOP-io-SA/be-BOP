@@ -2,7 +2,12 @@ import { ORDER_PAYMENT_STATUSES, type OrderPaymentStatus } from '$lib/types/Orde
 import { DELAY_MULTIPLIERS } from '$lib/utils/delayMultipliers';
 import { ORIGIN } from '$lib/server/env-config';
 import { collections } from '$lib/server/database';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import {
+	CUSTOMER_ALWAYS_EMAILED,
+	ORDER_EMAIL_TEMPLATE_KEYS,
+	orderEmailRecipientsFor,
+	runtimeConfig
+} from '$lib/server/runtime-config';
 import { CURRENCIES } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { typedKeys } from '$lib/utils/typedKeys.js';
@@ -76,6 +81,10 @@ export async function load(event) {
 		physicalCartMinAmount: runtimeConfig.physicalCartMinAmount,
 		accountingCurrency: runtimeConfig.accountingCurrency,
 		copyOrderEmailsToAdmin: runtimeConfig.copyOrderEmailsToAdmin,
+		orderEmailRecipients: Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [key, orderEmailRecipientsFor(key)])
+		),
+		customerAlwaysEmailed: CUSTOMER_ALWAYS_EMAILED as readonly string[],
 		disableLanguageSelector: runtimeConfig.disableLanguageSelector,
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
 		cartPreviewInteractive: runtimeConfig.cartPreviewInteractive,
@@ -201,6 +210,10 @@ export const actions = {
 				locals.user?.roleId === SUPER_ADMIN_ROLE_ID
 					? result.analyticsScriptSnippet
 					: runtimeConfig.analyticsScriptSnippet,
+			// Disabled without a contact address, so not submitted: keep the saved value.
+			copyOrderEmailsToAdmin: runtimeConfig.sellerIdentity?.contact.email
+				? result.copyOrderEmailsToAdmin
+				: runtimeConfig.copyOrderEmailsToAdmin,
 			secondaryCurrency: result.secondaryCurrency || null,
 			accountingCurrency: result.accountingCurrency || null,
 			cartMaxSeparateItems: result.cartMaxSeparateItems || null
@@ -315,6 +328,29 @@ export const actions = {
 		if (JSON.stringify(runtimeConfig.dataCleanup) !== JSON.stringify(dataCleanup)) {
 			runtimeConfig.dataCleanup = dataCleanup;
 			await persistConfigElement('dataCleanup', dataCleanup);
+		}
+
+		const hasShopEmail = !!runtimeConfig.sellerIdentity?.contact.email;
+		const orderEmailRecipients = Object.fromEntries(
+			ORDER_EMAIL_TEMPLATE_KEYS.map((key) => [
+				key,
+				{
+					// A locked box is disabled on the page, so it is not submitted.
+					customer:
+						CUSTOMER_ALWAYS_EMAILED.includes(key) || formData.get(`customer:${key}`) === 'on',
+					// Without a contact address the shop column is disabled, so it is not submitted.
+					shop: hasShopEmail
+						? formData.get(`shop:${key}`) === 'on'
+						: orderEmailRecipientsFor(key).shop
+				}
+			])
+		);
+
+		if (
+			JSON.stringify(runtimeConfig.orderEmailRecipients) !== JSON.stringify(orderEmailRecipients)
+		) {
+			runtimeConfig.orderEmailRecipients = orderEmailRecipients;
+			await persistConfigElement('orderEmailRecipients', orderEmailRecipients);
 		}
 
 		if (oldAdminHash !== result.adminHash) {
