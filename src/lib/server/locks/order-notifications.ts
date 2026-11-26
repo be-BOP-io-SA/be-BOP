@@ -46,7 +46,7 @@ const PENDING_PAYMENT_TEMPLATE = {
 	custom: 'order.payment.pending.custom',
 	'point-of-sale': null,
 	free: null
-} satisfies Record<PaymentMethod, EmailTemplateKey | null>;
+} satisfies Record<PaymentMethod, OrderEmailTemplateKey | null>;
 
 const lock = new Lock('order-notifications');
 
