@@ -202,6 +202,9 @@ export interface PaymentProcessorDefinition {
 	 */
 	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
 
+	/** Receives this processor's pending payments on every order loop turn; `[]` means stop watching. */
+	watchPendingPayments?(payments: Order['payments'][number][]): void;
+
 	/** What its form on the pay page receives. It reaches the buyer's browser: never a credential. */
 	payData?(payment: Order['payments'][number]): unknown;
 }
@@ -302,6 +305,39 @@ export function tapToPayProcessors(): PaymentProcessor[] {
 	return allProcessors()
 		.filter((pp) => pp.tapToPay)
 		.map((pp) => pp.meta.processor);
+}
+
+/**
+ * The enabled processor that follows a pending payment. Processor and method must both match,
+ * so tap-to-pay (stripe, point-of-sale) skips the Stripe processor. Unlike `processorFor`, a
+ * payment with no recorded processor gets none: nothing shown to a buyer depends on it.
+ */
+export function watchingProcessorFor(
+	payment: Order['payments'][number],
+	isEnabled = (pp: PaymentProcessorDefinition) => pp.isEnabled()
+): PaymentProcessorDefinition | undefined {
+	const pp = payment.processor ? registry.get(payment.processor) : undefined;
+	return pp && pp.meta.method === payment.method && isEnabled(pp) ? pp : undefined;
+}
+
+/** Pass no orders to make every processor stop watching, e.g. when this instance loses the lock. */
+export function dispatchPendingPayments(orders: Order[]): void {
+	const pending = orders.flatMap((order) => order.payments.filter((p) => p.status === 'pending'));
+	for (const pp of registry.values()) {
+		if (!pp.watchPendingPayments) {
+			continue;
+		}
+		// isEnabled can derive an address, too costly to repeat for every payment on every turn.
+		const enabled = pp.isEnabled();
+		const payments = pending.filter(
+			(payment) => watchingProcessorFor(payment, (candidate) => candidate === pp && enabled) === pp
+		);
+		try {
+			pp.watchPendingPayments(payments);
+		} catch (err) {
+			console.error(`${pp.meta.processor} failed to watch pending payments:`, err);
+		}
+	}
 }
 
 export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorDefinition[] {
