@@ -231,8 +231,8 @@ describe('cart', () => {
 			});
 		});
 
-		// #2649: whatever the reason an order carries no VAT, a delivery fee entered VAT included
-		// is billed as entered, and nothing is taxed.
+		// #2649: a shop without VAT bills a VAT-included fee as entered. A shop that charges VAT
+		// takes the VAT out of it, then leaves it off an order that is exempt.
 		describe('delivery fees entered VAT included', () => {
 			const shippedItem = {
 				product: {
@@ -262,7 +262,7 @@ describe('cart', () => {
 				expect(priceInfo.totalVat).toBe(400);
 			});
 
-			it('bills the fee as entered, with no VAT, when the shop or the order is VAT exempt', () => {
+			it('bills the fee as entered, with no VAT, when the shop has VAT disabled', () => {
 				const priceInfo = computePriceInfo([shippedItem], {
 					...base,
 					userCountry: 'FR',
@@ -275,15 +275,27 @@ describe('cart', () => {
 				expect(priceInfo.vatRates).toEqual([0]);
 			});
 
-			it('bills the fee as entered, with no VAT, when delivering outside the seller country', () => {
+			it('takes the VAT out of the fee and charges none on an order ticked VAT free', () => {
+				const priceInfo = computePriceInfo([shippedItem], {
+					...base,
+					userCountry: 'FR',
+					vatExempted: false,
+					vatFreeOrder: true,
+					vatNullOutsideSellerCountry: false
+				});
+				expect(priceInfo.totalPrice).toBe(2000);
+				expect(priceInfo.totalPriceWithVat).toBe(2000);
+				expect(priceInfo.totalVat).toBe(0);
+			});
+
+			it('takes the VAT out of the fee and charges none outside the seller country', () => {
 				const priceInfo = computePriceInfo([shippedItem], {
 					...base,
 					userCountry: 'CH',
 					vatExempted: false,
 					vatNullOutsideSellerCountry: true
 				});
-				expect(priceInfo.totalPrice).toBe(2200);
-				expect(priceInfo.totalPriceWithVat).toBe(2200);
+				expect(priceInfo.totalPrice).toBeCloseTo(2110.08, 2);
 				expect(priceInfo.totalVat).toBe(0);
 			});
 		});
