@@ -19,3 +19,6 @@ docker-compose.override.yml
 playwright/.auth
 /test-results
 /playwright-report
+
+# Vitest JSON report output
+.vitest

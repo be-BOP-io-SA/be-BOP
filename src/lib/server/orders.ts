@@ -11,10 +11,9 @@ import { ClientSession, ObjectId, type WithId } from 'mongodb';
 import { collections, withTransaction } from './database';
 import { firePaidOrderWebhooks, stripPaidOrderWebhook } from './order-paid-webhook';
 import {
-	Duration,
+	type Duration,
 	add,
 	addDays,
-	addHours,
 	addMinutes,
 	differenceInMinutes,
 	eachDayOfInterval,
@@ -48,20 +47,32 @@ import { type Cart } from '$lib/types/Cart';
 import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
 import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { sumCurrency } from '$lib/utils/sumCurrency';
+// Every payment now resolves through the registry, so loading it is this module's business
+// rather than something the request hooks happen to have done first.
+import './sdk/pp-registry';
+import {
+	bookAmount,
+	bookSet,
+	commonBookCurrencies,
+	orderBookCurrencies,
+	paymentPriceSnapshot,
+	type BookAxis
+} from './orderBookkeeping';
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { handleOrderTabAfterPayment } from './orderTab';
 import { userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { escapeHtml } from '$lib/utils/escapeHtml';
 import { convertAmountToCurrencyForStorage } from '$lib/utils/toStorageCurrency';
-import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
+import { restrictToProducts } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
-import { isPhoenixdConfigured } from './phoenixd';
 import type { Discount } from '$lib/types/Discount';
 import {
 	collectUserAddresses,
@@ -72,6 +83,7 @@ import {
 import { groupByNonPartial } from '$lib/utils/group-by';
 import {
 	dayList,
+	closingMinute,
 	minutesToTime,
 	productToScheduleId,
 	scheduleToProductId,
@@ -192,6 +204,45 @@ export async function onOrderPayment(
 
 	payment.status = 'paid'; // for isOrderFullyPaid
 	payment.paidAt = paidAt;
+
+	const bookCurrencies = commonBookCurrencies(order, payment);
+
+	const previouslyPaidIn = (currency: Currency, axis: BookAxis): Price => ({
+		currency,
+		amount: sumCurrency(
+			currency,
+			order.payments
+				.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
+				.map((p) => p.currencySnapshot[axis]?.price)
+				.filter((p) => p !== undefined)
+		)
+	});
+
+	const remainingToPayIn = (currency: Currency, axis: BookAxis): Price => {
+		const orderTotal = order.currencySnapshot[axis]?.totalPrice;
+
+		return {
+			currency,
+			amount: sumCurrency(currency, [
+				...(orderTotal ? [orderTotal] : []),
+				...order.payments
+					.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
+					.map((p) => p.currencySnapshot[axis]?.price)
+					.filter((p) => p !== undefined)
+					.map((p) => ({ currency: p.currency, amount: -p.amount }))
+			])
+		};
+	};
+
+	// The order's frozen currency, never the live config: a shop changing currency
+	// mid-order must not split `price` and `totalReceived` across two of them.
+	const totalReceivedIn = (currency: Currency, axis: BookAxis): Price => ({
+		currency,
+		amount:
+			toCurrency(currency, received.amount, received.currency) +
+			(order.currencySnapshot[axis]?.totalReceived?.amount ?? 0)
+	});
+
 	const fn = async (session: ClientSession) => {
 		// Taken inside the transaction that stores it: anything failing afterwards rolls the
 		// counter back instead of leaving a gap in the numbering. `maintainOrders` re-polls the
@@ -233,198 +284,23 @@ export async function onOrderPayment(
 					'payments.$.received': received,
 					...(params?.fees && {
 						'payments.$.fees': params.fees,
-						'payments.$.currencySnapshot.main.fees': {
-							currency: payment.currencySnapshot.main.price.currency,
-							amount: toCurrency(
-								payment.currencySnapshot.main.price.currency,
-								params.fees.amount,
-								params.fees.currency
-							)
-						},
-						...(payment.currencySnapshot.secondary && {
-							'payments.$.currencySnapshot.secondary.fees': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									params.fees.amount,
-									params.fees.currency
-								)
-							}
-						}),
-						'payments.$.currencySnapshot.priceReference.fees': {
-							currency: payment.currencySnapshot.priceReference.price.currency,
-							amount: toCurrency(
-								payment.currencySnapshot.priceReference.price.currency,
-								params.fees.amount,
-								params.fees.currency
-							)
-						},
-						...(payment.currencySnapshot.accounting && {
-							'payments.$.currencySnapshot.accounting.fees': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									params.fees.amount,
-									params.fees.currency
-								)
-							}
-						})
+						...bookSet(bookCurrencies, 'payments.$.currencySnapshot', 'fees', params.fees)
 					}),
-					'payments.$.currencySnapshot.main.previouslyPaid': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: sumCurrency(
-							payment.currencySnapshot.main.price.currency,
-							order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-								.map((p) => p.currencySnapshot.main.price)
-						)
-					},
-					'payments.$.currencySnapshot.main.remainingToPay': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: sumCurrency(payment.currencySnapshot.main.price.currency, [
-							order.currencySnapshot.main.totalPrice,
-							...order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-								.map((p) => p.currencySnapshot.main.price)
-								.map((p) => ({ currency: p.currency, amount: -p.amount }))
-						])
-					},
-					'payments.$.currencySnapshot.main.received': {
-						currency: payment.currencySnapshot.main.price.currency,
-						amount: toCurrency(
-							payment.currencySnapshot.main.price.currency,
-							received.amount,
-							received.currency
-						)
-					},
-					'payments.$.currencySnapshot.priceReference.previouslyPaid': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: sumCurrency(
-							payment.currencySnapshot.priceReference.price.currency,
-							order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-								.map((p) => p.currencySnapshot.priceReference.price)
-						)
-					},
-					'payments.$.currencySnapshot.priceReference.remainingToPay': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: sumCurrency(payment.currencySnapshot.priceReference.price.currency, [
-							order.currencySnapshot.priceReference.totalPrice,
-							...order.payments
-								.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-								.map((p) => p.currencySnapshot.priceReference.price)
-								.map((p) => ({ currency: p.currency, amount: -p.amount }))
-						])
-					},
-					'payments.$.currencySnapshot.priceReference.received': {
-						currency: payment.currencySnapshot.priceReference.price.currency,
-						amount: toCurrency(
-							payment.currencySnapshot.priceReference.price.currency,
-							received.amount,
-							received.currency
-						)
-					},
-					...(payment.currencySnapshot.secondary &&
-						order.currencySnapshot.secondary && {
-							'payments.$.currencySnapshot.secondary.previouslyPaid': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: sumCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-										.map((p) => p.currencySnapshot.secondary?.price)
-										.filter((p) => p !== undefined)
-								)
-							},
-							'payments.$.currencySnapshot.secondary.remainingToPay': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: sumCurrency(payment.currencySnapshot.secondary.price.currency, [
-									order.currencySnapshot.secondary.totalPrice,
-									...order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-										.map((p) => p.currencySnapshot.secondary?.price)
-										.filter((p) => p !== undefined)
-										.map((p) => ({ currency: p.currency, amount: -p.amount }))
-								])
-							},
-							'payments.$.currencySnapshot.secondary.received': {
-								currency: payment.currencySnapshot.secondary.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.secondary.price.currency,
-									received.amount,
-									received.currency
-								)
-							}
-						}),
-					...(payment.currencySnapshot.accounting &&
-						order.currencySnapshot.accounting && {
-							'payments.$.currencySnapshot.accounting.previouslyPaid': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: sumCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt < paidAt)
-										.map((p) => p.currencySnapshot.accounting?.price)
-										.filter((p) => p !== undefined)
-								)
-							},
-							'payments.$.currencySnapshot.accounting.remainingToPay': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: sumCurrency(payment.currencySnapshot.accounting.price.currency, [
-									order.currencySnapshot.accounting.totalPrice,
-									...order.payments
-										.filter((p) => p.status === 'paid' && p.paidAt && p.paidAt <= paidAt)
-										.map((p) => p.currencySnapshot.accounting?.price)
-										.filter((p) => p !== undefined)
-										.map((p) => ({ currency: p.currency, amount: -p.amount }))
-								])
-							},
-							'payments.$.currencySnapshot.accounting.received': {
-								currency: payment.currencySnapshot.accounting.price.currency,
-								amount: toCurrency(
-									payment.currencySnapshot.accounting.price.currency,
-									received.amount,
-									received.currency
-								)
-							}
-						}),
+					...bookSet(
+						bookCurrencies,
+						'payments.$.currencySnapshot',
+						'previouslyPaid',
+						previouslyPaidIn
+					),
+					...bookSet(
+						bookCurrencies,
+						'payments.$.currencySnapshot',
+						'remainingToPay',
+						remainingToPayIn
+					),
+					...bookSet(bookCurrencies, 'payments.$.currencySnapshot', 'received', received),
 					'payments.$.transactions': payment.transactions,
-					'currencySnapshot.main.totalReceived': {
-						amount:
-							toCurrency(
-								order.currencySnapshot.main.totalReceived?.currency ?? runtimeConfig.mainCurrency,
-								received.amount,
-								received.currency
-							) + (order.currencySnapshot.main.totalReceived?.amount ?? 0),
-						currency:
-							order.currencySnapshot.main.totalReceived?.currency ?? runtimeConfig.mainCurrency
-					},
-					...(runtimeConfig.secondaryCurrency && {
-						'currencySnapshot.secondary.totalReceived': {
-							amount:
-								toCurrency(
-									order.currencySnapshot.secondary?.totalReceived?.currency ??
-										runtimeConfig.secondaryCurrency,
-									received.amount,
-									received.currency
-								) + (order.currencySnapshot.secondary?.totalReceived?.amount ?? 0),
-							currency:
-								order.currencySnapshot.secondary?.totalReceived?.currency ??
-								runtimeConfig.secondaryCurrency
-						}
-					}),
-					'currencySnapshot.priceReference.totalReceived': {
-						amount:
-							toCurrency(
-								order.currencySnapshot.priceReference.totalReceived?.currency ??
-									runtimeConfig.priceReferenceCurrency,
-								received.amount,
-								received.currency
-							) + (order.currencySnapshot.priceReference.totalReceived?.amount ?? 0),
-						currency:
-							order.currencySnapshot.priceReference.totalReceived?.currency ??
-							runtimeConfig.priceReferenceCurrency
-					},
+					...bookSet(bookCurrencies, 'currencySnapshot', 'totalReceived', totalReceivedIn),
 					updatedAt: new Date()
 				}
 			},
@@ -437,7 +313,19 @@ export async function onOrderPayment(
 
 		order = ret.value;
 		if (order.status === 'paid') {
-			await updateAfterOrderPaid(order, session);
+			// Claim the transition before issuing anything: free payments reach here twice by
+			// design, and two split payments can each cover the full total and both be confirmed.
+			// Tickets, stock decrements and subscription cycles do not survive being applied twice.
+			const claimed = await collections.orders.findOneAndUpdate(
+				{ _id: order._id, paidEffectsAppliedAt: { $exists: false } },
+				{ $set: { paidEffectsAppliedAt: new Date() } },
+				{ returnDocument: 'after', session }
+			);
+
+			if (claimed.value) {
+				order = claimed.value;
+				await updateAfterOrderPaid(order, session);
+			}
 		}
 
 		if (!alreadyPaid) {
@@ -527,7 +415,8 @@ export async function onOrderPaymentFailed(
 	const ret = await collections.orders.findOneAndUpdate(
 		{
 			_id: order._id,
-			'payments._id': payment._id
+			// The caller's copy may predate a settlement: never let it overwrite a paid payment.
+			payments: { $elemMatch: { _id: payment._id, status: { $in: ['pending', 'failed'] } } }
 		},
 		{
 			$set: {
@@ -579,7 +468,7 @@ export async function onOrderPaymentFailed(
 		}
 	}
 	if (!ret.value) {
-		throw new Error('Failed to update order');
+		throw error(409, 'Payment is no longer pending');
 	}
 	if (
 		order.status !== ret.value.status &&
@@ -767,6 +656,35 @@ export async function lastInvoiceNumber(session?: ClientSession): Promise<number
 	)?.invoiceNumber;
 }
 
+// The justification and the login are typed by staff, and the owner reads this mail as an audit
+// trail, so they must not be able to add markup to it.
+export function discountAlertHtml(params: {
+	amount: string;
+	discountInSats: number;
+	orderId: string;
+	orderNumber: number;
+	total: string;
+	userLogin?: string;
+	justification?: string;
+}): string {
+	return `A discount of ${params.amount} (${
+		params.discountInSats
+	} SAT) has been applied to the <a href="${ORIGIN}/order/${params.orderId}">order ${
+		params.orderNumber
+	}</a> (${params.total}). The discount was applied by ${escapeHtml(
+		params.userLogin ?? ''
+	)}. Justification: ${escapeHtml(params.justification ?? '-')} `;
+}
+
+// A till sells under the cashier's account, so a subscription is bought from the product page.
+export function sellsSubscriptionAtTill(
+	user: UserIdentifier,
+	products: Array<Pick<Product, 'type'>>
+): boolean {
+	const soldAtTill = user.userHasPosOptions || user.userRoleId === POS_ROLE_ID;
+	return !!soldAtTill && products.some((product) => product.type === 'subscription');
+}
+
 export async function createOrder(
 	items: Array<{
 		_id?: ObjectId;
@@ -826,8 +744,39 @@ export async function createOrder(
 		channel?: import('$lib/types/Discount').DiscountChannel;
 	}
 ): Promise<Order['_id']> {
+	// Every channel creates orders through here, so none can forget a product's restriction.
+	if (
+		paymentMethod &&
+		!restrictToProducts(
+			[paymentMethod],
+			items.map((item) => item.product)
+		).length
+	) {
+		throw error(400, 'Payment method not available for these products');
+	}
+
+	if (
+		sellsSubscriptionAtTill(
+			params.user,
+			items.map((item) => item.product)
+		)
+	) {
+		throw error(400, 'Subscriptions are not sold at the point of sale');
+	}
+
 	const npubAddress = params.notifications?.paymentStatus?.npub;
 	const email = params.notifications?.paymentStatus?.email;
+
+	// The order is filed under the notification address too (see `user` on the document below), and
+	// that is the identity the payment later credits the subscription to. Deciding the price from
+	// the session alone would let a new session with the same address buy at the intro price for
+	// ever while extending the same subscription. Deliberately not used for discount eligibility:
+	// there, honouring a self-asserted address would hand over someone else's subscriber pricing.
+	const subscriptionUser: UserIdentifier = {
+		...params.user,
+		...(!params.user.email && email && { email }),
+		...(!params.user.npub && npubAddress && { npub: npubAddress })
+	};
 
 	// With no contact mode available, checkout asks for an email anyway, for the staff to use
 	const canBeNotified = !!(
@@ -984,7 +933,7 @@ export async function createOrder(
 			continue;
 		}
 		const existing = await collections.paidSubscriptions.findOne(
-			{ ...userQuery(params.user), productId: item.product._id },
+			{ ...userQuery(subscriptionUser), productId: item.product._id },
 			{
 				projection: { pricingScheduleSnapshot: 1, pricingScheduleCursor: 1 },
 				session: params.session
@@ -1051,8 +1000,9 @@ export async function createOrder(
 				const toUse = Math.min(quantityToConsume, subAvailable);
 				quantityToConsume -= toUse;
 
-				await collections.paidSubscriptions.updateOne(
-					{ _id: sub._id },
+				// The read above can be stale when two orders draw on the same allowance at once.
+				const consumed = await collections.paidSubscriptions.updateOne(
+					{ _id: sub._id, [`freeProductsById.${item.product._id}.available`]: { $gte: toUse } },
 					{
 						$inc: {
 							[`freeProductsById.${item.product._id}.used`]: toUse,
@@ -1064,6 +1014,9 @@ export async function createOrder(
 					},
 					{ session: params.session }
 				);
+				if (!consumed.modifiedCount) {
+					throw error(409, 'Free product allowance changed, please try again');
+				}
 
 				usedSources.push({ subscriptionId: sub._id, quantity: toUse });
 			}
@@ -1108,7 +1061,7 @@ export async function createOrder(
 
 		const existingSubscription = await collections.paidSubscriptions.findOne(
 			{
-				...userQuery(params.user),
+				...userQuery(subscriptionUser),
 				productId: product._id
 			},
 			{ session: params.session }
@@ -1126,12 +1079,15 @@ export async function createOrder(
 			}
 		}
 
+		// `payment` was replaced by the `payments` array long ago, so this filter matched nothing
+		// and the guard never fired — letting a buyer stack unpaid orders that each snapshot the
+		// pricing schedule's intro phase, then pay them all at the intro price.
 		if (
 			await collections.orders.countDocuments(
 				{
-					...userQuery(params.user),
+					...userQuery(subscriptionUser),
 					'items.product._id': product._id,
-					'payment.status': 'pending'
+					status: 'pending'
 				},
 				{ limit: 1 }
 			)
@@ -1157,17 +1113,17 @@ export async function createOrder(
 	}
 
 	for (const item of items) {
-		if (
-			item.product.variations?.length &&
-			!item.product.payWhatYouWant &&
-			checkProductVariationsIntegrity(item.product, item.chosenVariations)
-		) {
+		if (!item.product.variations?.length) {
+			continue;
+		}
+		if (!checkProductVariationsIntegrity(item.product, item.chosenVariations)) {
+			throw error(400, 'error matching on variations choice');
+		}
+		if (!item.product.payWhatYouWant) {
 			item.customPrice = {
 				amount: productPriceWithVariations(item.product, item.chosenVariations),
 				currency: item.product.price.currency
 			};
-		} else if (item.product.variations?.length && !item.product.payWhatYouWant) {
-			throw error(400, 'error matching on variations choice');
 		}
 	}
 	const physicalCartMinAmount = runtimeConfig.physicalCartMinAmount;
@@ -1290,7 +1246,7 @@ export async function createOrder(
 							)}) before the scheduled opening time (${daySpec.start})`
 						);
 					}
-					if (minutesEnd > (daySpec.end === '00:00' ? timeToMinutes(daySpec.end) : 24 * 60)) {
+					if (minutesEnd > closingMinute(daySpec.end)) {
 						throw error(
 							400,
 							`Product ${productById[productId].name} booking time range ends (${minutesToTime(
@@ -1391,6 +1347,15 @@ export async function createOrder(
 		: undefined;
 
 	await withTransaction(async (session) => {
+		if (params.cart) {
+			// Parallel checkouts of one cart all pass the stock and pending-order checks above: only
+			// the one that removes the cart may place its order, and a retried loser finds it gone.
+			const claimed = await collections.carts.deleteOne({ _id: params.cart._id }, { session });
+			if (!claimed.deletedCount) {
+				throw error(409, 'This cart has already been checked out');
+			}
+		}
+
 		const orderNumber = await generateOrderNumber(session);
 
 		if (discount && params.discount && params.user.userHasPosOptions) {
@@ -1400,19 +1365,19 @@ export async function createOrder(
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					subject: 'NEW DISCOUNT',
-					htmlContent: `A discount of ${params?.discount?.amount}${
-						params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
-					} (${toCurrency(
-						'SAT',
-						priceInfo.discount,
-						priceInfo.currency
-					)} SAT) has been applied to the <a href="${ORIGIN}/order/${orderId}">order ${orderNumber}</a> (${toCurrency(
-						runtimeConfig.mainCurrency,
-						totalSatoshis,
-						'SAT'
-					)}${runtimeConfig.mainCurrency}). The discount was applied by ${
-						params.user.userLogin
-					}. Justification: ${params?.discount?.justification ?? '-'} `,
+					htmlContent: discountAlertHtml({
+						amount: `${params.discount.amount}${
+							params.discount.type === 'fiat' ? runtimeConfig.mainCurrency : '%'
+						}`,
+						discountInSats: toCurrency('SAT', priceInfo.discount, priceInfo.currency),
+						orderId,
+						orderNumber,
+						total: `${toCurrency(runtimeConfig.mainCurrency, totalSatoshis, 'SAT')}${
+							runtimeConfig.mainCurrency
+						}`,
+						userLogin: params.user.userLogin,
+						justification: params.discount.justification
+					}),
 					dest: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
 				},
 				{ session }
@@ -1649,6 +1614,7 @@ export async function createOrder(
 						type: params.discount.type
 					}
 				}),
+			...(bestAutoDiscount && { appliedAutoDiscountId: bestAutoDiscount.discount._id }),
 			...(params.clientIp && { clientIp: params.clientIp }),
 			currencySnapshot: {
 				main: {
@@ -1848,10 +1814,11 @@ export async function createOrder(
 			}),
 			...(params.engagements && { engagements: params.engagements }),
 			...(params.onLocation !== undefined && { onLocation: params.onLocation }),
+			// A checkout that lost the race for this cart finds the winner's order through it.
+			...(params.cart && { cartId: params.cart._id }),
 			...(params.cart?.orderTabSlug && {
 				orderTabSlug: params.cart.orderTabSlug,
 				orderTabId: params.cart.orderTabId,
-				cartId: params.cart._id,
 				splitMode: params.cart.splitMode
 			}),
 			...(params.peopleCountFromPosUi !== undefined && {
@@ -2002,40 +1969,30 @@ async function generatePaymentInfo(params: {
 	meta?: unknown;
 	processor?: PaymentProcessor;
 }> {
-	// SDK branch — handles bitcoin, lightning, card, paypal
 	const pp = resolveProcessor(params.method);
-	if (pp) {
-		try {
-			const result = await pp.createPayment({
-				orderId: params.orderId,
-				orderNumber: params.orderNumber,
-				paymentId: params.paymentId.toHexString(),
-				toPay: params.toPay,
-				expiresAt: params.expiresAt
-			});
-			return { ...result, processor: pp.meta.processor };
-		} catch (err) {
-			throw new PaymentGenerationError(
-				params.method,
-				err instanceof Error ? err.message : 'Payment creation failed',
-				err
-			);
-		}
+
+	if (!pp) {
+		throw new PaymentGenerationError(
+			params.method,
+			`No payment processor available for method ${params.method}`
+		);
 	}
 
-	// Fallback for methods without SDK: point-of-sale, free, bank-transfer, custom
-	switch (params.method) {
-		case 'point-of-sale':
-		case 'free':
-		case 'custom':
-			return {};
-		case 'bank-transfer':
-			return { address: runtimeConfig.sellerIdentity?.bank?.iban };
-		default:
-			throw new PaymentGenerationError(
-				params.method,
-				`No payment processor available for method ${params.method}`
-			);
+	try {
+		const result = await pp.createPayment({
+			orderId: params.orderId,
+			orderNumber: params.orderNumber,
+			paymentId: params.paymentId.toHexString(),
+			toPay: params.toPay,
+			expiresAt: params.expiresAt
+		});
+		return { ...result, processor: pp.meta.processor };
+	} catch (err) {
+		throw new PaymentGenerationError(
+			params.method,
+			err instanceof Error ? err.message : 'Payment creation failed',
+			err
+		);
 	}
 }
 
@@ -2043,39 +2000,25 @@ export function paymentMethodExpiration(
 	paymentMethod: PaymentMethod,
 	opts?: { paymentTimeout?: number }
 ) {
-	return paymentMethod === 'point-of-sale' ||
-		paymentMethod === 'bank-transfer' ||
-		paymentMethod === 'custom'
-		? undefined
-		: paymentMethod === 'lightning' &&
-		  isPhoenixdConfigured() &&
-		  (opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout) > 60
-		? addHours(new Date(), 1)
-		: addMinutes(new Date(), opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout);
+	const timeout = opts?.paymentTimeout ?? runtimeConfig.desiredPaymentTimeout;
+	const declared = resolveProcessor(paymentMethod)?.expiresIn?.(timeout);
+
+	// `null` is a processor saying the payment never expires; absent is no opinion.
+	return declared === null ? undefined : declared ?? addMinutes(new Date(), timeout);
 }
 
-function paymentPrice(paymentMethod: PaymentMethod, price: Price): Price {
+/** Currency a payment via this method is denominated in. */
+function settlementCurrency(paymentMethod: PaymentMethod): Currency {
 	const pp = resolveProcessor(paymentMethod);
-	if (pp) {
-		return pp.paymentPrice(price);
+
+	if (!pp) {
+		throw new PaymentGenerationError(
+			paymentMethod,
+			`No payment processor configured for method ${paymentMethod}`
+		);
 	}
 
-	// Non-SDK methods use mainCurrency
-	switch (paymentMethod) {
-		case 'point-of-sale':
-		case 'free':
-		case 'bank-transfer':
-		case 'custom':
-			return {
-				amount: toCurrency(runtimeConfig.mainCurrency, price.amount, price.currency),
-				currency: runtimeConfig.mainCurrency
-			};
-		default:
-			throw new PaymentGenerationError(
-				paymentMethod,
-				`No payment processor configured for method ${paymentMethod}`
-			);
-	}
+	return pp.settlementCurrency();
 }
 
 export async function addOrderPayment(
@@ -2106,10 +2049,8 @@ export async function addOrderPayment(
 	}
 
 	// We reuse the same currencies as previous payments
-	const mainCurrency = order.currencySnapshot.main.totalPrice.currency;
-	const secondaryCurrency = order.currencySnapshot.secondary?.totalPrice.currency;
-	const priceReferenceCurrency = order.currencySnapshot.priceReference.totalPrice.currency;
-	const accountingCurrency = order.currencySnapshot.accounting?.totalPrice.currency;
+	const bookCurrencies = orderBookCurrencies(order);
+	const mainCurrency = bookCurrencies.main;
 
 	const remainingAmount = orderAmountWithNoPaymentsCreated(order, {
 		ignorePendingPayments: opts?.ignorePendingPayments
@@ -2122,6 +2063,16 @@ export async function addOrderPayment(
 	if (paymentMethod !== 'free' && priceToPay.amount < CURRENCY_UNIT[priceToPay.currency]) {
 		throw error(400, 'Order already fully paid');
 	}
+
+	// A free payment settles itself instantly, so it may only ever cover nothing: any caller
+	// offering it on an order that still owes money would hand out a free order.
+	if (paymentMethod === 'free' && priceToPay.amount >= CURRENCY_UNIT[priceToPay.currency]) {
+		throw error(400, "You can't use free payment method on this order");
+	}
+
+	// Converted once here so the amount recorded and the amount asked of the provider
+	// cannot be computed from two different exchange rates.
+	const toPay = bookAmount(settlementCurrency(paymentMethod), priceToPay);
 
 	const paymentId = new ObjectId();
 	const expiresAt =
@@ -2150,45 +2101,16 @@ export async function addOrderPayment(
 		status: isFreePayment ? 'paid' : 'pending',
 		...(paidAt && { paidAt }),
 		method: paymentMethod,
-		price: paymentPrice(paymentMethod, priceToPay),
+		price: toPay,
 		...(paymentMethod === 'point-of-sale' && opts?.posSubtype && { posSubtype: opts.posSubtype }),
 		...(customPaymentMethod && { customPaymentMethod }),
-		currencySnapshot: {
-			main: {
-				price: {
-					amount: toCurrency(mainCurrency, priceToPay.amount, priceToPay.currency),
-					currency: mainCurrency
-				}
-			},
-			...(secondaryCurrency && {
-				secondary: {
-					price: {
-						amount: toCurrency(secondaryCurrency, priceToPay.amount, priceToPay.currency),
-						currency: secondaryCurrency
-					}
-				}
-			}),
-			...(accountingCurrency && {
-				accounting: {
-					price: {
-						amount: toCurrency(accountingCurrency, priceToPay.amount, priceToPay.currency),
-						currency: accountingCurrency
-					}
-				}
-			}),
-			priceReference: {
-				price: {
-					amount: toCurrency(priceReferenceCurrency, priceToPay.amount, priceToPay.currency),
-					currency: priceReferenceCurrency
-				}
-			}
-		},
+		currencySnapshot: paymentPriceSnapshot(bookCurrencies, priceToPay),
 		...(expiresAt && { expiresAt }),
 		...(await generatePaymentInfo({
 			method: paymentMethod,
 			orderId: order._id,
 			orderNumber: order.number,
-			toPay: priceToPay,
+			toPay,
 			paymentId,
 			expiresAt: expiresAt ?? undefined
 		})),

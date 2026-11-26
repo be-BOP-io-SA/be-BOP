@@ -31,7 +31,11 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import type { ProductActionSettings } from '$lib/types/ProductActionSettings';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
 	import { currencies } from '$lib/stores/currencies';
 	import { page } from '$app/stores';
 	import type { PojoObject } from '$lib/server/pojo';
@@ -271,11 +275,15 @@
 				}
 				let index = 0;
 				for (const file of files) {
-					const pictureId = await preUploadPicture(adminPrefix, file, {
+					const upload = await preUploadPicture(adminPrefix, file, {
 						fileName: `${product.name}-${index}`
 					});
+					if ('failure' in upload) {
+						errorMessage = pictureUploadFailureMessage(t, upload.failure);
+						return;
+					}
 
-					formData.set(`pictureIds[${index}]`, pictureId);
+					formData.set(`pictureIds[${index}]`, upload.pictureId);
 					index++;
 				}
 			}
@@ -779,7 +787,7 @@
 						value={product.shortDescription}
 						class="form-input"
 						placeholder={t('admin.productForm.briefDescriptionPlaceholder')}
-					/>
+					></textarea>
 				</label>
 
 				<label class="form-label">
@@ -792,10 +800,9 @@
 						class="form-input"
 						value={product.description}
 						placeholder={t('admin.productForm.detailedDescriptionPlaceholder')}
-					/>
+					></textarea>
 				</label>
 
-				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label">
 					{t('admin.productForm.productTags')}
 					<MultiSelect
@@ -1473,7 +1480,7 @@
 									value={product?.customPreorderText ?? ''}
 									class="form-input"
 									placeholder={t('admin.productForm.customPreorderMessagePlaceholder')}
-								/>
+								></textarea>
 							</label>
 						{/if}
 					</div>
@@ -1911,7 +1918,7 @@
 								class="form-input"
 								placeholder={t('admin.productForm.explainWhyDisclaimerNeeded')}
 								required
-							/>
+							></textarea>
 						</label>
 					</div>
 				{/if}
@@ -2118,7 +2125,11 @@
 									<Editor
 										scriptSrc="/tinymce/tinymce.js"
 										bind:value={product.contentBefore}
-										conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+										conf={{
+											plugins: TINYMCE_PLUGINS,
+											toolbar: TINYMCE_TOOLBAR,
+											license_key: 'gpl'
+										}}
 									/>
 								</div>
 
@@ -2149,7 +2160,7 @@
 									placeholder={t('admin.productForm.htmlContent')}
 									class="form-input block w-full mt-2"
 									bind:value={product.contentBefore}
-								/>
+								></textarea>
 							</div>
 
 							<div class="bg-gray-50 p-4 rounded-lg">
@@ -2170,7 +2181,11 @@
 									<Editor
 										scriptSrc="/tinymce/tinymce.js"
 										bind:value={product.contentAfter}
-										conf={{ plugins: TINYMCE_PLUGINS, toolbar: TINYMCE_TOOLBAR }}
+										conf={{
+											plugins: TINYMCE_PLUGINS,
+											toolbar: TINYMCE_TOOLBAR,
+											license_key: 'gpl'
+										}}
 									/>
 								</div>
 
@@ -2201,7 +2216,7 @@
 									placeholder={t('admin.productForm.htmlContent')}
 									class="form-input block w-full mt-2"
 									bind:value={product.contentAfter}
-								/>
+								></textarea>
 							</div>
 						</div>
 					</div>

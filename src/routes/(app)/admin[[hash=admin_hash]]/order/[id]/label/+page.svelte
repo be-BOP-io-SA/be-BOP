@@ -14,7 +14,6 @@
 <h1 class="text-3xl">{t('admin.order.orderLabelTitle')}</h1>
 
 <form method="post" class="flex flex-col gap-6">
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.order.orderLabelIds')}
 		<MultiSelect

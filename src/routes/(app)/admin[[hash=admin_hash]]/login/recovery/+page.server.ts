@@ -22,17 +22,11 @@ export const actions = {
 
 		const user = await collections.users.findOne({ login, roleId: { $ne: CUSTOMER_ROLE_ID } });
 		if (user) {
-			const ret = await sendResetPasswordNotification(user, {
+			await sendResetPasswordNotification(user, {
 				alternateEmail: runtimeConfig.sellerIdentity?.contact.email || SMTP_USER
 			});
-			return {
-				success: true,
-				npub: !!ret.npub,
-				email: !!ret.email,
-				isBackupEmail: ret.email === (runtimeConfig.sellerIdentity?.contact.email || SMTP_USER)
-			};
-		} else {
-			return { failedFindUser: true, login };
 		}
+		// The same answer either way, or the form lists the back office's logins and their channels.
+		return { success: true, login };
 	}
 };

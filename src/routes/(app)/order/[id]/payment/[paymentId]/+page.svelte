@@ -13,5 +13,10 @@
 			{t('checkout.paymentGenerationFailed')}
 		</div>
 	{/if}
+	{#if form?.discountTiedToPaymentMethod}
+		<div class="alert-error">
+			{t('order.discountTiedToPaymentMethod')}
+		</div>
+	{/if}
 	<a href="/order/{$page.params.id}" class="body-hyperlink underline">← Order #{$page.params.id}</a>
 </main>

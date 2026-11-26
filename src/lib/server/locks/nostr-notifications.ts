@@ -2,19 +2,19 @@ import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
 import { Lock } from '../lock';
 import { processClosed } from '../process';
 import type { NostRNotification } from '$lib/types/NostRNotifications';
-import { getNostrKeys, hexToNpub, isNostrConfigured, nostrRelays, nostrToHex } from '../nostr';
+import {
+	getNostrKeys,
+	hexToNpub,
+	isAuthenticEvent,
+	isNostrConfigured,
+	nostrRelays,
+	nostrToHex,
+	zodNpub
+} from '../nostr';
 import { fromUnixTime, getUnixTime, max } from 'date-fns';
 import { collections } from '../database';
 import { RelayPool } from 'nostr-relaypool';
-import {
-	getEventHash,
-	getSignature,
-	nip04,
-	type Event,
-	Kind,
-	validateEvent,
-	verifySignature
-} from 'nostr-tools';
+import { getEventHash, getSignature, nip04, type Event, Kind } from 'nostr-tools';
 import { NOSTR_PROTOCOL_VERSION } from './handle-messages';
 import { building } from '$app/environment';
 import { rateLimit } from '../rateLimit';
@@ -82,7 +82,7 @@ if (!building) {
 	watch();
 }
 
-async function processUnprocessedNotifications() {
+export async function processUnprocessedNotifications() {
 	if (!isNostrConfigured()) {
 		return;
 	}
@@ -92,7 +92,10 @@ async function processUnprocessedNotifications() {
 	});
 
 	for await (const notification of unprocessedNotifications) {
-		await handleNostrNotification(notification);
+		// One malformed notification must not keep the ones after it from being sent.
+		await handleNostrNotification(notification).catch((err) =>
+			console.error(`Nostr notification ${notification._id} failed`, err)
+		);
 	}
 }
 
@@ -117,7 +120,7 @@ function initRelayPool(): boolean {
 		async (event /*, isAfterEose, relayURL*/) => {
 			// isAfterEose = live event
 			try {
-				if (!validateEvent(event) || !verifySignature(event)) {
+				if (!isAuthenticEvent(event)) {
 					return;
 				}
 				if (!event.tags.some((tag) => tag[0] === 'p' && tag[1] === nostrPublicKeyHex)) {
@@ -219,6 +222,18 @@ async function handleNostrNotification(nostrNotification: NostRNotification): Pr
 				const npub = nostrNotification.dest;
 
 				if (!npub) {
+					return;
+				}
+
+				// Stored before the address check was strict: no retry can ever encrypt to it.
+				const dest = zodNpub().safeParse(npub);
+				if (!dest.success) {
+					const error = dest.error.issues[0].message;
+					console.error(`Nostr notification ${nostrNotification._id} dropped: ${error}`);
+					await collections.nostrNotifications.updateOne(
+						{ _id: nostrNotification._id },
+						{ $set: { error, processedAt: new Date(), updatedAt: new Date() } }
+					);
 					return;
 				}
 

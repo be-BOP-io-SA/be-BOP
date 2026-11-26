@@ -1,6 +1,8 @@
 import { adminPrefix } from '$lib/server/admin';
 import { collections } from '$lib/server/database';
 import { ALL_PAYMENT_PROCESSORS } from '$lib/server/payment-methods.js';
+import { getProcessor, tapToPayProcessors } from '$lib/server/sdk/pp';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
 import { ObjectId } from 'mongodb';
 import { runtimeConfig, defaultConfig } from '$lib/server/runtime-config';
 import type { Tag } from '$lib/types/Tag';
@@ -34,25 +36,16 @@ export const load = async ({}) => {
 		collections.tags.find({}).project<Pick<Tag, '_id' | 'name'>>({ _id: 1, name: 1 }).toArray(),
 		collections.tagGroups.find({}).sort({ order: 1 }).toArray()
 	]);
-	const supportedTapToPayProviders = ['not-used', 'stripe'] as const;
 	// displayName is only for brand names, which stay literal in every locale. UI copy like
 	// "Not used" has no displayName and is resolved client-side through t() (issue #878).
-	const tapToPayProviders: { provider: string; displayName?: string; available: boolean }[] =
-		supportedTapToPayProviders.map((provider) => {
-			switch (provider) {
-				case 'not-used':
-					return { provider, available: true };
-				case 'stripe':
-					return {
-						provider,
-						displayName: 'Stripe',
-						available: !!runtimeConfig.stripe.secretKey
-					};
-				default:
-					provider satisfies never;
-					return { provider, displayName: `Unknown: ${provider}`, available: false };
-			}
-		});
+	const tapToPayProviders: { provider: string; displayName?: string; available: boolean }[] = [
+		{ provider: 'not-used', available: true },
+		...tapToPayProcessors().map((processor) => ({
+			provider: processor,
+			displayName: PROCESSORS[processor].label,
+			available: !!getProcessor(processor)?.tapToPay?.isConfigured()
+		}))
+	];
 	return {
 		tags: tags.filter((tag) => tag._id !== 'pos-favorite'),
 		tagGroups: tagGroups.map(

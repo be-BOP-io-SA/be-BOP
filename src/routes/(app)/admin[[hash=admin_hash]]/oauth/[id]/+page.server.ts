@@ -20,8 +20,6 @@ export const actions = {
 			})
 			.parse(Object.fromEntries(formData));
 
-		console.log('parsed', parsed, Object.fromEntries(formData));
-
 		const oauth = runtimeConfig.oauth.find((o) => o.slug === slug);
 
 		if (!oauth) {

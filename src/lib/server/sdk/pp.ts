@@ -1,16 +1,26 @@
 import type { PaymentMethod, PaymentProcessor } from '$lib/server/payment-methods';
+import type { ObjectId } from 'mongodb';
 import type { Price, Order } from '$lib/types/Order';
-import type { Currency } from '$lib/types/Currency';
-import { runtimeConfig } from '$lib/server/runtime-config';
+import { PAYMENT_RETURN_PARAM, type SerializedPaymentPresentation } from '$lib/types/Order';
 import { ORIGIN } from '$lib/server/env-config';
+import { CURRENCY_UNIT, type Currency } from '$lib/types/Currency';
 import { toCurrency } from '$lib/utils/toCurrency';
+import { runtimeConfig, type ConfigKey } from '$lib/server/runtime-config';
+import { PROCESSORS } from '$lib/types/paymentProcessors';
+import type {
+	ConfigFields,
+	ConfigOf,
+	PayZone,
+	ProcessorDeclaration
+} from '$lib/payment-processors/types';
+import { configSchemaFromFields, hasEveryCredential, secretFieldsOf } from './config-fields';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 // --- Interfaces ---
 
 export interface PaymentProcessorMeta {
 	processor: PaymentProcessor;
 	method: PaymentMethod;
-	emoji?: string;
 }
 
 export interface CreatePaymentParams {
@@ -32,65 +42,244 @@ export interface CreatePaymentResult {
 	meta?: unknown;
 }
 
-export interface CheckPaymentResult {
-	status: 'paid' | 'pending' | 'expired' | 'failed' | 'canceled';
-	/**
-	 * For onchain payments: a full-amount TX is detected but not yet confirmed to the
-	 * required threshold. Surfaced to the buyer as "received, awaiting confirmation".
-	 */
-	awaitingConfirmation?: boolean;
-	/**
-	 * For onchain payments: the persisted start of the post-expiry grace window (see
-	 * `OrderPayment.mempoolMissingSince`). `null` means "clear it". Persisted by the worker.
-	 */
-	mempoolMissingSince?: Date | null;
-	received?: Price;
-	transactions?: Array<{
-		id: string;
-		amount: number;
-		currency: Currency;
-		transaction_code?: string;
-		txid?: string;
-	}>;
-	fees?: Price;
+export interface PaymentTransaction {
+	id: string;
+	amount: number;
+	currency: Currency;
+	transaction_code?: string;
+	/** The provider's own handle on the movement: a chain txid, a card auth code, a SEPA id. */
+	reference?: string;
+}
+
+/**
+ * Discriminated on `status` so a processor cannot report a payment as settled without
+ * saying what arrived, and cannot attach progress to a terminal status.
+ */
+export type CheckPaymentResult =
+	| {
+			status: 'paid';
+			/** What actually arrived, in whatever currency the provider settled in. */
+			received: Price;
+			/** Only a fee already taken out of `received`: it counts toward the amount due. */
+			fees?: Price;
+			transactions?: PaymentTransaction[];
+	  }
+	| {
+			status: 'pending';
+			/**
+			 * Observed, but not final: money the provider has seen and may still take back. The
+			 * poller stores only that it exists (`payment.awaitingConfirmation`), and the order page
+			 * tells the buyer it arrived and is being confirmed for bitcoin payments only. The order
+			 * does not settle on it.
+			 */
+			provisional?: { received: Price; reason?: string };
+			/**
+			 * Read by the poller after this check and not passed back to the next one. Only
+			 * `mempoolMissingSince` is kept, on the payment, where the processor reads it again.
+			 */
+			state?: Record<string, unknown>;
+			transactions?: PaymentTransaction[];
+	  }
+	| { status: 'expired' | 'failed' | 'canceled' };
+
+export interface PaymentPresentation {
+	kind: SerializedPaymentPresentation['kind'];
+	/** What the QR encodes. Absent = `payment.address` verbatim. */
+	qrPayload?(payment: Order['payments'][number]): string;
+	/** URI the QR image links to, so tapping it opens a wallet. Absent = not clickable. */
+	qrLink?(payment: Order['payments'][number]): string;
+	/** Tags a wallet browser extension looks for on the payment page. */
+	headTags?(payment: Order['payments'][number]): Array<{ name: string; content: string }>;
+}
+
+/**
+ * The processor that handled a payment. Rows written before the registry recorded one
+ * fall back to whichever processor currently serves the method.
+ */
+export function processorFor(
+	payment: Order['payments'][number]
+): PaymentProcessorDefinition | undefined {
+	const recorded = payment.processor ? getProcessor(payment.processor) : undefined;
+
+	return recorded ?? resolveProcessor(payment.method);
+}
+
+export function serializePresentation(
+	pp: PaymentProcessorDefinition | undefined,
+	payment: Order['payments'][number]
+): SerializedPaymentPresentation | undefined {
+	if (!pp?.presentation) {
+		return undefined;
+	}
+
+	const { kind, qrLink, headTags } = pp.presentation;
+
+	// A QR or a redirect carries the address; a till payment taken by tap-to-pay has none.
+	if ((kind === 'qr' || kind === 'redirect') && !payment.address) {
+		return undefined;
+	}
+
+	return {
+		kind,
+		...(qrLink && { qrLink: qrLink(payment) }),
+		...(headTags && { headTags: headTags(payment) })
+	};
 }
 
 export interface PaymentProcessorDefinition {
 	meta: PaymentProcessorMeta;
 	isEnabled(): boolean;
-	paymentPrice(price: Price): Price;
+
+	// Separate from isEnabled: payments already pending must still be checked when new ones are refused.
+	acceptsNewPayments?(): boolean;
+
+	/**
+	 * Validates this processor's settings form. Absent for the ones configured by environment
+	 * variables and for the hand-settled methods, which have no credentials of their own.
+	 * Declaring it here is what lets one shared settings page serve every processor: the shape
+	 * of a provider's credentials is the provider's business, not the page's.
+	 */
+	configSchema?: ZodType<Record<string, unknown>, ZodTypeDef, unknown>;
+
+	/**
+	 * The settings fields that give control of the provider account. A role that may only read
+	 * the settings page gets them blanked, since holding them is holding the account.
+	 */
+	secretConfigFields?: readonly string[];
+
+	/**
+	 * Currency the payment is asked for. Not the currency it arrives in: `checkPayment`
+	 * reports whatever the provider actually settled.
+	 */
+	settlementCurrency(): Currency;
+
+	/**
+	 * When the payment stops being payable. `null` = it never does, for anything settled
+	 * by hand. Absent = the shop's payment timeout from now.
+	 */
+	expiresIn?(timeoutMinutes: number): Date | null;
+
+	/**
+	 * Shortfall accepted between what arrived and what was asked, in the settlement
+	 * currency. Absent = one currency unit, which only absorbs rounding.
+	 */
+	underpaymentTolerance?(currency: Currency): number;
+
+	/**
+	 * How the buyer is asked to pay. Absent = nothing to scan or follow.
+	 * Owning the payload and the link together is what keeps a QR from being labelled
+	 * as one protocol while encoding another.
+	 */
+	presentation?: PaymentPresentation;
+
+	/**
+	 * Absent = this processor cannot settle a contactless payment made on the terminal.
+	 * `findMatching` returns the provider reference of a transaction that matches the
+	 * payment's amount and tap window, or `null` when none does yet.
+	 */
+	tapToPay?: {
+		/** Whether the shop gave what matching needs, which can be less than taking payments does. */
+		isConfigured(): boolean;
+		findMatching(order: Order, paymentId: ObjectId): Promise<string | null>;
+	};
+
+	/**
+	 * Background work this processor needs while it is enabled: a provider subscription,
+	 * a chain tip poll. Started once per cluster under a lock, never per request and never
+	 * from inside `checkPayment`. Resolves to a function that stops it.
+	 */
+	worker?: {
+		start(): Promise<() => void>;
+	};
+
+	/** `params.toPay` is already in `settlementCurrency()` — do not convert it again. */
 	createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult>;
-	checkPayment(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
+
+	/**
+	 * Absent = nothing to poll, because settlement happens out of band: cash in a till,
+	 * a wire the shopowner reconciles, an order that was free to begin with. Such a
+	 * payment only ever changes status when someone says so.
+	 */
+	checkPayment?(payment: Order['payments'][number], order: Order): Promise<CheckPaymentResult>;
+
+	/** What its form on the pay page receives. It reaches the buyer's browser: never a credential. */
+	payData?(payment: Order['payments'][number]): unknown;
+}
+
+/** What a processor still writes itself: the rest is read from its declaration. */
+export type ProcessorImplementation<D extends ProcessorDeclaration> = Omit<
+	PaymentProcessorDefinition,
+	'meta' | 'configSchema' | 'secretConfigFields' | 'isEnabled' | 'settlementCurrency' | 'payData'
+> &
+	(D extends { config: { fields: ConfigFields } }
+		? {
+				isEnabled?(): boolean;
+				/** For a rule the fields cannot say, such as one that spans two of them. */
+				configSchema?: ZodType<ConfigOf<D>, ZodTypeDef, unknown>;
+		  }
+		: { isEnabled(): boolean; configSchema?: never }) &
+	(D extends { config: { fields: { currency: { kind: 'currency' } } } }
+		? { settlementCurrency?(): Currency }
+		: { settlementCurrency(): Currency }) &
+	(D extends { pay: PayZone<infer Data> }
+		? { payData(payment: Order['payments'][number]): Data }
+		: { payData?: never });
+
+/** Builds a processor from its declaration, so that what the declaration says is not written twice. */
+export function definePaymentProcessor<
+	D extends ProcessorDeclaration,
+	I extends ProcessorImplementation<D>
+>(declaration: D, implementation: I): Omit<PaymentProcessorDefinition, keyof I> & I {
+	const fields = declaration.config?.fields;
+	const config = () =>
+		runtimeConfig[declaration.configKey as ConfigKey] as Record<string, unknown> | undefined;
+
+	return {
+		...(fields && {
+			configSchema: configSchemaFromFields(fields),
+			secretConfigFields: secretFieldsOf(fields),
+			isEnabled: () => hasEveryCredential(fields, config())
+		}),
+		...(fields?.currency?.kind === 'currency' && {
+			settlementCurrency: () => config()?.currency as Currency
+		}),
+		...implementation,
+		meta: { processor: declaration.slug as PaymentProcessor, method: declaration.method }
+	} as Omit<PaymentProcessorDefinition, keyof I> & I;
 }
 
 // --- Helpers ---
 
-export function lightningPaymentPrice(price: Price): Price {
-	return {
-		amount: toCurrency('SAT', price.amount, price.currency),
-		currency: 'SAT'
-	};
+/**
+ * Whether what the provider says arrived covers what the payment asked for.
+ * Providers report in their own currency, so the comparison happens in the payment's.
+ */
+export function coversPayment(
+	pp: PaymentProcessorDefinition,
+	payment: Order['payments'][number],
+	received: Price,
+	/** A fee the provider took out of `received`, as phoenixd does with its channel fee. */
+	fees?: Price
+): boolean {
+	const currency = payment.price.currency;
+	const settled =
+		toCurrency(currency, received.amount, received.currency) +
+		(fees ? toCurrency(currency, fees.amount, fees.currency) : 0);
+	const tolerance = pp.underpaymentTolerance?.(currency) ?? CURRENCY_UNIT[currency];
+
+	return settled >= payment.price.amount - tolerance;
 }
 
-export function bitcoinPaymentPrice(price: Price): Price {
-	return {
-		amount: toCurrency('BTC', price.amount, price.currency),
-		currency: 'BTC'
-	};
+/**
+ * Where a provider sends the buyer once they paid: the order page, told which payment it is
+ * waiting for, so that it shows the confirmation in progress rather than the link to pay again.
+ */
+export function orderReturnUrl(orderId: string, paymentId: string): string {
+	return `${ORIGIN}/order/${orderId}?${PAYMENT_RETURN_PARAM}=${paymentId}`;
 }
 
-export function lightningLabel(orderId: string, orderNumber: number): string {
-	switch (runtimeConfig.lightningQrCodeDescription) {
-		case 'brand':
-			return runtimeConfig.brandName;
-		case 'orderUrl':
-			return `${ORIGIN}/order/${orderId}`;
-		case 'brandAndOrderNumber':
-			return `${runtimeConfig.brandName} - Order #${orderNumber.toLocaleString('en')}`;
-		default:
-			return '';
-	}
-}
+/** Nothing to scan or follow: the buyer pays in the room, by wire, or not at all. */
+export const MANUAL_PRESENTATION: PaymentPresentation = { kind: 'manual' };
 
 // --- Registry ---
 
@@ -104,12 +293,33 @@ export function getProcessor(processor: string): PaymentProcessorDefinition | un
 	return registry.get(processor);
 }
 
+export function allProcessors(): PaymentProcessorDefinition[] {
+	return [...registry.values()];
+}
+
+/** Processors that can settle a contactless payment made on a terminal. */
+export function tapToPayProcessors(): PaymentProcessor[] {
+	return allProcessors()
+		.filter((pp) => pp.tapToPay)
+		.map((pp) => pp.meta.processor);
+}
+
 export function getProcessorsForMethod(method: PaymentMethod): PaymentProcessorDefinition[] {
-	return [...registry.values()].filter((pp) => pp.meta.method === method);
+	return (
+		[...registry.values()]
+			.filter((pp) => pp.meta.method === method)
+			// Declared rank, not load order. `resolveProcessor` returns the first enabled one, so
+			// this decides which acquirer a shop that expressed no preference actually uses.
+			.sort((a, b) => PROCESSORS[a.meta.processor].priority - PROCESSORS[b.meta.processor].priority)
+	);
+}
+
+export function canTakeNewPayment(pp: PaymentProcessorDefinition): boolean {
+	return pp.isEnabled() && (pp.acceptsNewPayments?.() ?? true);
 }
 
 export function resolveProcessor(method: PaymentMethod): PaymentProcessorDefinition | undefined {
-	const processors = getProcessorsForMethod(method).filter((pp) => pp.isEnabled());
+	const processors = getProcessorsForMethod(method).filter(canTakeNewPayment);
 	if (!processors.length) {
 		return undefined;
 	}

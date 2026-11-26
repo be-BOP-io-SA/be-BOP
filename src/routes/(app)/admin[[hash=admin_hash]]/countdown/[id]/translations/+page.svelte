@@ -32,7 +32,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			placeholder={data.countdown.title}
 			value={data.countdown.translations?.[language]?.title ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.countdown.description')}
@@ -43,7 +43,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.countdown.description}
 			value={data.countdown.translations?.[language]?.description ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>

@@ -9,7 +9,13 @@ export const GET = async ({ url }) => {
 
 		if (picture) {
 			if (url.searchParams.has('original')) {
-				throw redirect(302, await getPublicS3DownloadLink(picture.storage.original.key));
+				// The original may be an SVG uploaded before the store marked those as attachments.
+				throw redirect(
+					302,
+					await getPublicS3DownloadLink(picture.storage.original.key, {
+						input: { ResponseContentDisposition: 'attachment' }
+					})
+				);
 			}
 
 			throw redirect(302, await getPublicS3DownloadLink(picture.storage.formats[0].key));

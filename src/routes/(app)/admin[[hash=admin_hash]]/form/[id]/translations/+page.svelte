@@ -42,7 +42,7 @@
 				placeholder={data.contactForm.disclaimer?.content}
 				class="form-input block w-full"
 				value={data.contactForm.translations?.[language]?.disclaimer?.content ?? ''}
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			{t('admin.form.disclaimerCheckboxLabel')}
@@ -76,7 +76,7 @@
 		value={data.contactForm.translations?.[language]?.content ?? ''}
 		placeholder={data.contactForm.content}
 		class="form-input block w-full"
-	/>
+	></textarea>
 
 	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>
 </form>
