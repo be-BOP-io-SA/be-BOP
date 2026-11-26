@@ -1,21 +1,18 @@
 import {
 	addToCartInDb,
-	checkCartItems,
+	cartErrorBody,
+	cartLocks,
 	getCartFromDb,
 	restoreFromPendingSnapshot,
-	type CartErrorCode
+	type CartErrorBody
 } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
-import { evaluateSaleLocks, SALE_LOCK_CODES, withStoredWhitelists } from '$lib/server/saleLock';
+import { SALE_LOCK_CODES, withStoredWhitelists } from '$lib/server/saleLock';
 import { cartErrorKey } from '$lib/cartErrorKey';
-import {
-	applyResolvedStock,
-	refreshAvailableStockInDb,
-	resolveAvailableAmounts
-} from '$lib/server/product.js';
+import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { userIdentifier, userQuery } from '$lib/server/user.js';
@@ -49,12 +46,6 @@ export type CartFromUrlState =
 	| { mode: 'errors'; errors: AddError[]; snapshotId: string }
 	| { mode: 'invalidUrl' };
 
-type AddErrorBody = {
-	code?: CartErrorCode;
-	message?: string;
-	params?: Record<string, string | number>;
-};
-
 function parsePairsFrom(slugs: string[], qtys: string[]): SlugQty[] | null {
 	if (!slugs.length || slugs.length !== qtys.length) {
 		return null;
@@ -78,7 +69,7 @@ function isEmployeeFromLocals(locals: App.Locals): boolean {
 	return locals.user?.roleId !== undefined && locals.user.roleId !== CUSTOMER_ROLE_ID;
 }
 
-function mapAddError(slug: string, body: AddErrorBody, product: ProductBadge | null): AddError {
+function mapAddError(slug: string, body: CartErrorBody, product: ProductBadge | null): AddError {
 	if (!body.code) {
 		return { slug, key: 'cartFromUrl.errors.reasonGeneric', product };
 	}
@@ -172,9 +163,7 @@ async function attemptAddAll(
 				await addToCartInDb(product, quantity, { user, mode });
 			}
 		} catch (e) {
-			const body =
-				typeof e === 'object' && e && 'body' in e ? (e as { body?: AddErrorBody }).body ?? {} : {};
-			errors.push(mapAddError(slug, body, badge));
+			errors.push(mapAddError(slug, cartErrorBody(e) ?? {}, badge));
 		}
 	}
 	return errors;
@@ -246,7 +235,7 @@ export async function load({ parent, locals, url }) {
 		parentData.cart.items.map((item) => item.product)
 	);
 
-	// Resolve stock for cart items FIRST (needed for checkCartItems)
+	// Resolve stock for cart items first: the refusals below read it
 	const cartItemsWithResolvedStock = await Promise.all(
 		parentData.cart.items.map(async (item, index) => ({
 			...item,
@@ -254,25 +243,9 @@ export async function load({ parent, locals, url }) {
 		}))
 	);
 
+	// One reading of every refusal the cart holds, the one checkout and order creation make too.
 	const saleLocks = [
-		...(
-			await evaluateSaleLocks(cartProducts, userIdentifier(locals), {
-				extraQuantityByProductId: parentData.cart.items.reduce<Record<string, number>>(
-					(acc, item) => ({
-						...acc,
-						[item.product._id]: (acc[item.product._id] ?? 0) + item.quantity
-					}),
-					{}
-				),
-				// Without this the banner cannot see stock: it would stay silent on a cart the
-				// checkout is about to refuse, and the customer would learn it by clicking. The products
-				// with their stock resolved, so one drawing on another's stock is seen running out.
-				availableByProductId: await resolveAvailableAmounts(
-					cartItemsWithResolvedStock.map((item) => item.product),
-					userIdentifier(locals)
-				)
-			})
-		).entries()
+		...(await cartLocks(cartItemsWithResolvedStock, { user: userIdentifier(locals) })).entries()
 	].map(([productId, productLocks]) => ({
 		locks: productLocks,
 		name:
@@ -286,27 +259,6 @@ export async function load({ parent, locals, url }) {
 	const refusedLock = (SALE_LOCK_CODES as readonly string[]).includes(refusedLockParam ?? '')
 		? (refusedLockParam as (typeof SALE_LOCK_CODES)[number])
 		: undefined;
-
-	let errorMessage: string | undefined;
-
-	if (parentData.cart) {
-		try {
-			await checkCartItems(cartItemsWithResolvedStock, { user: userIdentifier(locals) });
-		} catch (err) {
-			const body =
-				typeof err === 'object' && err && 'body' in err
-					? (err as { body?: AddErrorBody }).body
-					: undefined;
-			// Only a sale lock is dropped here, because the banner already carries it and in a
-			// better form. Everything else — stock, per-order cap, cart size — is shown
-			// alongside: several rules can block the same checkout, and the customer needs to
-			// read all of them, not the first one we happened to raise.
-			const isSaleLock = !!body?.code && (SALE_LOCK_CODES as readonly string[]).includes(body.code);
-			if (!isSaleLock && typeof body?.message === 'string') {
-				errorMessage = body.message;
-			}
-		}
-	}
 
 	const [cmsBasketTop, cmsBasketBottom] = await Promise.all([
 		collections.cmsPages.findOne(
@@ -403,7 +355,6 @@ export async function load({ parent, locals, url }) {
 		hasPromoDiscounts,
 		saleLocks,
 		...(refusedLock && { refusedLock }),
-		...(errorMessage && { errorMessage }),
 		appliedPromoCode: cartInDb?.promoCode,
 		allowCartFromUrl: runtimeConfig.allowCartFromUrl,
 		...(cartFromUrl && { cartFromUrl }),

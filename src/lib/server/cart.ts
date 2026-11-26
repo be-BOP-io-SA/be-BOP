@@ -55,6 +55,19 @@ function cartError(
 	throw error(400, { code, message, ...(params && { params }) });
 }
 
+export type CartErrorBody = {
+	code?: CartErrorCode;
+	message?: string;
+	params?: Record<string, string | number>;
+};
+
+/** What a refusal raised by `cartError` carries, for the routes that explain it. */
+export function cartErrorBody(err: unknown): CartErrorBody | undefined {
+	return typeof err === 'object' && err && 'body' in err
+		? (err as { body?: CartErrorBody }).body
+		: undefined;
+}
+
 /**
  * Re-applies a server-side cart snapshot atomically and releases any reserved
  * stock for items that were dropped or kept. Returns false when the snapshot
@@ -474,7 +487,11 @@ export async function removeFromCartInDb(
 	return cart;
 }
 
-export async function checkCartItems(
+/**
+ * Every refusal the cart holds, product by product, without throwing: what the cart page shows,
+ * and what `checkCartItems` turns into an error for checkout and order creation.
+ */
+export async function cartLocks(
 	items: Array<{
 		quantity: number;
 		product: Pick<Product, 'stock' | '_id' | 'name' | 'maxQuantityPerOrder' | 'stockReference'> &
@@ -485,7 +502,7 @@ export async function checkCartItems(
 		/** The contact address typed at checkout, when the order is being placed */
 		checkoutAddress?: string;
 	}
-) {
+): Promise<Map<string, SaleLock[]>> {
 	const products = items.map((item) => item.product);
 
 	// be careful, there can be multiple lines for the same product due to product.standalone
@@ -500,7 +517,7 @@ export async function checkCartItems(
 	// function is what the cart page, the checkout page and order creation all call, so the
 	// three give the same answer. Without a customer — a renewal — only stock and the per-order
 	// cap apply.
-	const locks = opts?.user
+	return opts?.user
 		? await evaluateSaleLocks(products, opts.user, {
 				// What sits in the cart is what is about to be ordered, so it counts towards a
 				// per-person cap alongside what was ordered before.
@@ -516,7 +533,14 @@ export async function checkCartItems(
 					])
 					.filter(([, productLocks]) => productLocks.length)
 		  );
+}
 
+export async function checkCartItems(
+	items: Parameters<typeof cartLocks>[0],
+	opts?: Parameters<typeof cartLocks>[1]
+) {
+	const products = items.map((item) => item.product);
+	const locks = await cartLocks(items, opts);
 	const firstLocked = products.find((product) => locks.has(product._id));
 	if (firstLocked) {
 		const productLocks = locks.get(firstLocked._id) as SaleLock[];

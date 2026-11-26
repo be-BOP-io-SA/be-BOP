@@ -18,9 +18,9 @@ import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import {
 	CART_ERROR_CODES,
+	cartErrorBody,
 	checkCartItems,
-	getCartFromDb,
-	type CartErrorCode
+	getCartFromDb
 } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { withStoredWhitelists } from '$lib/server/saleLock';
@@ -748,16 +748,13 @@ export const actions = {
 			// A typed cart error means the cart itself is no longer orderable. The cart page says
 			// why, in the customer's own language, and keeps their cart intact; a raw 400 page
 			// says nothing and loses them.
-			const cartErrorBody =
-				typeof err === 'object' && err && 'body' in err
-					? (err as { body?: { code?: string } }).body
-					: undefined;
+			const refusal = cartErrorBody(err);
 			// A list is answered on the address typed here, so the refusal is told here: the cart
 			// cannot know it.
-			if (cartErrorBody?.code === 'NOT_WHITELISTED') {
+			if (refusal?.code === 'NOT_WHITELISTED') {
 				return fail(400, { notOnList: true });
 			}
-			if (cartErrorBody?.code && CART_ERROR_CODES.includes(cartErrorBody.code as CartErrorCode)) {
+			if (refusal?.code && CART_ERROR_CODES.includes(refusal.code)) {
 				throw redirect(303, '/cart');
 			}
 			if (err instanceof PaymentGenerationError) {

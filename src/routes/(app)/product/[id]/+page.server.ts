@@ -1,4 +1,4 @@
-import { addToCartInDb } from '$lib/server/cart';
+import { addToCartInDb, cartErrorBody } from '$lib/server/cart';
 import { cmsFromContent } from '$lib/server/cms';
 import { collections } from '$lib/server/database';
 import {
@@ -506,8 +506,7 @@ async function addToCartOrExplain(params: RequestEvent) {
 		if (!isSaleLockError(err)) {
 			throw err;
 		}
-		const body = (err as { body?: { code?: string; params?: Record<string, string | number> } })
-			.body;
+		const body = cartErrorBody(err);
 		return fail(400, { saleLock: { code: body?.code, params: body?.params ?? {} } });
 	}
 }
