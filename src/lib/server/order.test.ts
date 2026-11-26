@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
-import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
+import { cleanDb, createDiscount, createPaidSubscription, insertTestOrder } from './test-utils';
 import { collections } from './database';
 import { ObjectId } from 'mongodb';
 import {
@@ -20,6 +20,17 @@ import { orderAmountWithNoPaymentsCreated } from '$lib/types/Order';
 import { runtimeConfig } from './runtime-config';
 import type { Product } from '$lib/types/Product';
 import { POS_ROLE_ID } from '$lib/types/User';
+
+function createPosOrder(sessionId: string) {
+	// Unlimited product on purpose: orders of a stocked product could be refused by the stock
+	// check, failing a test for a reason unrelated to invoicing.
+	return createOrder([{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }], 'point-of-sale', {
+		locale: 'en',
+		user: { sessionId },
+		shippingAddress: null,
+		userVatCountry: 'FR'
+	});
+}
 
 describe('order', () => {
 	beforeEach(async () => {
@@ -294,6 +305,108 @@ describe('order', () => {
 		expect(order1?.payments[1].invoice?.number).toBe(3);
 	});
 
+	it('gives every concurrent settlement its own invoice number', async () => {
+		const orderIds = await Promise.all(
+			Array.from({ length: 8 }, (_, i) => createPosOrder(`concurrent-session-${i}`))
+		);
+
+		const orders = await collections.orders.find({ _id: { $in: orderIds } }).toArray();
+		expect(orders).toHaveLength(orderIds.length);
+
+		await Promise.all(
+			orders.map((order) => onOrderPayment(order, order.payments[0], order.payments[0].price))
+		);
+
+		const settled = await collections.orders.find({ _id: { $in: orderIds } }).toArray();
+		const invoiceNumbers = settled.map((order) => order.payments[0].invoice?.number);
+
+		expect(invoiceNumbers.every((number) => typeof number === 'number')).toBe(true);
+		expect(new Set(invoiceNumbers).size).toBe(orderIds.length);
+		expect(settled.every((order) => order.payments[0].status === 'paid')).toBe(true);
+	});
+
+	it('issues past the invoices already stored when the counter is behind them', async () => {
+		// A shop can end up with its history ahead of its counter: a database restored without the
+		// counter, or a downgrade that left it behind. The next invoice has to follow the last one
+		// given out — reusing it would be refused by the unique index and lose the payment (#2743).
+		await insertTestOrder({ payments: [{ invoice: { number: 41, createdAt: new Date() } }] });
+		// A counter that exists but is behind, so `$max` has to raise it rather than create it.
+		await collections.runtimeConfig.updateOne(
+			{ _id: 'invoiceNumber' },
+			{ $set: { data: 3 as never, updatedAt: new Date() } },
+			{ upsert: true }
+		);
+
+		const orderId = await createPosOrder('next-session');
+		const order = await collections.orders.findOne({ _id: orderId });
+		if (!order) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+		await onOrderPayment(order, order.payments[0], order.payments[0].price);
+
+		const settledOrder = await collections.orders.findOne({ _id: orderId });
+		expect(settledOrder?.payments[0].invoice?.number).toBe(42);
+	});
+
+	it('refuses to settle the same payment twice, and gives its number back', async () => {
+		const orderId = await createPosOrder('double-session');
+		// Two snapshots of the same pending payment, as a double click or a confirmation racing the
+		// poller would load.
+		const first = await collections.orders.findOne({ _id: orderId });
+		const second = await collections.orders.findOne({ _id: orderId });
+		if (!first || !second) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+
+		await onOrderPayment(first, first.payments[0], first.payments[0].price);
+		await expect(
+			onOrderPayment(second, second.payments[0], second.payments[0].price)
+		).rejects.toMatchObject({ status: 400 });
+
+		const nextId = await createPosOrder('next-session');
+		const next = await collections.orders.findOne({ _id: nextId });
+		if (!next) {
+			throw new Error(`Order ${nextId} not found`);
+		}
+		await onOrderPayment(next, next.payments[0], next.payments[0].price);
+
+		const settled = await collections.orders.findOne({ _id: orderId });
+		const settledNext = await collections.orders.findOne({ _id: nextId });
+		expect(settled?.payments[0].invoice?.number).toBe(1);
+		expect(settledNext?.payments[0].invoice?.number).toBe(2);
+	});
+
+	it('refuses the second of two simultaneous settlements, and gives its number back', async () => {
+		const orderId = await createPosOrder('simultaneous-double-session');
+		const first = await collections.orders.findOne({ _id: orderId });
+		const second = await collections.orders.findOne({ _id: orderId });
+		if (!first || !second) {
+			throw new Error(`Order ${orderId} not found`);
+		}
+
+		// Both run at once, so they can collide on the invoice counter and one of them be retried.
+		const results = await Promise.allSettled([
+			onOrderPayment(first, first.payments[0], first.payments[0].price),
+			onOrderPayment(second, second.payments[0], second.payments[0].price)
+		]);
+		expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+		const refused = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+		expect(refused).toHaveLength(1);
+		expect(refused[0].reason).toMatchObject({ status: 400 });
+
+		const nextId = await createPosOrder('simultaneous-next-session');
+		const next = await collections.orders.findOne({ _id: nextId });
+		if (!next) {
+			throw new Error(`Order ${nextId} not found`);
+		}
+		await onOrderPayment(next, next.payments[0], next.payments[0].price);
+
+		const settled = await collections.orders.findOne({ _id: orderId });
+		const settledNext = await collections.orders.findOne({ _id: nextId });
+		expect(settled?.payments[0].invoice?.number).toBe(1);
+		expect(settledNext?.payments[0].invoice?.number).toBe(2);
+	});
+
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
 		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
 			sessionId: 'test-session-id'
@@ -363,9 +476,13 @@ describe('order', () => {
 		expect(afterFirst.status).toBe('paid');
 		expect(afterFirst.paidEffectsAppliedAt).toBeInstanceOf(Date);
 
-		// Replay the same settled payment: the order stays paid and the marker does not move.
-		await onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price);
+		// Replay the same settled payment: it is refused, the order stays paid and the marker does
+		// not move.
+		await expect(
+			onOrderPayment(afterFirst, afterFirst.payments[0], afterFirst.payments[0].price)
+		).rejects.toMatchObject({ status: 400 });
 		const afterSecond = await collections.orders.findOne({ _id: orderId });
+		expect(afterSecond?.status).toBe('paid');
 		expect(afterSecond?.paidEffectsAppliedAt?.getTime()).toBe(
 			afterFirst.paidEffectsAppliedAt?.getTime()
 		);
