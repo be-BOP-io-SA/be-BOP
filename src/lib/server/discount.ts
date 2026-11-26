@@ -23,6 +23,11 @@ export interface DiscountContext {
 	deliveryCountry?: CountryAlpha2;
 	billingCountry?: CountryAlpha2;
 	userContactAddresses: string[];
+	/**
+	 * The contact address typed at checkout. It counts for a visitor who is not signed in only:
+	 * a signed-in customer is matched on the addresses they signed in with.
+	 */
+	checkoutAddress?: string;
 	cartItems: Array<{ productId: string; quantity: number; tagIds?: string[] }>;
 	isLoggedIn: boolean;
 }
@@ -77,19 +82,22 @@ export function evaluateDiscountConditions(discount: Discount, ctx: DiscountCont
 	}
 
 	if (discount.contactAddresses?.length) {
-		if (!ctx.isLoggedIn) {
-			return false;
-		}
+		// A list of addresses does not ask to sign in: a visitor who is not signed in is matched
+		// on the address they type at checkout.
 		const normalizedRequired = discount.contactAddresses.map((a) => a.toLowerCase());
 		const normalizedUser = ctx.userContactAddresses.map((a) => a.toLowerCase());
+		const typed =
+			!ctx.isLoggedIn && ctx.checkoutAddress ? [ctx.checkoutAddress.trim().toLowerCase()] : [];
 		const matchesAddress = normalizedRequired.some((addr) => {
-			// Wildcard `npub*` matches any Nostr-authenticated user.
+			// Wildcard `npub*` matches any Nostr-authenticated user, so a typed npub does not count.
 			// Reject lookalikes such as `npubcool@gmail.com` (no `npub1` prefix)
 			// or `npub1xyz@example.com` (contains `@`).
 			if (addr === 'npub*') {
-				return normalizedUser.some((u) => u.startsWith('npub1') && !u.includes('@'));
+				return (
+					ctx.isLoggedIn && normalizedUser.some((u) => u.startsWith('npub1') && !u.includes('@'))
+				);
 			}
-			return normalizedUser.includes(addr);
+			return normalizedUser.includes(addr) || typed.includes(addr);
 		});
 		if (!matchesAddress) {
 			return false;

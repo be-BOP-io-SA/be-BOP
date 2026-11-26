@@ -869,6 +869,7 @@ export async function createOrder(
 		deliveryCountry: params.userVatCountry,
 		billingCountry: params.billingAddress?.country,
 		userContactAddresses: collectUserAddresses(params.user),
+		checkoutAddress: email || npubAddress,
 		cartItems: items.map((i) => ({
 			productId: i.product._id,
 			quantity: i.quantity,

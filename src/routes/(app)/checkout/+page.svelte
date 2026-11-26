@@ -2,6 +2,7 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import Picture from '$lib/components/Picture.svelte';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
@@ -19,7 +20,6 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
-	import { sha256 } from '$lib/utils/sha256';
 
 	export let data;
 	export let form;
@@ -114,24 +114,33 @@
 	$: billKey = data.relevantBillCountries?.includes(effectiveBillingCountry)
 		? effectiveBillingCountry
 		: '';
-	// A visitor who is not signed in keeps this browser session's subscriber rights only while the
-	// address typed below is the one a subscription was taken with, as order creation decides.
-	let keepsSubscriptions = true;
-	$: checkSubscriptionAddress(addresses.paymentStatus);
-	async function checkSubscriptionAddress(typed: string | undefined) {
+	// For a visitor who is not signed in, the address typed below may be on a discount's list, and
+	// decides whether this browser session's subscriptions still count: the server recomputes the
+	// prices for it, so the price shown is the one the order charges.
+	let pricesForAddress:
+		| { discountByContext: typeof data.discountByContext; freeProductUnits: Record<string, number> }
+		| undefined;
+	let pricesTimer: ReturnType<typeof setTimeout> | undefined;
+	$: askPricesForAddress(addresses.paymentStatus);
+	function askPricesForAddress(typed: string | undefined) {
 		const address = typed?.trim() ?? '';
-		if (!data.subscriptionAddressHashes || !address) {
-			keepsSubscriptions = true;
+		clearTimeout(pricesTimer);
+		if (!browser || !data.contactAddressCounts || !address) {
+			pricesForAddress = undefined;
 			return;
 		}
-		const hash = await sha256(address.startsWith('npub') ? address : address.toLowerCase());
-		if ((addresses.paymentStatus?.trim() ?? '') === address) {
-			keepsSubscriptions = data.subscriptionAddressHashes.includes(hash);
-		}
+		pricesTimer = setTimeout(async () => {
+			const response = await fetch('/checkout/prices', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ address })
+			});
+			if (response.ok && (addresses.paymentStatus?.trim() ?? '') === address) {
+				pricesForAddress = await response.json();
+			}
+		}, 400);
 	}
-	$: discountTable = keepsSubscriptions
-		? data.discountByContext
-		: data.discountByContextWithoutSubscriptions;
+	$: discountTable = pricesForAddress?.discountByContext ?? data.discountByContext;
 	$: contextDiscountMap = baseMethod
 		? discountTable?.[`${shipKey}|${billKey}|${baseMethod}`]
 		: undefined;
@@ -141,9 +150,10 @@
 			return item;
 		}
 		const dynamicDiscount = contextDiscountMap?.[item.product._id];
-		// The cart's own discount may come from a subscription this address does not keep.
+		// Once recomputed for the typed address, the cart's own discount no longer applies: it may
+		// come from a subscription or a list this address does not have.
 		const discountPercentage =
-			dynamicDiscount ?? (keepsSubscriptions ? item.discountPercentage : undefined);
+			dynamicDiscount ?? (pricesForAddress ? undefined : item.discountPercentage);
 		return discountPercentage !== undefined ? { ...item, discountPercentage } : item;
 	});
 	$: orderDeliveryFees = computeDeliveryFees(
@@ -184,7 +194,7 @@
 		bebopCountry: data.vatCountry,
 		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
-		freeProductUnits: keepsSubscriptions ? data.cart.freeProductUnits : {},
+		freeProductUnits: pricesForAddress?.freeProductUnits ?? data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
 		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,

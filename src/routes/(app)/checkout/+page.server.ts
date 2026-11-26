@@ -23,16 +23,10 @@ import {
 	getCartFromDb
 } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
-import { subscriptionRightsQuery, userIdentifier, userQuery } from '$lib/server/user.js';
-import { sha256 } from '$lib/utils/sha256';
+import { userIdentifier, userQuery } from '$lib/server/user.js';
+import { checkoutPrices } from '$lib/server/checkoutPrices';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
-import {
-	collectUserAddresses,
-	getActivePercentageDiscounts,
-	isAuthenticated,
-	selectBestDiscount,
-	webChannelForUser
-} from '$lib/server/discount';
+import { isAuthenticated, webChannelForUser } from '$lib/server/discount';
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import type { JsonObject } from 'type-fest';
 import { rateLimit } from '$lib/server/rateLimit.js';
@@ -124,81 +118,15 @@ export async function load({ parent, locals }) {
 			? 'employee'
 			: undefined;
 
-	// Precompute auto discount per payment method so the frontend can switch live
-	const activeDiscounts = await getActivePercentageDiscounts();
-	const user = userIdentifier(locals);
-	const paidSubs = await collections.paidSubscriptions
-		.find({ ...subscriptionRightsQuery(user), paidUntil: { $gt: new Date() } })
-		.toArray();
-	// A visitor who is not signed in keeps the rights of this browser session's subscriptions
-	// only while the address typed below is the one a subscription was taken with — the rule
-	// order creation applies. The page knows those addresses by their hash, never in clear, and
-	// shows the prices without the subscriptions as soon as another address is typed.
-	const subscriptionAddressHashes =
-		!isAuthenticated(user) && paidSubs.length
-			? await Promise.all(
-					paidSubs
-						.flatMap((subscription) => [
-							...(subscription.user.email ? [subscription.user.email.toLowerCase()] : []),
-							...(subscription.user.npub ? [subscription.user.npub] : [])
-						])
-						.map((address) => sha256(address))
-			  )
-			: undefined;
-	const discountItemsForEval = cartItemsWithResolvedStock.map((i) => ({
-		product: i.product,
-		quantity: i.quantity,
-		...(i.customPrice && { customPrice: i.customPrice })
-	}));
-	const baseDiscountContext = {
-		userSubscriptionIds: paidSubs.map((s) => s.productId),
+	// The discounts depend on the address typed in the contact field for a visitor who is not
+	// signed in: the page asks `/checkout/prices` again each time it changes.
+	const contactAddressCounts = !isAuthenticated(userIdentifier(locals));
+	const { discountByContext, relevantShipCountries, relevantBillCountries } = await checkoutPrices({
+		locals,
+		items: cartItemsWithResolvedStock,
 		promoCode: parentData.cart.promoCode,
-		channel: webChannelForUser(locals.user?.hasPosOptions),
-		userContactAddresses: collectUserAddresses(user),
-		cartItems: cartItemsWithResolvedStock.map((i) => ({
-			productId: i.product._id,
-			quantity: i.quantity,
-			tagIds: i.product.tagIds
-		})),
-		isLoggedIn: isAuthenticated(user)
-	};
-	// Countries that can influence discount eligibility, split by condition axis.
-	// Any other country produces the same result (condition fails), so we only vary these.
-	// '' sentinel = "country not relevant to this axis".
-	const relevantShipCountries = [
-		...new Set(activeDiscounts.flatMap((d) => (d.deliveryCountry ? [d.deliveryCountry] : [])))
-	];
-	const relevantBillCountries = [
-		...new Set(activeDiscounts.flatMap((d) => (d.billingCountry ? [d.billingCountry] : [])))
-	];
-	const shipKeys: Array<CountryAlpha2 | ''> = ['', ...relevantShipCountries];
-	const billKeys: Array<CountryAlpha2 | ''> = ['', ...relevantBillCountries];
-
-	// Key format: `${ship}|${bill}|${method}`. Frontend normalizes each chosen country to ''
-	// unless it appears in the corresponding relevant list, then looks up the precomputed best.
-	const discountTable = (
-		context: typeof baseDiscountContext
-	): Record<string, Record<string, number>> =>
-		Object.fromEntries(
-			shipKeys.flatMap((ship) =>
-				billKeys.flatMap((bill) =>
-					methods.flatMap((method) => {
-						const best = selectBestDiscount(activeDiscounts, discountItemsForEval, {
-							...context,
-							...(ship && { deliveryCountry: ship }),
-							...(bill && { billingCountry: bill }),
-							paymentMethod: method
-						});
-						return best
-							? [[`${ship}|${bill}|${method}`, Object.fromEntries(best.discountByProduct)]]
-							: [];
-					})
-				)
-			)
-		);
-	const discountByContext = discountTable(baseDiscountContext);
-	const discountByContextWithoutSubscriptions =
-		subscriptionAddressHashes && discountTable({ ...baseDiscountContext, userSubscriptionIds: [] });
+		methods
+	});
 
 	const posSubtypes = await collections.posPaymentSubtypes
 		.find({ disabled: { $ne: true } })
@@ -222,10 +150,7 @@ export async function load({ parent, locals }) {
 			label
 		})),
 		discountByContext,
-		...(subscriptionAddressHashes && {
-			subscriptionAddressHashes,
-			discountByContextWithoutSubscriptions
-		}),
+		contactAddressCounts,
 		relevantShipCountries,
 		relevantBillCountries,
 		reportingTags,
