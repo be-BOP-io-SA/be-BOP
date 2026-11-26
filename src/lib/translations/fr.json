@@ -2205,7 +2205,10 @@
 			"VARIATION_INVALID": "Choisissez une des options proposées pour ce produit.",
 			"MAX_PER_ORDER": "Vous ne pouvez commander que {max} exemplaires de ce produit.",
 			"INVALID_QUANTITY": "Saisissez une quantité valide.",
-			"INVALID_PRICE": "Saisissez un prix valide."
+			"INVALID_PRICE": "Saisissez un prix valide.",
+			"LOGIN_REQUIRED": "Vous devez être connecté pour commander ce produit.",
+			"NOT_WHITELISTED": "Ce produit est réservé à certains clients.",
+			"MAX_PER_USER": "Vous avez atteint le maximum commandable pour ce produit."
 		}
 	},
 	"cartFromUrl": {
@@ -3350,9 +3353,6 @@
 		}
 	},
 	"saleLock": {
-		"LOGIN_REQUIRED": "Vous devez être connecté pour commander ce produit.",
-		"NOT_WHITELISTED": "Ce produit est réservé à certains clients.",
-		"MAX_PER_USER": "Vous avez atteint le maximum commandable pour ce produit.",
 		"login": "Se connecter"
 	}
 }

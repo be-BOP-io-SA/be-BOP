@@ -2058,7 +2058,7 @@
 									rows="4"
 									placeholder={t('admin.productForm.saleLocks.emailsPlaceholder')}
 									value={product.whitelist?.emails?.join('\n') ?? ''}
-								/>
+								></textarea>
 							</label>
 
 							<label class="form-label">
@@ -2069,10 +2069,9 @@
 									rows="4"
 									placeholder={t('admin.productForm.saleLocks.npubsPlaceholder')}
 									value={product.whitelist?.npubs?.join('\n') ?? ''}
-								/>
+								></textarea>
 							</label>
 
-							<!-- svelte-ignore a11y-label-has-associated-control -->
 							<label class="form-label">
 								{t('admin.productForm.saleLocks.subscribers')}
 								<MultiSelect
