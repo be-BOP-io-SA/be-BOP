@@ -73,7 +73,7 @@
 		<div class="flex flex-col gap-4">
 			{#each sortedOptins as optin, i (optin._id)}
 				<div
-					class="border rounded-lg p-4 flex justify-between items-start {optin.enabled
+					class="border rounded-lg p-4 flex flex-wrap gap-2 justify-between items-start {optin.enabled
 						? ''
 						: 'bg-gray-50 opacity-60'}"
 				>
