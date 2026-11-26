@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	discountTargetsProduct,
 	evaluateDiscountConditions,
 	isPublicZeroCriteriaDiscount,
 	publicDiscountPriceSnapshot,
@@ -159,11 +160,23 @@ describe('selectBestDiscount — a subscription never discounts itself', () => {
 		percentage: 10
 	});
 	const membership = {
-		product: { _id: 'membership', price: { amount: 50, currency: 'EUR' as const } },
+		product: {
+			_id: 'membership',
+			price: { amount: 50, currency: 'EUR' as const },
+			type: 'subscription' as const,
+			free: false,
+			payWhatYouWant: false
+		},
 		quantity: 1
 	};
 	const tshirt = {
-		product: { _id: 'tshirt', price: { amount: 20, currency: 'EUR' as const } },
+		product: {
+			_id: 'tshirt',
+			price: { amount: 20, currency: 'EUR' as const },
+			type: 'resource' as const,
+			free: false,
+			payWhatYouWant: false
+		},
 		quantity: 1
 	};
 	const inCart = (items: Array<{ product: { _id: string } }>) =>
@@ -215,5 +228,68 @@ describe('evaluateDiscountConditions — required product combinations', () => {
 
 	it('does not match when the combination is absent from the cart', () => {
 		expect(evaluateDiscountConditions(combo, context())).toBe(false);
+	});
+});
+
+describe('discountTargetsProduct — free, pay-what-you-want and subscription products', () => {
+	const product = (overrides: Record<string, unknown> = {}) => ({
+		_id: 'p1',
+		tagIds: ['t1'],
+		type: 'resource' as const,
+		free: false,
+		payWhatYouWant: false,
+		...overrides
+	});
+	const wholeCatalog = discount({ wholeCatalog: true });
+	const byTag = discount({ wholeCatalog: false, requiredTagIds: ['t1'] });
+
+	it('reaches a regular product through the whole catalog or a tag', () => {
+		expect(discountTargetsProduct(wholeCatalog, product())).toBe(true);
+		expect(discountTargetsProduct(byTag, product())).toBe(true);
+	});
+
+	for (const [label, overrides] of [
+		['a subscription', { type: 'subscription' }],
+		['a free product', { free: true }],
+		['a pay-what-you-want product', { payWhatYouWant: true }]
+	] as const) {
+		it(`never reaches ${label} through the whole catalog`, () => {
+			expect(discountTargetsProduct(wholeCatalog, product(overrides))).toBe(false);
+		});
+
+		it(`never reaches ${label} through a tag`, () => {
+			expect(discountTargetsProduct(byTag, product(overrides))).toBe(false);
+		});
+	}
+
+	it('leaves the membership at full price when a required combination asks for it', () => {
+		const membership = {
+			product: {
+				...product({ _id: 'membership', type: 'subscription' }),
+				price: { amount: 50, currency: 'EUR' as const }
+			},
+			quantity: 1
+		};
+		const tshirt = {
+			product: { ...product({ _id: 'tshirt' }), price: { amount: 20, currency: 'EUR' as const } },
+			quantity: 1
+		};
+		const best = selectBestDiscount(
+			[
+				discount({
+					percentage: 10,
+					productCombinations: [{ products: [{ productId: 'membership', quantity: 1 }] }]
+				})
+			],
+			[membership, tshirt],
+			context({
+				cartItems: [
+					{ productId: 'membership', quantity: 1 },
+					{ productId: 'tshirt', quantity: 1 }
+				]
+			})
+		);
+		expect(best?.discountByProduct.get('tshirt')).toBe(10);
+		expect(best?.discountByProduct.get('membership') ?? 0).toBe(0);
 	});
 });
