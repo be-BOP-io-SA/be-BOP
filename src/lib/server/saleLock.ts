@@ -13,7 +13,7 @@ import { CUSTOMER_ROLE_ID, POS_ROLE_ID } from '$lib/types/User';
 import { collections } from './database';
 import { collectUserAddresses, isAuthenticated } from './discount';
 import { currentFundingReminderSeconds } from './subscriptions';
-import { identifiedUserQuery, userQuery } from './user';
+import { subscriptionRightsQuery, userQuery } from './user';
 
 /**
  * A sale lock is a per-product rule that answers one question: may *this* customer buy *this*
@@ -193,6 +193,12 @@ export type SaleLockContext = {
 	 * `resolveAvailableAmounts`. Absent means the caller has nothing to say about stock.
 	 */
 	availableByProductId?: Record<string, number>;
+	/**
+	 * The contact address typed at checkout, given only once the order is being placed. A list
+	 * the shop did not tie to signing in is answered on it for a visitor who is not signed in:
+	 * until then nothing says who they are, so the list does not stop them.
+	 */
+	checkoutAddress?: string;
 	session?: ClientSession;
 };
 
@@ -304,11 +310,10 @@ export async function evaluateSaleLocks(
 	const capWaivedForSellerOn = (product: ProductWithSaleLocks) =>
 		seller && !!product.posOverridesMaxQuantityPerUser;
 
-	// Two different questions, two different identities. Whether a subscription already
-	// occupies someone's single slot is a refusal, and the browser session counts for it — that
-	// is how an anonymous buyer is stopped from taking a second one. Whether a subscription
-	// lets someone through a whitelist is a grant, and a session that once served a subscriber
-	// must not carry that right to whoever holds the browser next.
+	// Two different questions. Whether a subscription already occupies someone's single slot is
+	// a refusal, and the browser session counts for it — that is how an anonymous buyer is
+	// stopped from taking a second one. Whether a subscription lets someone through a list is a
+	// right, read the way every subscriber right is: see `subscriptionRightsQuery`.
 	const needsHeldSubscriptions = products.some(
 		(product) => product.type === 'subscription' && maxQuantityPerUser(product) !== undefined
 	);
@@ -328,7 +333,7 @@ export async function evaluateSaleLocks(
 					await collections.paidSubscriptions
 						.find(
 							{
-								...identifiedUserQuery(user),
+								...subscriptionRightsQuery(user, context?.checkoutAddress),
 								productId: { $in: grantingProductIds },
 								paidUntil: { $gt: new Date() }
 							},
@@ -407,6 +412,7 @@ export async function evaluateSaleLocks(
 			subscriptions,
 			takenByProductId,
 			pendingSubscriptionOrderIds,
+			checkoutAddress: context?.checkoutAddress,
 			extraQuantity: context?.extraQuantityByProductId?.[product._id] ?? 0,
 			quantityInCart: context?.quantityInCartByProductId?.[product._id] ?? 0,
 			available: context?.availableByProductId?.[product._id]
@@ -437,6 +443,7 @@ function locksFor(
 		subscriptions: PaidSubscription[];
 		takenByProductId: Map<string, number>;
 		pendingSubscriptionOrderIds: Set<string>;
+		checkoutAddress: string | undefined;
 		extraQuantity: number;
 		quantityInCart: number;
 		available: number | undefined;
@@ -448,11 +455,18 @@ function locksFor(
 
 	const found: SaleLock[] = [];
 
-	if (product.whitelist) {
+	// A visitor who is not signed in is matched on the address they type at checkout, the list
+	// alone not asking them to sign in. Before checkout there is nothing to match them on.
+	const signedIn = ctx.employee || isAuthenticated(user);
+	if (product.whitelist && (signedIn || ctx.checkoutAddress !== undefined)) {
+		const typed = signedIn ? undefined : ctx.checkoutAddress;
+		const buyer: UserIdentifier | undefined = typed
+			? { ...user, ...(typed.startsWith('npub') ? { npub: typed } : { email: typed }) }
+			: user;
 		// The counter has no say here: employees are let through by the list's own "allow every
 		// employee", and a till standing in for a customer who is not on the list is not a case
 		// the shop asked for.
-		if (!matchesWhitelist(product.whitelist, user, ctx.activeSubscriptionProductIds)) {
+		if (!matchesWhitelist(product.whitelist, buyer, ctx.activeSubscriptionProductIds)) {
 			found.push({ code: 'NOT_WHITELISTED' });
 		}
 	}

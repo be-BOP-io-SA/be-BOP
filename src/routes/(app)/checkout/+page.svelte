@@ -19,6 +19,7 @@
 	import Trans from '$lib/components/Trans.svelte';
 	import CmsDesign from '$lib/components/CmsDesign.svelte';
 	import { formatBookedDates } from '$lib/utils/formatBookedDates.js';
+	import { sha256 } from '$lib/utils/sha256';
 
 	export let data;
 	export let form;
@@ -113,8 +114,26 @@
 	$: billKey = data.relevantBillCountries?.includes(effectiveBillingCountry)
 		? effectiveBillingCountry
 		: '';
+	// A visitor who is not signed in keeps this browser session's subscriber rights only while the
+	// address typed below is the one a subscription was taken with, as order creation decides.
+	let keepsSubscriptions = true;
+	$: checkSubscriptionAddress(addresses.paymentStatus);
+	async function checkSubscriptionAddress(typed: string | undefined) {
+		const address = typed?.trim() ?? '';
+		if (!data.subscriptionAddressHashes || !address) {
+			keepsSubscriptions = true;
+			return;
+		}
+		const hash = await sha256(address.startsWith('npub') ? address : address.toLowerCase());
+		if ((addresses.paymentStatus?.trim() ?? '') === address) {
+			keepsSubscriptions = data.subscriptionAddressHashes.includes(hash);
+		}
+	}
+	$: discountTable = keepsSubscriptions
+		? data.discountByContext
+		: data.discountByContextWithoutSubscriptions;
 	$: contextDiscountMap = baseMethod
-		? data.discountByContext?.[`${shipKey}|${billKey}|${baseMethod}`]
+		? discountTable?.[`${shipKey}|${billKey}|${baseMethod}`]
 		: undefined;
 	$: effectiveItems = items.map((item) => {
 		const isPosManual = !!item.discountJustification;
@@ -122,7 +141,9 @@
 			return item;
 		}
 		const dynamicDiscount = contextDiscountMap?.[item.product._id];
-		const discountPercentage = dynamicDiscount ?? item.discountPercentage;
+		// The cart's own discount may come from a subscription this address does not keep.
+		const discountPercentage =
+			dynamicDiscount ?? (keepsSubscriptions ? item.discountPercentage : undefined);
 		return discountPercentage !== undefined ? { ...item, discountPercentage } : item;
 	});
 	$: orderDeliveryFees = computeDeliveryFees(
@@ -163,7 +184,7 @@
 		bebopCountry: data.vatCountry,
 		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
 		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
-		freeProductUnits: data.cart.freeProductUnits,
+		freeProductUnits: keepsSubscriptions ? data.cart.freeProductUnits : {},
 		userCountry: isDigital ? digitalCountry : country,
 		vatExempted: data.vatExempted,
 		vatNullOutsideSellerCountry: data.vatNullOutsideSellerCountry,
@@ -337,6 +358,11 @@
 			{#if form?.subscriptionAtTill}
 				<div class="alert-error">
 					{t('checkout.subscriptionAtTill')}
+				</div>
+			{/if}
+			{#if form?.notOnList}
+				<div class="alert-error">
+					{t('cart.error.NOT_WHITELISTED')}
 				</div>
 			{/if}
 			<input type="hidden" name="cartId" value={data.cartId} />

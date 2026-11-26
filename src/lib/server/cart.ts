@@ -482,6 +482,8 @@ export async function checkCartItems(
 	}>,
 	opts?: {
 		user?: UserIdentifier;
+		/** The contact address typed at checkout, when the order is being placed */
+		checkoutAddress?: string;
 	}
 ) {
 	const products = items.map((item) => item.product);
@@ -503,7 +505,8 @@ export async function checkCartItems(
 				// What sits in the cart is what is about to be ordered, so it counts towards a
 				// per-person cap alongside what was ordered before.
 				extraQuantityByProductId: quantityInCart,
-				availableByProductId
+				availableByProductId,
+				checkoutAddress: opts.checkoutAddress
 		  })
 		: new Map(
 				products

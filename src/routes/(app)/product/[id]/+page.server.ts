@@ -17,7 +17,7 @@ import {
 	withoutWhitelist
 } from '$lib/server/saleLock';
 import { adminPrefix as getAdminPrefix } from '$lib/server/admin';
-import { identifiedUserQuery, userIdentifier } from '$lib/server/user';
+import { subscriptionRightsQuery, userIdentifier } from '$lib/server/user';
 import { CURRENCIES, parsePriceAmount } from '$lib/types/Currency';
 import {
 	DEFAULT_MAX_QUANTITY_PER_ORDER,
@@ -226,7 +226,7 @@ async function fetchProductPictures(productId: string) {
 async function fetchUserSubscriptions(userIdentifier: UserIdentifier) {
 	return collections.paidSubscriptions
 		.find({
-			...identifiedUserQuery(userIdentifier),
+			...subscriptionRightsQuery(userIdentifier),
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();

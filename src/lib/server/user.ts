@@ -7,6 +7,7 @@ import { collections, withTransaction } from './database';
 import type { UserIdentifier } from '$lib/types/UserIdentifier';
 import { error, type Cookies } from '@sveltejs/kit';
 import { sha256 } from '$lib/utils/sha256';
+import { escapeForRegex } from '$lib/utils/escapeForRegex';
 import { refreshSessionCookie } from './cookies';
 
 export const BCRYPT_SALT_ROUNDS = 10;
@@ -85,18 +86,31 @@ export function userIdentifier(locals: App.Locals): UserIdentifier {
 }
 
 /**
- * The same person, minus the browser session.
+ * The subscriptions that give this buyer their subscriber rights: discount, free units, access
+ * to a product reserved to subscribers.
  *
- * `userQuery` matches on the session id too, which is what lets an anonymous visitor keep
- * their own cart and orders. That is right for recognising someone's belongings, and wrong for
- * granting them anything: a session that once served a subscriber keeps matching that
- * subscription after they log out, or after somebody else logs in on the same browser — and
- * the subscriber discount followed the session instead of the person.
- *
- * So: `userQuery` to find what is yours, this one to decide what you are entitled to.
+ * The browser session counts, so a subscriber without an account keeps their rights. A visitor
+ * who is not signed in and types, at checkout, another contact address than the one the
+ * subscription was taken with loses them: on a shared computer the session may be someone
+ * else's, and a discount given by mistake is worse than one missed.
  */
-export function identifiedUserQuery(user: UserIdentifier) {
-	return userQuery({ ...user, sessionId: undefined });
+export function subscriptionRightsQuery(user: UserIdentifier, checkoutAddress?: string) {
+	const query = userQuery(user);
+	const signedIn = !!(user.userId || user.email || user.npub || user.ssoIds?.length);
+	if (signedIn || !checkoutAddress) {
+		return query;
+	}
+	return {
+		$and: [
+			query,
+			{
+				$or: [
+					{ 'user.email': { $regex: `^${escapeForRegex(checkoutAddress)}$`, $options: 'i' } },
+					{ 'user.npub': checkoutAddress }
+				]
+			}
+		]
+	};
 }
 
 export function userQuery(user: UserIdentifier) {

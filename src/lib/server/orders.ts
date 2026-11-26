@@ -61,7 +61,7 @@ import {
 import { refreshAvailableStockInDb } from './product';
 import { checkCartItems } from './cart';
 import { handleOrderTabAfterPayment } from './orderTab';
-import { userQuery } from './user';
+import { subscriptionRightsQuery, userQuery } from './user';
 import { SMTP_USER } from '$lib/server/env-config';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { escapeHtml } from '$lib/utils/escapeHtml';
@@ -810,7 +810,11 @@ export async function createOrder(
 		}
 	}
 
-	await checkCartItems(items, params.cart);
+	// The address typed at checkout answers the lists of a visitor who is not signed in.
+	await checkCartItems(
+		items,
+		params.cart && { user: params.cart.user, checkoutAddress: email || npubAddress || '' }
+	);
 
 	const isDigital = products.every((product) => !product.shipping);
 	const shippingPrice = {
@@ -851,7 +855,7 @@ export async function createOrder(
 
 	const paidSubs = await collections.paidSubscriptions
 		.find({
-			...userQuery(params.user),
+			...subscriptionRightsQuery(params.user, email || npubAddress),
 			paidUntil: { $gt: new Date() }
 		})
 		.toArray();
@@ -926,7 +930,8 @@ export async function createOrder(
 		discount: discountInfo,
 		freeProductUnits: await freeProductsForUser(
 			params.user,
-			items.map((item) => item.product._id)
+			items.map((item) => item.product._id),
+			email || npubAddress
 		),
 		userCountry: params.userVatCountry,
 		vatExempted,
@@ -940,7 +945,7 @@ export async function createOrder(
 			let quantityToConsume = price.usedFreeUnits;
 			const freeProductSubscriptions = await collections.paidSubscriptions
 				.find({
-					...userQuery(params.user),
+					...subscriptionRightsQuery(params.user, email || npubAddress),
 					[`freeProductsById.${item.product._id}.available`]: { $gt: 0 },
 					paidUntil: { $gt: new Date() }
 				})

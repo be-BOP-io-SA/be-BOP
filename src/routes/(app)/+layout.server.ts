@@ -9,7 +9,7 @@ import { SALE_LOCK_PROJECTION, withoutWhitelist } from '$lib/server/saleLock';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { freeProductsForUser, resolveSubscriptionDuration } from '$lib/server/subscriptions';
 import type { DigitalFile } from '$lib/types/DigitalFile';
-import { identifiedUserQuery } from '$lib/server/user.js';
+import { subscriptionRightsQuery } from '$lib/server/user.js';
 import { userIdentifier } from '$lib/server/user.js';
 import type { CMSPage } from '$lib/types/CmsPage.js';
 import type { Product } from '$lib/types/Product';
@@ -195,7 +195,7 @@ export async function load(params) {
 		cart.items.length ? await picturesForProducts(cart.items.map((it) => it.productId)) : [],
 		cart.items.length
 			? collections.paidSubscriptions
-					.find({ ...identifiedUserQuery(user), paidUntil: { $gt: new Date() } })
+					.find({ ...subscriptionRightsQuery(user), paidUntil: { $gt: new Date() } })
 					.toArray()
 			: []
 	]);

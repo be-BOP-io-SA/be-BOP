@@ -24,7 +24,8 @@ import {
 } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
 import { withStoredWhitelists } from '$lib/server/saleLock';
-import { identifiedUserQuery, userIdentifier, userQuery } from '$lib/server/user.js';
+import { subscriptionRightsQuery, userIdentifier, userQuery } from '$lib/server/user.js';
+import { sha256 } from '$lib/utils/sha256';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
 import {
 	collectUserAddresses,
@@ -129,10 +130,25 @@ export async function load({ parent, locals }) {
 
 	// Precompute auto discount per payment method so the frontend can switch live
 	const activeDiscounts = await getActivePercentageDiscounts();
-	const paidSubs = await collections.paidSubscriptions
-		.find({ ...identifiedUserQuery(userIdentifier(locals)), paidUntil: { $gt: new Date() } })
-		.toArray();
 	const user = userIdentifier(locals);
+	const paidSubs = await collections.paidSubscriptions
+		.find({ ...subscriptionRightsQuery(user), paidUntil: { $gt: new Date() } })
+		.toArray();
+	// A visitor who is not signed in keeps the rights of this browser session's subscriptions
+	// only while the address typed below is the one a subscription was taken with — the rule
+	// order creation applies. The page knows those addresses by their hash, never in clear, and
+	// shows the prices without the subscriptions as soon as another address is typed.
+	const subscriptionAddressHashes =
+		!isAuthenticated(user) && paidSubs.length
+			? await Promise.all(
+					paidSubs
+						.flatMap((subscription) => [
+							...(subscription.user.email ? [subscription.user.email.toLowerCase()] : []),
+							...(subscription.user.npub ? [subscription.user.npub] : [])
+						])
+						.map((address) => sha256(address))
+			  )
+			: undefined;
 	const discountItemsForEval = cartItemsWithResolvedStock.map((i) => ({
 		product: i.product,
 		quantity: i.quantity,
@@ -164,23 +180,29 @@ export async function load({ parent, locals }) {
 
 	// Key format: `${ship}|${bill}|${method}`. Frontend normalizes each chosen country to ''
 	// unless it appears in the corresponding relevant list, then looks up the precomputed best.
-	const discountByContext: Record<string, Record<string, number>> = Object.fromEntries(
-		shipKeys.flatMap((ship) =>
-			billKeys.flatMap((bill) =>
-				methods.flatMap((method) => {
-					const best = selectBestDiscount(activeDiscounts, discountItemsForEval, {
-						...baseDiscountContext,
-						...(ship && { deliveryCountry: ship }),
-						...(bill && { billingCountry: bill }),
-						paymentMethod: method
-					});
-					return best
-						? [[`${ship}|${bill}|${method}`, Object.fromEntries(best.discountByProduct)]]
-						: [];
-				})
+	const discountTable = (
+		context: typeof baseDiscountContext
+	): Record<string, Record<string, number>> =>
+		Object.fromEntries(
+			shipKeys.flatMap((ship) =>
+				billKeys.flatMap((bill) =>
+					methods.flatMap((method) => {
+						const best = selectBestDiscount(activeDiscounts, discountItemsForEval, {
+							...context,
+							...(ship && { deliveryCountry: ship }),
+							...(bill && { billingCountry: bill }),
+							paymentMethod: method
+						});
+						return best
+							? [[`${ship}|${bill}|${method}`, Object.fromEntries(best.discountByProduct)]]
+							: [];
+					})
+				)
 			)
-		)
-	);
+		);
+	const discountByContext = discountTable(baseDiscountContext);
+	const discountByContextWithoutSubscriptions =
+		subscriptionAddressHashes && discountTable({ ...baseDiscountContext, userSubscriptionIds: [] });
 
 	const posSubtypes = await collections.posPaymentSubtypes
 		.find({ disabled: { $ne: true } })
@@ -204,6 +226,10 @@ export async function load({ parent, locals }) {
 			label
 		})),
 		discountByContext,
+		...(subscriptionAddressHashes && {
+			subscriptionAddressHashes,
+			discountByContextWithoutSubscriptions
+		}),
 		relevantShipCountries,
 		relevantBillCountries,
 		reportingTags,
@@ -726,6 +752,11 @@ export const actions = {
 				typeof err === 'object' && err && 'body' in err
 					? (err as { body?: { code?: string } }).body
 					: undefined;
+			// A list is answered on the address typed here, so the refusal is told here: the cart
+			// cannot know it.
+			if (cartErrorBody?.code === 'NOT_WHITELISTED') {
+				return fail(400, { notOnList: true });
+			}
 			if (cartErrorBody?.code && CART_ERROR_CODES.includes(cartErrorBody.code as CartErrorCode)) {
 				throw redirect(303, '/cart');
 			}
