@@ -593,7 +593,7 @@
 									/>
 									<span class="whitespace-nowrap">{t('pos.touch.inclVat')}</span>
 								{:else}
-									<span />
+									<span></span>
 								{/if}
 								<PriceTag
 									amount={priceInfo.partialPriceWithVat}

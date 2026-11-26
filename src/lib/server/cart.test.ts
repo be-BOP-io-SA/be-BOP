@@ -336,7 +336,8 @@ describe('cart', () => {
 					vatExempted: false,
 					vatNullOutsideSellerCountry: true
 				});
-				expect(priceInfo.totalPrice).toBeCloseTo(2110.08, 2);
+				// 1200 SAT with 8.1% Swiss VAT taken out is 1110.08, rounded to the satoshi.
+				expect(priceInfo.totalPrice).toBe(2110);
 				expect(priceInfo.totalVat).toBe(0);
 			});
 		});
