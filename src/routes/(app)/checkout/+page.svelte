@@ -7,8 +7,7 @@
 	import CheckoutFieldInput from '$lib/components/CheckoutFieldInput.svelte';
 	import ProductType from '$lib/components/ProductType.svelte';
 	import SubscriptionDurationLabel from '$lib/components/SubscriptionDurationLabel.svelte';
-	import { computeDeliveryFees, computePriceInfo } from '$lib/cart';
-	import { computeVatRate, extractVat } from '$lib/utils/vat';
+	import { computeDeliveryFees, computePriceInfo, deliveryFeesVatOf } from '$lib/cart';
 	import IconInfo from '$lib/components/icons/IconInfo.svelte';
 	import { toCurrency } from '$lib/utils/toCurrency.js';
 	import { UNDERLYING_CURRENCY } from '$lib/types/Currency.js';
@@ -133,17 +132,9 @@
 	);
 	$: deliveryFeesToBill = offerDeliveryFees ? 0 : orderDeliveryFees;
 
-	// Display delivery HT (not the raw TTC) so the breakdown sums up to Total.
-	$: deliveryFeesVatRate = computeVatRate({
-		productVatProfileId: data.deliveryFees.vatProfileId ?? undefined,
-		vatProfiles: data.vatProfiles,
-		bebopCountry: data.vatCountry,
-		userCountry: isDigital ? digitalCountry : country,
-		vatSingleCountry: data.vatSingleCountry
-	});
-	$: deliveryFeesToDisplay = data.deliveryFees.vatIncludedReference
-		? extractVat(deliveryFeesToBill, deliveryFeesVatRate)
-		: deliveryFeesToBill;
+	// Display delivery HT (not the raw TTC) so the breakdown sums up to Total. Its VAT can follow
+	// the cart products, so only the price computation knows it.
+	$: deliveryFeesToDisplay = priceInfo.deliveryFeesHt.amount;
 
 	$: isFreeOfCharge = addDiscount && discountType === 'percentage' && discountAmount === 100;
 
@@ -161,8 +152,7 @@
 	// deliveryFees stays inline so contextual typing keeps the Currency literal.
 	$: vatBaseConfig = {
 		bebopCountry: data.vatCountry,
-		deliveryFeesVatProfileId: data.deliveryFees.vatProfileId,
-		deliveryFeesVatIncluded: data.deliveryFees.vatIncludedReference,
+		deliveryFeesVat: deliveryFeesVatOf(data.deliveryFees),
 		freeProductUnits: data.cart.freeProductUnits,
 		userCountry: isDigital ? digitalCountry : country,
 		vatExempted: data.vatExempted,

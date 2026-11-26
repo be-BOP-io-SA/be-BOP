@@ -1213,7 +1213,14 @@
 			"saveConfig": "Guardar configuración",
 			"useDeliveryFeesVatIncludedReference": "Usar el precio de referencia de las tarifas de envío como precio con IVA incluido en lugar de sin IVA",
 			"vatProfileForDeliveryFees": "Perfil de IVA para tarifas de envío",
-			"useShopStandardVat": "Usar el IVA estándar de la tienda",
+			"deliveryFeesVatMode": "IVA aplicado a las tarifas de envío",
+			"deliveryFeesVatModes": {
+				"standard": "IVA estándar de la tienda",
+				"highest": "Tipo de IVA más alto entre los productos del carrito",
+				"prorata": "Tipos de IVA de los productos del carrito, a prorrata de su parte del total del carrito sin IVA",
+				"custom": "Perfil de IVA personalizado",
+				"none": "Sin IVA"
+			},
 			"valuesUpdated": "Valores actualizados",
 			"manageVatProfiles": "Gestionar perfiles de IVA",
 			"vatProfilesHint": "Puede crear perfiles de IVA, con tasas de IVA personalizadas para países específicos. Es útil para productos con tasas de IVA específicas, como los libros en Francia y Suiza.",

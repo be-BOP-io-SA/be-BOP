@@ -5,6 +5,7 @@ import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
 import type { Currency } from '$lib/types/Currency';
 import type { SubscriptionDuration } from '$lib/types/SubscriptionDuration';
 import type { DeliveryFees } from '$lib/types/DeliveryFees';
+import type { DeliveryFeesVatMode } from '$lib/cart';
 import { currencies } from '$lib/stores/currencies';
 import {
 	NOSTR_PRIVATE_KEY,
@@ -175,6 +176,8 @@ const baseConfig = {
 		onlyPayHighest: false,
 		allowFreeForPOS: false,
 		vatIncludedReference: false,
+		/** null = saved before the mode existed, read by `deliveryFeesVatOf`. */
+		vatMode: null as DeliveryFeesVatMode | null,
 		vatProfileId: null as string | null,
 		deliveryFees: {
 			default: {

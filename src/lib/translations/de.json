@@ -1213,7 +1213,14 @@
 			"saveConfig": "Konfiguration speichern",
 			"useDeliveryFeesVatIncludedReference": "Preisreferenz der Liefergebühren als Preis inkl. MwSt. statt exkl. MwSt. verwenden",
 			"vatProfileForDeliveryFees": "MwSt.-Profil für Liefergebühren",
-			"useShopStandardVat": "Standard-MwSt. des Shops verwenden",
+			"deliveryFeesVatMode": "Auf Liefergebühren angewandte MwSt.",
+			"deliveryFeesVatModes": {
+				"standard": "Standard-MwSt. des Shops",
+				"highest": "Höchster MwSt.-Satz der Produkte im Warenkorb",
+				"prorata": "MwSt.-Sätze der Produkte im Warenkorb, anteilig nach ihrem Anteil an der Warenkorbsumme ohne MwSt.",
+				"custom": "Eigenes MwSt.-Profil",
+				"none": "Keine MwSt."
+			},
 			"valuesUpdated": "Werte aktualisiert",
 			"manageVatProfiles": "MwSt.-Profile verwalten",
 			"vatProfilesHint": "Sie können MwSt.-Profile mit benutzerdefinierten MwSt.-Sätzen für bestimmte Länder erstellen. Dies ist nützlich für Produkte mit besonderen MwSt.-Sätzen, wie Bücher in Frankreich und der Schweiz.",

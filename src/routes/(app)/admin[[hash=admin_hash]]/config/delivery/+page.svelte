@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DeliveryFeesSelector from '$lib/components/DeliveryFeesSelector.svelte';
-	import { computeVatRate } from '$lib/utils/vat';
+	import DeliveryFeesVatFields from '$lib/components/DeliveryFeesVatFields.svelte';
+	import { deliveryFeesVatOf } from '$lib/cart';
 	import { useI18n } from '$lib/i18n';
 
 	const { t } = useI18n();
@@ -11,18 +12,13 @@
 	let mode: 'flatFee' | 'perItem' = data.deliveryFees.mode;
 	let onlyPayHighest = data.deliveryFees.onlyPayHighest;
 	let applyFlatFeeToEachItem = data.deliveryFees.applyFlatFeeToEachItem;
-	let vatIncludedReference = data.deliveryFees.vatIncludedReference ?? false;
-	let vatProfileId = data.deliveryFees.vatProfileId ?? '';
+	const savedVat = deliveryFeesVatOf(data.deliveryFees);
+	let vatIncludedReference = savedVat.included;
+	let vatMode = savedVat.mode;
+	let vatProfileId = savedVat.profileId ?? '';
+	let deliveryVatRate = 0;
 
 	let deliveryFees = data.deliveryFees.deliveryFees || {};
-
-	$: deliveryVatRate = computeVatRate({
-		productVatProfileId: vatProfileId || undefined,
-		vatProfiles: data.vatProfiles,
-		bebopCountry: data.vatCountry,
-		userCountry: data.vatCountry,
-		vatSingleCountry: true
-	});
 </script>
 
 {#if form?.success}
@@ -78,25 +74,14 @@
 		</label>
 	{/if}
 
-	<label class="checkbox-label">
-		<input
-			type="checkbox"
-			class="form-checkbox"
-			name="vatIncludedReference"
-			bind:checked={vatIncludedReference}
-		/>
-		{t('admin.config.useDeliveryFeesVatIncludedReference')}
-	</label>
-
-	<label class="form-label">
-		{t('admin.config.vatProfileForDeliveryFees')}
-		<select name="vatProfileId" class="form-input" bind:value={vatProfileId}>
-			<option value="">{t('admin.config.useShopStandardVat')}</option>
-			{#each data.vatProfiles as profile}
-				<option value={profile._id}>{profile.name}</option>
-			{/each}
-		</select>
-	</label>
+	<DeliveryFeesVatFields
+		vatProfiles={data.vatProfiles}
+		vatCountry={data.vatCountry}
+		bind:vatMode
+		bind:vatProfileId
+		bind:vatIncludedReference
+		bind:previewRate={deliveryVatRate}
+	/>
 
 	<DeliveryFeesSelector
 		{deliveryFees}
