@@ -4,7 +4,12 @@
 	import { sortCurrencies, currenciesToSelectOptions } from '$lib/types/Currency';
 	import { applyAction, enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import Select from 'svelte-select';
 	import { browser } from '$app/environment';
 	import CurrencyLabel from '$lib/components/CurrencyLabel.svelte';
@@ -12,9 +17,9 @@
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
-	const { t } = useI18n();
-
 	export let data;
+
+	const { t } = useI18n();
 
 	let name = data.schedule.name;
 	let slug = data.schedule._id;
@@ -48,6 +53,7 @@
 
 	let beginsAt: string[] = [];
 	let endsAt: string[] = [];
+	const toDateTimeInput = (date: Date | string) => new Date(date).toISOString().slice(0, 16);
 	let hideAll = true;
 
 	let limitedStock = false;
@@ -99,16 +105,25 @@
 		submitting = true;
 		const formData = new FormData(formElement);
 		try {
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
-						formData.set(`eventPictures[${index}]`, pictureId);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
+							return;
+						}
+						formData.set(`eventPictures[${index}]`, upload.pictureId);
 					}
 				})
 			);
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
+				return;
+			}
 			const action = (event.submitter as HTMLButtonElement | null)?.formAction.includes('?/')
 				? (event.submitter as HTMLButtonElement).formAction
 				: formElement.action;
@@ -289,27 +304,9 @@
 				{/if}
 				{#if data.schedule.events && data.schedule.events.length >= i + 1}
 					{#if !data.schedule.events[i].productId || !data.schedule.events[i].url?.startsWith('/product')}
-						<form
-							on:submit={() => (loading = true)}
-							method="post"
-							class="flex flex-col gap-4"
-							use:enhance={() => {
-								errorMessage[i] = '';
-								return async ({ result }) => {
-									loading = false;
-
-									if (result.type === 'error') {
-										errorMessage[i] = result.error.message;
-										return;
-									}
-									if (result.type === 'success' && result.data?.['redirectUrl']) {
-										// rerun all `load` functions, following the successful update
-										await invalidateAll();
-										window.open(result.data?.['redirectUrl'].toString(), '_blank');
-									}
-								};
-							}}
-						>
+						<!-- Its fields post through the ticket form rendered after the page-wide form:
+						     a form nested in another is dropped by the browser and breaks hydration. -->
+						<div class="flex flex-col gap-4">
 							<button
 								class="btn {createATicket[i] ? 'btn-red' : 'btn-gray'} self-start"
 								on:click={() => (createATicket[i] = !createATicket[i])}
@@ -320,27 +317,57 @@
 							</button>
 							{#if createATicket[i]}
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="useTitleDateAsShortDesc" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="useTitleDateAsShortDesc"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.useTitleDateAsShortDesc')}
 								</label>
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="displayShortDescription" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="displayShortDescription"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.displayShortDescriptionOnProduct')}
 								</label>
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="exportEventToCalendar" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="exportEventToCalendar"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.createExportCalendarCta')}
 								</label>
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="locationUrlCta" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="locationUrlCta"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.createLocationUrlCta')}
 								</label>
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="overwriteEventUrl" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="overwriteEventUrl"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.overwriteEventUrlWithProductUrl')}
 								</label>
 								<label class="checkbox-label">
-									<input class="form-checkbox" type="checkbox" name="CTAForMoreInformation" />
+									<input
+										class="form-checkbox"
+										type="checkbox"
+										name="CTAForMoreInformation"
+										form="ticket-form-{i}"
+									/>
 									{t('admin.schedule.createMoreInfoCta')}
 								</label>
 								<label class="checkbox-label">
@@ -348,6 +375,7 @@
 										class="form-checkbox"
 										type="checkbox"
 										name="nonFreePrice"
+										form="ticket-form-{i}"
 										bind:checked={nonFreePrice}
 									/>
 									{t('admin.schedule.setNonFreePrice')}
@@ -360,6 +388,7 @@
 												class="form-input"
 												type="number"
 												name="priceAmount"
+												form="ticket-form-{i}"
 												placeholder={t('admin.schedule.pricePlaceholder')}
 												step="any"
 												required
@@ -378,6 +407,7 @@
 											<input
 												type="hidden"
 												name="priceCurrency"
+												form="ticket-form-{i}"
 												value={selectedTicketCurrency?.value || ''}
 												required
 											/>
@@ -389,6 +419,7 @@
 										class="form-checkbox"
 										type="checkbox"
 										name="limitedStock"
+										form="ticket-form-{i}"
 										bind:checked={limitedStock}
 									/>
 									{t('admin.schedule.useLimitedStock')}
@@ -400,6 +431,7 @@
 											class="form-input"
 											type="number"
 											name="stock"
+											form="ticket-form-{i}"
 											placeholder={t('admin.schedule.stock')}
 											step="1"
 											min="0"
@@ -409,13 +441,12 @@
 								<button
 									class="btn btn-blue self-start"
 									type="submit"
+									form="ticket-form-{i}"
 									disabled={loading}
-									formaction="{data.adminPrefix}/schedule/{data.schedule._id}/event/{data.schedule
-										.events[i].slug}?/creatTicket"
 									>{t('admin.schedule.confirmTicketCreation')}
 								</button>
 							{/if}
-						</form>
+						</div>
 					{/if}
 					<label class="form-label">
 						{t('admin.schedule.eventTitle')}
@@ -443,7 +474,7 @@
 							maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 							class="form-input"
 							value={data.schedule.events[i].shortDescription}
-						/>
+						></textarea>
 					</label>
 					<label class="form-label">
 						{t('admin.schedule.description')}
@@ -454,7 +485,7 @@
 							maxlength="10000"
 							class="block form-input"
 							value={data.schedule.events[i].description}
-						/>
+						></textarea>
 					</label>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
@@ -464,9 +495,7 @@
 								class="form-input"
 								type="datetime-local"
 								name="events[{i}].beginsAt"
-								value={(beginsAt[i] = new Date(data.schedule.events[i].beginsAt)
-									.toISOString()
-									.slice(0, 16))}
+								value={toDateTimeInput(data.schedule.events[i].beginsAt)}
 								required
 								on:invalid={handleInvalidInput}
 							/>
@@ -481,9 +510,9 @@
 								type="datetime-local"
 								name="events[{i}].endsAt"
 								value={data.schedule.events[i].endsAt !== null
-									? new Date(data.schedule.events[i].endsAt ?? '').toISOString().slice(0, 16)
+									? toDateTimeInput(data.schedule.events[i].endsAt ?? '')
 									: ''}
-								min={beginsAt[i]}
+								min={toDateTimeInput(data.schedule.events[i].beginsAt)}
 							/>
 							<span class="text-sm text-gray-600 mt-2 block">
 								<kbd class="kbd body-secondaryCTA">backspace</kbd>
@@ -662,7 +691,7 @@
 							rows="2"
 							maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 							class="form-input"
-						/>
+						></textarea>
 					</label>
 					<label class="form-label">
 						{t('admin.schedule.description')}
@@ -672,7 +701,7 @@
 							rows="10"
 							maxlength="10000"
 							class="block form-input"
-						/>
+						></textarea>
 					</label>
 					<div class="flex flex-wrap gap-4">
 						<label class="form-label">
@@ -786,3 +815,28 @@
 		/>
 	</div>
 </form>
+
+{#each data.schedule.events as event, i}
+	<form
+		id="ticket-form-{i}"
+		method="post"
+		action="{data.adminPrefix}/schedule/{data.schedule._id}/event/{event.slug}?/creatTicket"
+		on:submit={() => (loading = true)}
+		use:enhance={() => {
+			errorMessage[i] = '';
+			return async ({ result }) => {
+				loading = false;
+
+				if (result.type === 'error') {
+					errorMessage[i] = result.error.message;
+					return;
+				}
+				if (result.type === 'success' && result.data?.['redirectUrl']) {
+					// rerun all `load` functions, following the successful update
+					await invalidateAll();
+					window.open(result.data?.['redirectUrl'].toString(), '_blank');
+				}
+			};
+		}}
+	></form>
+{/each}

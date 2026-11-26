@@ -324,6 +324,22 @@
 					{t('checkout.paymentGenerationFailed')}
 				</div>
 			{/if}
+			{#if form?.paymentTimeoutOutOfRange}
+				<div class="alert-error">
+					{t('checkout.paymentTimeoutOutOfRange')}
+				</div>
+			{/if}
+			{#if form?.cartAlreadyCheckedOut}
+				<div class="alert-error">
+					{t('checkout.cartAlreadyCheckedOut')}
+				</div>
+			{/if}
+			{#if form?.subscriptionAtTill}
+				<div class="alert-error">
+					{t('checkout.subscriptionAtTill')}
+				</div>
+			{/if}
+			<input type="hidden" name="cartId" value={data.cartId} />
 			<section class="gap-4 flex flex-col sm:grid sm:grid-cols-6">
 				<h2 class="font-light text-2xl col-span-6">{t('checkout.shipmentInfo')}</h2>
 				{#if isDigital}
@@ -652,6 +668,9 @@
 								value={data.desiredPaymentTimeout}
 								disabled={!changePaymentTimeOut}
 								required={changePaymentTimeOut}
+								on:invalid={(event) =>
+									event.currentTarget.setCustomValidity(t('checkout.paymentTimeoutOutOfRange'))}
+								on:input={(event) => event.currentTarget.setCustomValidity('')}
 							/>
 						</div>
 					</label>
@@ -719,14 +738,15 @@
 						<div class="p-4 flex flex-col gap-3">
 							<label class="form-label text-xl">
 								{t('checkout.receiptNote.label')}
-								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input" />
+								<textarea name="receiptNoteContent" cols="30" rows="2" class="form-input"
+								></textarea>
 							</label>
 						</div>{/if}
 					<div class="p-4 flex flex-col gap-3">
 						<label class="form-label text-xl">
 							{t('checkout.note.label')}
 
-							<textarea name="noteContent" cols="30" rows="2" class="form-input" />
+							<textarea name="noteContent" cols="30" rows="2" class="form-input"></textarea>
 						</label>
 					</div>
 				</article>
@@ -867,7 +887,7 @@
 						</div>
 					</form>
 
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
 				{#if deliveryFeesToBill}
@@ -888,7 +908,7 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{:else if isNaN(deliveryFeesToBill)}
 					<div class="alert-error mt-3">
 						{t('checkout.noDeliveryInCountry')}
@@ -942,10 +962,10 @@
 							/>
 						</div>
 					</div>
-					<div class="border-b border-gray-300 col-span-4" />
+					<div class="border-b border-gray-300 col-span-4"></div>
 				{/each}
 
-				<span class="py-1" />
+				<span class="py-1"></span>
 
 				<div class="-mx-3 p-3 flex flex-col">
 					<div class="flex justify-between">

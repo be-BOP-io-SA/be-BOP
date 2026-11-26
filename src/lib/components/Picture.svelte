@@ -106,7 +106,6 @@
 </script>
 
 {#if picture}
-	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<img
 		alt={picture.name}
 		width={picture.storage.formats[0].width}

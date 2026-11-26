@@ -195,14 +195,28 @@ export interface OrderPayment {
 	customPaymentMethod?: { id: string; label: string; instructions: string };
 }
 
+/**
+ * How the buyer is asked to pay, as the processor declares it. Lives here rather than in
+ * the server-only SDK because the payment page needs it.
+ */
+export type SerializedPaymentPresentation = {
+	kind: 'qr' | 'redirect' | 'embedded' | 'manual';
+	/** URI the QR image links to, so tapping it opens a wallet. */
+	qrLink?: string;
+	/** Tags a wallet browser extension looks for on the payment page. */
+	headTags?: Array<{ name: string; content: string }>;
+};
+
 export type SerializedOrderPayment = Omit<OrderPayment, '_id'> & {
 	id: string;
 	tapToPayOnActivationUrl?: string;
 	posSubtypeHasProcessor?: boolean;
 	confirmationBlocksRequired: number;
+	presentation?: SerializedPaymentPresentation;
 };
 
-export const FAKE_ORDER_INVOICE_NUMBER = -1;
+/** On the order page's address, the id of the payment the buyer has just come back from. */
+export const PAYMENT_RETURN_PARAM = 'paymentReturn';
 
 export interface OrderAddress {
 	firstName: string;
@@ -349,6 +363,12 @@ export interface Order extends Timestamps {
 	 */
 	status: OrderPaymentStatus;
 
+	/**
+	 * Set once, when the order first became paid and its goods were issued. Tickets, stock and
+	 * subscription cycles are not recoverable if applied twice, and several paths reach that code.
+	 */
+	paidEffectsAppliedAt?: Date;
+
 	payments: OrderPayment[];
 
 	sellerIdentity: SellerIdentity | null;
@@ -368,6 +388,12 @@ export interface Order extends Timestamps {
 		type: DiscountType;
 		price: Price;
 	};
+
+	/**
+	 * The automatic discount baked into the item prices, if any. Recorded so a later change to
+	 * the order — the payment method above all — can re-check the conditions it was granted under.
+	 */
+	appliedAutoDiscountId?: string;
 
 	clientIp?: string;
 	notes?: Note[];

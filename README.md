@@ -61,7 +61,7 @@ card.
 
 ### 3. Docker
 
-`docker compose up` brings up be-BOP with a MongoDB and an S3 storage. Good for
+`docker compose --env-file .env.local up` brings up be-BOP with a MongoDB and an S3 storage. Good for
 local development, and for a single-host deployment you manage yourself.
 
 **You need** Docker, and the environment variables from
@@ -152,7 +152,7 @@ hand rather than with the wizard.
 
 ## Requirements
 
-- **Node.js 18+**, with corepack enabled: `corepack enable`
+- **Node.js 22 (22.19 or later) or 24**, 24 recommended as in the Dockerfile, with corepack enabled: `corepack enable`
 - **pnpm** (enabled via corepack — you may need `sudo corepack enable`)
 - **Git LFS**, installed with `git lfs install`
 - A **MongoDB replica set** — run it in Docker or use [MongoDB Atlas](https://www.mongodb.com/atlas/database)
@@ -212,7 +212,7 @@ secrets that should not be committed to git; these override the values in
 | `ORIGIN`                    | The URL where be-BOP will be deployed, e.g. `https://bebop.example.com`                                                                                                                                                                                                                               |
 | `NOSTR_PRIVATE_KEY`         | Private key (`nsec…`) used to send Nostr notifications                                                                                                                                                                                                                                                |
 | `LINK_PRELOAD_HEADERS`      | Set to `true` to enable the `Link rel=preload` header ([explanation](https://nitropack.io/blog/post/link-rel-preload-explained)). If you do, you may need to raise nginx's `proxy_buffer_size 16k` ([explanation](https://www.getpagespeed.com/server-setup/nginx/tuning-proxy_buffer_size-in-nginx)) |
-| `BODY_SIZE_LIMIT`           | Maximum upload size in bytes, e.g. `20000000` for 20 MB. Not needed for normal usage                                                                                                                                                                                                                  |
+| `BODY_SIZE_LIMIT`           | Maximum request body size in bytes, e.g. `20000000` for 20 MB, `512K` by default. Not needed for normal usage. `0` or an empty value means the default `512K`. For no limit set `Infinity`                                                                                                            |
 | `PORT`                      | Port to listen on, defaults to `3000`                                                                                                                                                                                                                                                                 |
 
 ### S3 object storage
@@ -335,6 +335,10 @@ Add an S3 access key and secret to `.env.local` if not already present:
 echo "S3_KEY_ID=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
 echo "S3_KEY_SECRET=$(openssl rand -base64 63 | tr -d '\n')" >> .env.local
 ```
+
+Compose fills `${S3_KEY_ID}` and the other variables of `docker-compose.yml` from the
+`--env-file` it is given, not from `.env.local` on its own, so pass
+`--env-file .env.local` to every `docker compose` command.
 
 Make sure you have a fairly recent version of docker and docker compose, then:
 

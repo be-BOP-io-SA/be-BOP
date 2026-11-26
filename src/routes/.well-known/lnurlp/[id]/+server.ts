@@ -7,6 +7,7 @@ import { SignJWT } from 'jose';
 import sharp from 'sharp';
 import { error } from '@sveltejs/kit';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
+import { rateLimit } from '$lib/server/rateLimit';
 
 export const OPTIONS = () => {
 	return new Response(null, {
@@ -18,20 +19,13 @@ export const OPTIONS = () => {
 	});
 };
 
-export const GET = async ({ params, url }) => {
-	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
-		throw error(400, 'Lighting is not configured');
+/** The logo only changes with the shop's picture, and resizing it per request is free CPU to anyone. */
+let logoPng: { pictureId: string | undefined; png: Buffer | null } | null = null;
+
+async function logoAsPng(): Promise<Buffer | null> {
+	if (logoPng && logoPng.pictureId === runtimeConfig.pictureId) {
+		return logoPng.png;
 	}
-	if (isLndConfigured()) {
-		const info = await lndGetInfo();
-
-		if (!info.uris.length) {
-			throw error(400, 'No public Lightning URI');
-		}
-	}
-
-	let picture: Buffer | null = null;
-
 	try {
 		const logo = runtimeConfig.pictureId
 			? await collections.pictures.findOne({ _id: runtimeConfig.pictureId })
@@ -46,15 +40,39 @@ export const GET = async ({ params, url }) => {
 			: null;
 
 		// Convert to 512x512 PNG
-		picture = rawPicture
+		const png = rawPicture
 			? await sharp(await rawPicture.arrayBuffer())
 					.resize(512, 512)
 					.png()
 					.toBuffer()
 			: null;
+		// A failed download is retried next time rather than remembered as "no logo".
+		if (png || !key) {
+			logoPng = { pictureId: runtimeConfig.pictureId, png };
+		}
+		return png;
 	} catch {
 		console.log('error getting picture for lnurlp');
+		return null;
 	}
+}
+
+export const GET = async ({ params, url, locals }) => {
+	// Generous: a custodial wallet's server fetches on behalf of all its users from one address.
+	rateLimit(locals.clientIp, 'lnurlp', 120, { minutes: 1 });
+
+	if (!isLndConfigured() && !runtimeConfig.phoenixd.lnAddress) {
+		throw error(400, 'Lighting is not configured');
+	}
+	if (isLndConfigured()) {
+		const info = await lndGetInfo();
+
+		if (!info.uris.length) {
+			throw error(400, 'No public Lightning URI');
+		}
+	}
+
+	const picture = await logoAsPng();
 
 	const metadata = JSON.stringify([
 		['text/plain', `Tip ${runtimeConfig.brandName}`],

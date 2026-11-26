@@ -13,8 +13,19 @@ vi.mock('$lib/server/runtime-config', () => ({
 vi.mock('$lib/server/price-history', () => ({
 	getProductPriceHistory: vi.fn(async () => ({
 		currency: 'CHF',
-		catalogue: { points: [], current: null, deltaPct: null, min30: null, max30: null },
-		paid: { points: [], mean: null, pctBelowCatalogue: null }
+		catalogue: {
+			points: [{ t: '2026-01-02', price: 12.5 }],
+			current: null,
+			deltaPct: null,
+			min30: null,
+			max30: null
+		},
+		paid: {
+			currency: 'CHF',
+			points: [{ t: '2026-01-03', price: 11 }],
+			mean: null,
+			pctBelowCatalogue: null
+		}
 	}))
 }));
 
@@ -23,7 +34,7 @@ import { GET } from './+server';
 type CallOpts = {
 	id?: string;
 	csv?: boolean;
-	user?: { roleId: string; hasPosOptions?: boolean };
+	user?: { roleId: string; hasPosOptions?: boolean; role?: unknown };
 };
 
 function call(opts: CallOpts = {}) {
@@ -45,7 +56,14 @@ async function statusOf(p: Promise<Response>): Promise<number | 'ok'> {
 	}
 }
 
-const PUBLIC_PRODUCT = { price: { currency: 'CHF' } };
+function withVisibility(visibility: { eShop: boolean; retail: boolean }) {
+	return {
+		price: { currency: 'CHF' },
+		actionSettings: { eShop: { visible: visibility.eShop }, retail: { visible: visibility.retail } }
+	};
+}
+
+const PUBLIC_PRODUCT = withVisibility({ eShop: true, retail: false });
 
 describe('GET /product/[id]/price-history', () => {
 	beforeEach(() => {
@@ -65,11 +83,67 @@ describe('GET /product/[id]/price-history', () => {
 		}
 	);
 
+	it('404s for a product hidden from the e-shop', async () => {
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: true }));
+		expect(await statusOf(call())).toBe(404);
+	});
+
+	it('serves a hidden product to staff allowed on the admin product page, chart and CSV', async () => {
+		const productReader = {
+			roleId: 'catalog',
+			role: {
+				_id: 'catalog',
+				permissions: { read: ['/admin/product/*'], write: [], forbidden: [] }
+			}
+		};
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: false }));
+		expect(await statusOf(call({ user: productReader }))).toBe('ok');
+		const csv = await call({ csv: true, user: productReader });
+		expect(csv.headers.get('content-type')).toContain('text/csv');
+
+		const otherStaff = {
+			roleId: 'checker',
+			role: { _id: 'checker', permissions: { read: ['/admin/order/*'], write: [], forbidden: [] } }
+		};
+		expect(await statusOf(call({ user: otherStaff }))).toBe(404);
+	});
+
+	it('follows the retail visibility for a POS account', async () => {
+		findOne.mockResolvedValue(PUBLIC_PRODUCT);
+		expect(await statusOf(call({ user: { roleId: 'pos', hasPosOptions: true } }))).toBe(404);
+
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: true }));
+		expect(await statusOf(call({ user: { roleId: 'pos', hasPosOptions: true } }))).toBe('ok');
+	});
+
 	it('returns JSON for a normal product', async () => {
 		findOne.mockResolvedValue(PUBLIC_PRODUCT);
 		const res = await call();
 		expect(res.status).toBe(200);
 		expect(res.headers.get('content-type')).toContain('application/json');
+	});
+
+	it('keeps staff responses out of shared caches, and the public one apart from them', async () => {
+		const productReader = {
+			roleId: 'catalog',
+			role: {
+				_id: 'catalog',
+				permissions: { read: ['/admin/product/*'], write: [], forbidden: [] }
+			}
+		};
+		findOne.mockResolvedValue(withVisibility({ eShop: false, retail: false }));
+		const hidden = await call({ user: productReader });
+		expect(hidden.headers.get('cache-control')).toBe('private, max-age=60');
+		const csv = await call({ csv: true, user: productReader });
+		expect(csv.headers.get('cache-control')).toBe('private');
+
+		findOne.mockResolvedValue(PUBLIC_PRODUCT);
+		const staff = await call({ user: { roleId: 'admin' } });
+		expect(staff.headers.get('cache-control')).toBe('private, max-age=60');
+
+		const visitor = await call();
+		expect(visitor.headers.get('cache-control')).toBe('public, max-age=60');
+		expect(visitor.headers.get('vary')).toBe('Cookie');
 	});
 
 	it('forbids CSV export for an anonymous visitor', async () => {
@@ -88,5 +162,8 @@ describe('GET /product/[id]/price-history', () => {
 		expect(res.status).toBe(200);
 		expect(res.headers.get('content-type')).toContain('text/csv');
 		expect(res.headers.get('content-disposition')).toContain('attachment');
+		expect(await res.text()).toBe(
+			'series,date,price,currency\ncatalogue,2026-01-02,12.5,CHF\naverage_paid,2026-01-03,11,CHF'
+		);
 	});
 });

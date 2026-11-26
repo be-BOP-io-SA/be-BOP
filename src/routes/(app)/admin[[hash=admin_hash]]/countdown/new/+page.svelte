@@ -59,7 +59,7 @@
 			placeholder={t('admin.countdown.titlePlaceholder')}
 			class="form-input block w-full"
 			required
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.countdown.description')}
@@ -71,7 +71,7 @@
 			placeholder={t('admin.countdown.descriptionPlaceholder')}
 			class="form-input block w-full"
 			required
-		/>
+		></textarea>
 	</label>
 	<div class="flex flex-wrap gap-4">
 		<label class="form-label">

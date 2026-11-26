@@ -1,12 +1,17 @@
 import { collections, withTransaction } from '$lib/server/database';
-import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import {
+	paymentMethods,
+	restrictToProducts,
+	type PaymentMethod
+} from '$lib/server/payment-methods';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import {
 	createOrder,
 	notifySuperAdminPaymentFailure,
-	PaymentGenerationError
+	PaymentGenerationError,
+	sellsSubscriptionAtTill
 } from '$lib/server/orders';
 import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
@@ -109,14 +114,9 @@ export async function load({ parent, locals }) {
 		)
 	]);
 
-	const initialMethods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-	// Each item with explicit paymentMethods narrows the available methods (intersection)
-	const methods = (parentData.cart.items ?? []).reduce(
-		(acc, item) =>
-			item.product.paymentMethods
-				? acc.filter((m) => item.product.paymentMethods?.includes(m))
-				: acc,
-		initialMethods
+	const methods = restrictToProducts(
+		paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }),
+		(parentData.cart.items ?? []).map((item) => item.product)
 	);
 	const forceContentVersion =
 		locals.user?.roleId !== undefined && locals.user?.roleId !== CUSTOMER_ROLE_ID
@@ -226,7 +226,7 @@ export async function load({ parent, locals }) {
 		checkoutFields,
 		...(cmsCheckoutTop && {
 			cmsCheckoutTop,
-			cmsCheckoutTopData: cmsFromContent(
+			cmsCheckoutTopData: await cmsFromContent(
 				{
 					desktopContent: cmsCheckoutTop.content,
 					employeeContent:
@@ -238,7 +238,7 @@ export async function load({ parent, locals }) {
 		}),
 		...(cmsCheckoutBottom && {
 			cmsCheckoutBottom,
-			cmsCheckoutBottomData: cmsFromContent(
+			cmsCheckoutBottomData: await cmsFromContent(
 				{
 					desktopContent: cmsCheckoutBottom.content,
 					employeeContent:
@@ -250,15 +250,35 @@ export async function load({ parent, locals }) {
 			)
 		}),
 		defaultOnLocation: runtimeConfig.defaultOnLocation,
-		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout
+		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
+		cartId: (await getCartFromDb({ user: userIdentifier(locals) }))._id.toString()
 	};
+}
+
+async function orderPlacedFromCart(cartId: ObjectId, locals: App.Locals) {
+	const order = await collections.orders.findOne(
+		{ cartId, ...userQuery(userIdentifier(locals)) },
+		{ projection: { _id: 1 } }
+	);
+	return order?._id;
 }
 
 export const actions = {
 	default: async ({ request, locals, url }) => {
 		const cart = await getCartFromDb({ user: userIdentifier(locals) });
+		const formData = await request.formData();
+		const displayHeadless =
+			url.searchParams.get('display') === 'headless' ? '?display=headless' : '';
 
 		if (!cart?.items.length) {
+			// A double click on "Pay" sends the form again once the first request has placed the order.
+			const postedCartId = String(formData.get('cartId') ?? '');
+			const placedOrderId = ObjectId.isValid(postedCartId)
+				? await orderPlacedFromCart(new ObjectId(postedCartId), locals)
+				: undefined;
+			if (placedOrderId) {
+				throw redirect(303, `/order/${placedOrderId}${displayHeadless}`);
+			}
 			throw error(400, 'Cart is empty');
 		}
 
@@ -277,13 +297,10 @@ export const actions = {
 			productsFromDb.map(async (product) => await applyResolvedStock(product))
 		);
 
-		let methods = paymentMethods({ hasPosOptions: locals.user?.hasPosOptions });
-
-		for (const product of products) {
-			if (product.paymentMethods) {
-				methods = methods.filter((method) => product.paymentMethods?.includes(method));
-			}
-		}
+		const methods = restrictToProducts(
+			paymentMethods({ hasPosOptions: locals.user?.hasPosOptions }),
+			products
+		);
 
 		if (!methods.length) {
 			throw error(400, 'No payment methods available');
@@ -297,7 +314,6 @@ export const actions = {
 			throw error(400, 'Cart is empty');
 		}
 
-		const formData = await request.formData();
 		const json: JsonObject = {};
 
 		for (const [key, value] of formData) {
@@ -398,13 +414,16 @@ export const actions = {
 					})
 					.parse(json)
 			: null;
-		const receiptNote = json.receiptNoteContent
-			? z
-					.object({
-						receiptNoteContent: z.string().min(1)
-					})
-					.parse(json)
-			: null;
+		// POS-only, like the other operator fields around it: the receipt note is rendered as
+		// markdown on the employee screens, so a customer must not be able to fill it.
+		const receiptNote =
+			locals.user?.hasPosOptions && json.receiptNoteContent
+				? z
+						.object({
+							receiptNoteContent: z.string().min(1)
+						})
+						.parse(json)
+				: null;
 
 		const multiplePaymentMethods = locals.user?.hasPosOptions
 			? z
@@ -548,11 +567,17 @@ export const actions = {
 		}
 		const desiredPayment = z
 			.object({
-				paymentTimeOut: z.number({ coerce: true }).int().optional()
+				paymentTimeOut: z.number({ coerce: true }).int().min(1).optional()
 			})
-			.parse({
-				paymentTimeOut: formData.get('paymentTimeOut')
+			.safeParse({
+				// A long timeout freezes the crypto quote and holds stock and slots, so only the till sets it.
+				paymentTimeOut: locals.user?.hasPosOptions
+					? formData.get('paymentTimeOut') || undefined
+					: undefined
 			});
+		if (!desiredPayment.success) {
+			return fail(400, { paymentTimeoutOutOfRange: true });
+		}
 		const vatCountry =
 			shippingInfo?.shipping?.country ??
 			locals.countryCode ??
@@ -579,6 +604,14 @@ export const actions = {
 				400,
 				'You must acknowledge that you are only paying a deposit and will have to pay the rest later'
 			);
+		}
+		if (
+			sellsSubscriptionAtTill(
+				userIdentifier(locals),
+				cart.items.map((item) => byId[item.productId])
+			)
+		) {
+			return fail(400, { subscriptionAtTill: true });
 		}
 		const enabledCheckoutFields = await loadEnabledCheckoutFields();
 		const customCheckoutFields = collectCheckoutFieldValues(enabledCheckoutFields, json);
@@ -661,8 +694,8 @@ export const actions = {
 							})
 						},
 						...(physicalFullyPaid && { onLocation: physicalFullyPaid.onLocation }),
-						...(desiredPayment.paymentTimeOut && {
-							paymentTimeOut: desiredPayment.paymentTimeOut
+						...(desiredPayment.data.paymentTimeOut && {
+							paymentTimeOut: desiredPayment.data.paymentTimeOut
 						}),
 						session
 					}
@@ -677,10 +710,18 @@ export const actions = {
 				});
 				return fail(400, { paymentGenerationFailed: true });
 			}
+			// createOrder answers 409 when a parallel checkout of this same cart placed the order first.
+			if (isHttpError(err, 409)) {
+				const placedOrderId = await orderPlacedFromCart(cart._id, locals);
+				if (placedOrderId) {
+					throw redirect(303, `/order/${placedOrderId}${displayHeadless}`);
+				}
+				if (!(await collections.carts.countDocuments({ _id: cart._id }))) {
+					return fail(409, { cartAlreadyCheckedOut: true });
+				}
+			}
 			throw err;
 		}
-		const displayHeadless =
-			url.searchParams.get('display') === 'headless' ? '?display=headless' : '';
 		throw redirect(303, `/order/${orderId}${displayHeadless}`);
 	}
 };

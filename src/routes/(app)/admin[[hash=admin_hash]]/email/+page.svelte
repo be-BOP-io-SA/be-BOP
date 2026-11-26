@@ -24,7 +24,7 @@
 	>
 	<label class="form-label">
 		{t('admin.email.body')}
-		<textarea name="body" class="form-input" />
+		<textarea name="body" class="form-input"></textarea>
 	</label>
 	<button type="submit" class="btn btn-black self-start">{t('admin.email.send')}</button>
 </form>

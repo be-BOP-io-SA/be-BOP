@@ -106,7 +106,10 @@ describe('/asset/[filename]', () => {
 		expect(others).toContain('bebop-light.svg');
 
 		for (const file of others) {
-			expect(await served(file)).toEqual({ status: 302, location: `/src/lib/assets/${file}` });
+			expect(await served(file)).toEqual({
+				status: 302,
+				location: `/src/lib/assets/${file}?no-inline`
+			});
 		}
 	});
 

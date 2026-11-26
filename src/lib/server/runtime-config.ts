@@ -1,4 +1,4 @@
-import type { ChangeStream, ChangeStreamDocument } from 'mongodb';
+import type { ChangeStream, ChangeStreamDocument, Filter, WithId } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { defaultExchangeRate, exchangeRate } from '$lib/stores/exchangeRate';
@@ -46,6 +46,7 @@ import { typedInclude } from '$lib/utils/typedIncludes';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { OrderPaymentStatus } from '$lib/types/Order';
 import type { PaymentMethod, PaymentProcessor } from './payment-methods';
+import { processorConfigDefaults } from '$lib/types/paymentProcessors';
 import { merge } from '$lib/utils/merge';
 import { typedEntries } from '$lib/utils/typedEntries';
 import { deepEquals } from '$lib/utils/deep-equals';
@@ -224,11 +225,6 @@ const baseConfig = {
 	mainThemeId: '',
 	sellerIdentity: null as SellerIdentity | null,
 	shopInformation: null as SellerIdentity | null,
-	sumUp: {
-		apiKey: '',
-		merchantCode: '',
-		currency: 'EUR' as Currency
-	},
 	bitcoinNodeless: {
 		mempoolUrl: 'https://mempool.space',
 		format: 'bip84' as 'bip84' | 'bip48',
@@ -246,45 +242,7 @@ const baseConfig = {
 		derivationPath?: string;
 	},
 	bitcoinBlockHeight: 0,
-	stripe: {
-		/** pk_... */
-		publicKey: '',
-		/** sk_... */
-		secretKey: '',
-		currency: 'EUR' as Currency
-	},
-	btcpayServer: {
-		apiKey: '',
-		serverUrl: '',
-		storeId: ''
-	},
-	paypal: {
-		clientId: '',
-		secret: '',
-		currency: 'EUR' as Currency,
-		sandbox: false
-	},
-	swissBitcoinPay: {
-		apiKey: ''
-	},
-	blink: {
-		/** blink_... — when set, uses the API-key custodial GraphQL mode */
-		apiKey: '',
-		/** user@blink.sv — when set (and no apiKey), auto-detects custodial vs non-custodial (Spark) */
-		lnAddress: '',
-		/** Optional wallet id override for API-key mode; empty = account default wallet */
-		walletId: ''
-	},
-	taler: {
-		backendUrl: '',
-		backendApiKey: '',
-		currency: 'CHF' as Currency
-	},
-	osb: {
-		shopId: '',
-		password: '',
-		hmacKey: ''
-	},
+	...processorConfigDefaults(),
 	bity: {
 		clientId: ''
 	},
@@ -749,7 +707,7 @@ export type RuntimeConfig = BaseConfig &
 			>
 		>
 	>;
-type ConfigKey = keyof RuntimeConfig;
+export type ConfigKey = keyof RuntimeConfig;
 export type RuntimeConfigItem = {
 	[key in ConfigKey]: { _id: key; data: RuntimeConfig[key]; updatedAt: Date };
 }[ConfigKey];
@@ -767,33 +725,64 @@ process.on('SIGINT', () => {
 	setTimeout(() => process.exit(0), 8000);
 });
 
+function copyIntoMemory(config: WithId<RuntimeConfigItem>): void {
+	if (!(config._id in defaultConfig || config._id.startsWith('translations.'))) {
+		return;
+	}
+	Object.assign(runtimeConfig, { [config._id]: config.data });
+	runtimeConfigUpdatedAt[config._id] = config.updatedAt;
+
+	if (config._id.startsWith('translations.')) {
+		const locale = trimPrefix(config._id, 'translations.');
+		if (typedInclude(locales, locale)) {
+			enhancedLanguages[locale] = merge(
+				{},
+				languages[locale],
+				config.data as (typeof languages)[LanguageKey]
+			);
+			addTranslations(locale, enhancedLanguages[locale], {
+				formatDistance: formatDistanceLocale[locale]
+			});
+		}
+	}
+}
+
+// JSON rather than deepEquals, which takes any two dates for equal.
+const inMemory = (key: string) => JSON.stringify(runtimeConfig[key as ConfigKey]) ?? '';
+
+const MAX_READS = 5;
+
+// A setting that changes in memory during its read may have been saved meanwhile: read it again.
+async function readAndCopy(filter: Filter<RuntimeConfigItem>, keys: string[]): Promise<void> {
+	for (let attempt = 1; ; attempt++) {
+		const beforeRead = new Map(keys.map((key) => [key, inMemory(key)]));
+		const configs = await collections.runtimeConfig.find(filter).toArray();
+		const changedKeys = configs
+			.map((config) => config._id)
+			.filter((key) => inMemory(key) !== (beforeRead.get(key) ?? ''));
+
+		for (const config of configs) {
+			if (attempt === MAX_READS || !changedKeys.includes(config._id)) {
+				copyIntoMemory(config);
+			}
+		}
+		if (attempt === MAX_READS || !changedKeys.length) {
+			return;
+		}
+		filter = { _id: { $in: changedKeys } };
+		keys = changedKeys;
+	}
+}
+
 async function refresh(item?: ChangeStreamDocument<RuntimeConfigItem>): Promise<void> {
 	if (item && !('documentKey' in item)) {
 		return;
 	}
 
-	const configs = collections.runtimeConfig.find(item ? { _id: item.documentKey._id } : {});
-
-	for await (const config of configs) {
-		if (config._id in defaultConfig || config._id.startsWith('translations.')) {
-			Object.assign(runtimeConfig, { [config._id]: config.data });
-			runtimeConfigUpdatedAt[config._id] = config.updatedAt;
-
-			if (config._id.startsWith('translations.')) {
-				const locale = trimPrefix(config._id, 'translations.');
-				if (typedInclude(locales, locale)) {
-					enhancedLanguages[locale] = merge(
-						{},
-						languages[locale],
-						config.data as (typeof languages)[LanguageKey]
-					);
-					addTranslations(locale, enhancedLanguages[locale], {
-						formatDistance: formatDistanceLocale[locale]
-					});
-				}
-			}
-		}
-	}
+	await readAndCopy(
+		item ? { _id: item.documentKey._id } : {},
+		item ? [item.documentKey._id] : Object.keys(runtimeConfig)
+	);
 
 	for (const templateKey of typedKeys(defaultConfig.emailTemplates)) {
 		if (!(templateKey in runtimeConfig.emailTemplates)) {
