@@ -15,6 +15,7 @@
 	let vatProfileId = data.deliveryFees.vatProfileId ?? '';
 
 	let deliveryFees = data.deliveryFees.deliveryFees || {};
+	let deliveryZones = data.deliveryFees.deliveryZones ?? [];
 
 	$: deliveryVatRate = computeVatRate({
 		productVatProfileId: vatProfileId || undefined,
@@ -100,6 +101,7 @@
 
 	<DeliveryFeesSelector
 		{deliveryFees}
+		{deliveryZones}
 		defaultCurrency={data.currencies.priceReference}
 		{vatIncludedReference}
 		vatRate={deliveryVatRate}

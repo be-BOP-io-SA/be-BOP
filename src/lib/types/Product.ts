@@ -1,6 +1,6 @@
 import type { LanguageKey } from '$lib/translations';
 import type { ObjectId } from 'mongodb';
-import type { DeliveryFees } from './DeliveryFees';
+import type { DeliveryFees, DeliveryZone } from './DeliveryFees';
 import type { Price } from './Order';
 import type { ProductActionSettings } from './ProductActionSettings';
 import type { Tag } from './Tag';
@@ -63,6 +63,7 @@ export interface Product extends Timestamps, ProductTranslatableFields {
 	}>;
 	shipping: boolean;
 	deliveryFees?: DeliveryFees;
+	deliveryZones?: DeliveryZone[];
 	requireSpecificDeliveryFee?: boolean;
 	applyDeliveryFeesOnlyOnce?: boolean;
 	isTicket: boolean;
