@@ -929,7 +929,8 @@ export async function createOrder(
 			items.map((item) => item.product._id)
 		),
 		userCountry: params.userVatCountry,
-		vatExempted,
+		vatExempted: runtimeConfig.vatExempted,
+		vatFreeOrder: !!params.reasonFreeVat,
 		vatNullOutsideSellerCountry: runtimeConfig.vatNullOutsideSellerCountry,
 		vatProfiles,
 		vatSingleCountry: runtimeConfig.vatSingleCountry

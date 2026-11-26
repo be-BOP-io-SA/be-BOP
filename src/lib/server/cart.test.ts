@@ -272,6 +272,76 @@ describe('cart', () => {
 			});
 		});
 
+		// #2649: a shop without VAT bills a VAT-included fee as entered. A shop that charges VAT
+		// takes the VAT out of it, then leaves it off an order that is exempt.
+		describe('delivery fees entered VAT included', () => {
+			const shippedItem = {
+				product: {
+					_id: 'shipped',
+					shipping: true,
+					price: { amount: 1000, currency: 'SAT' as const }
+				},
+				quantity: 1
+			};
+			const base = {
+				bebopCountry: 'FR' as const,
+				deliveryFees: { amount: 1200, currency: 'SAT' as const },
+				deliveryFeesVatIncluded: true,
+				freeProductUnits: {},
+				vatProfiles: [],
+				vatSingleCountry: false
+			};
+
+			it('takes the VAT out of the fee when VAT applies', () => {
+				const priceInfo = computePriceInfo([shippedItem], {
+					...base,
+					userCountry: 'FR',
+					vatExempted: false,
+					vatNullOutsideSellerCountry: false
+				});
+				expect(priceInfo.totalPrice).toBe(2000);
+				expect(priceInfo.totalVat).toBe(400);
+			});
+
+			it('bills the fee as entered, with no VAT, when the shop has VAT disabled', () => {
+				const priceInfo = computePriceInfo([shippedItem], {
+					...base,
+					userCountry: 'FR',
+					vatExempted: true,
+					vatNullOutsideSellerCountry: false
+				});
+				expect(priceInfo.totalPrice).toBe(2200);
+				expect(priceInfo.totalPriceWithVat).toBe(2200);
+				expect(priceInfo.totalVat).toBe(0);
+				expect(priceInfo.vatRates).toEqual([0]);
+			});
+
+			it('takes the VAT out of the fee and charges none on an order ticked VAT free', () => {
+				const priceInfo = computePriceInfo([shippedItem], {
+					...base,
+					userCountry: 'FR',
+					vatExempted: false,
+					vatFreeOrder: true,
+					vatNullOutsideSellerCountry: false
+				});
+				expect(priceInfo.totalPrice).toBe(2000);
+				expect(priceInfo.totalPriceWithVat).toBe(2000);
+				expect(priceInfo.totalVat).toBe(0);
+			});
+
+			it('takes the VAT out of the fee and charges none outside the seller country', () => {
+				const priceInfo = computePriceInfo([shippedItem], {
+					...base,
+					userCountry: 'CH',
+					vatExempted: false,
+					vatNullOutsideSellerCountry: true
+				});
+				// 1200 SAT with 8.1% Swiss VAT taken out is 1110.08, rounded to the satoshi.
+				expect(priceInfo.totalPrice).toBe(2110);
+				expect(priceInfo.totalVat).toBe(0);
+			});
+		});
+
 		describe('when vatNullOutsideSellerCountry is true', () => {
 			describe("when the user's country is the same as the seller's country", () => {
 				it('should return the price with VAT for physical products', () => {

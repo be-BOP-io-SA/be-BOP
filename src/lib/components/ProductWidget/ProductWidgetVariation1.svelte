@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { Picture } from '$lib/types/Picture';
 	import PictureComponent from '../Picture.svelte';
 	import PriceTag from '../PriceTag.svelte';
@@ -61,7 +62,9 @@
 					currency={product.price.currency}
 					secondary
 				/>
-				<span class="font-semibold">{t('product.vatExcluded')}</span>
+				{#if !$page.data.vatExempted}
+					<span class="font-semibold">{t('product.vatExcluded')}</span>
+				{/if}
 			</div>
 		</div>
 		<a

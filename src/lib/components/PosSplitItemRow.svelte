@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { useI18n } from '$lib/i18n';
 	import PriceTag from '$lib/components/PriceTag.svelte';
 	import type { Currency } from '$lib/types/Currency';
@@ -83,10 +84,16 @@
 		<div class="text-xl text-gray-600 mb-2">+{item.internalNote.value}</div>
 	{/if}
 
-	<div class="grid grid-cols-4 w-full items-center justify-around text-xl">
-		<div>{t('pos.split.exclVat')}</div>
-		<PriceTag amount={priceInfo.amount} currency={priceInfo.currency} main />
-		<div>{t('pos.split.vatRate', { rate: vatRate })}</div>
-		<PriceTag amount={(priceInfo.amount * vatRate) / 100} currency={priceInfo.currency} main />
-	</div>
+	{#if $page.data.vatExempted}
+		<div class="text-xl">
+			<PriceTag amount={priceInfo.amount} currency={priceInfo.currency} main />
+		</div>
+	{:else}
+		<div class="grid grid-cols-4 w-full items-center justify-around text-xl">
+			<div>{t('pos.split.exclVat')}</div>
+			<PriceTag amount={priceInfo.amount} currency={priceInfo.currency} main />
+			<div>{t('pos.split.vatRate', { rate: vatRate })}</div>
+			<PriceTag amount={(priceInfo.amount * vatRate) / 100} currency={priceInfo.currency} main />
+		</div>
+	{/if}
 </div>
