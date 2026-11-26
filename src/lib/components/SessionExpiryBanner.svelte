@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
-	import { invalidateAll } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
 	import Trans from '$lib/components/Trans.svelte';
 	import { SESSION_EXPIRY_WARNING_MS } from '$lib/sessionExpiry';
@@ -67,7 +66,9 @@
 				redirect: 'manual'
 			});
 			if (res.ok) {
-				await invalidateAll();
+				// Only the end of the session changes. Reloading the page data instead would put the
+				// saved values back into the fields bound to it, over what the admin has just typed.
+				expireUserAt = ((await res.json()) as { expireUserAt: string }).expireUserAt;
 			} else {
 				extendFailed = true;
 			}

@@ -7,6 +7,7 @@ const E2E_DB = 'bebop-e2e';
 // 403 to every role but Super Admin.
 const ROLE_ID = 'e2e-session-extend';
 const LOGIN = 'e2e-session-extend';
+const TAG_ID = 'e2e-session-extend-tag';
 
 async function withDb<T>(run: (db: ReturnType<MongoClient['db']>) => Promise<T>): Promise<T> {
 	const client = await MongoClient.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017');
@@ -23,6 +24,7 @@ async function cleanUp() {
 		await db.collection('sessions').deleteMany({ userId: { $in: users.map((u) => u._id) } });
 		await db.collection('users').deleteMany({ _id: { $in: users.map((u) => u._id) } });
 		await db.collection('roles').deleteMany({ _id: ROLE_ID as never });
+		await db.collection('tags').deleteOne({ _id: TAG_ID as never });
 	});
 }
 
@@ -57,7 +59,7 @@ test.beforeAll(async () => {
 			_id: ROLE_ID as never,
 			name: 'E2E session extend',
 			hasPosOptions: false,
-			permissions: { read: [], write: ['/admin/arm/*'], forbidden: [] },
+			permissions: { read: [], write: ['/admin/tags/*'], forbidden: [] },
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
@@ -71,12 +73,30 @@ test.beforeAll(async () => {
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
+		await db.collection('tags').insertOne({
+			_id: TAG_ID as never,
+			name: 'E2E session extend tag',
+			title: 'E2E session extend tag',
+			subtitle: '',
+			content: '',
+			shortContent: '',
+			cta: [],
+			menu: [],
+			widgetUseOnly: false,
+			productTagging: true,
+			useLightDark: false,
+			reportingFilter: false,
+			printReceiptFilter: false,
+			cssOveride: '',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
 	});
 });
 
 test.afterAll(cleanUp);
 
-test('a back-office role other than Super Admin extends its session from the banner', async ({
+test('a role other than Super Admin extends its session and keeps what it typed', async ({
 	page,
 	context
 }) => {
@@ -84,6 +104,8 @@ test('a back-office role other than Super Admin extends its session from the ban
 	const sessionId = await signIn(context, userId, expireUserAt);
 	const extended = expireUserAt.getTime() + 30 * 60_000;
 	const extend = page.getByRole('button', { name: 'Extend' });
+	// Bound to the page data: reloading that data would untick it.
+	const reportingFilter = page.locator('input[name="reportingFilter"]');
 	const endOfSession = async () => {
 		const session = await withDb((db) => db.collection('sessions').findOne({ sessionId }));
 		return session?.expireUserAt?.getTime();
@@ -92,12 +114,14 @@ test('a back-office role other than Super Admin extends its session from the ban
 	// A click before the page hydrates does nothing, so reload until one goes through.
 	await expect(async () => {
 		if ((await endOfSession()) !== extended) {
-			await page.goto('/admin/arm');
+			await page.goto(`/admin/tags/${TAG_ID}`, { waitUntil: 'networkidle' });
+			await reportingFilter.check({ timeout: 1000 });
 			await extend.click({ timeout: 1000 });
 		}
 		await expect.poll(endOfSession, { timeout: 2000 }).toBe(extended);
 	}).toPass();
 
 	await expect(extend).toBeHidden();
+	await expect(reportingFilter).toBeChecked();
 	await expect(page.getByText('The session could not be extended')).toBeHidden();
 });
