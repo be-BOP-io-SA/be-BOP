@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Quels mails de commande partent",
 			"orderEmailRecipientsHint": "Une ligne par mail que be-BOP envoie au sujet d'une commande. Décochez ce que vous ne voulez pas recevoir — « paiement en attente » et « paiement expiré » sont en général les plus bruyants.",
 			"orderEmailRecipientsOverridden": "L'option ci-dessus vous envoie une copie de tous les mails de commande, cette liste n'a donc aucun effet. Décochez-la pour choisir mail par mail.",
+			"orderEmailRecipientsCustomerLocked": "Les cases grisées ne peuvent pas être décochées : elles disent au client ce qu'il est advenu de son paiement.",
 			"orderEmailRecipientsEmail": "Mail",
 			"orderEmailRecipientsToCustomer": "Au client",
 			"orderEmailRecipientsToShop": "En copie à vous",

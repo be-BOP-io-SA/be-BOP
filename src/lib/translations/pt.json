@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Que e-mails de encomenda são enviados",
 			"orderEmailRecipientsHint": "Uma linha por cada e-mail que o be-BOP envia sobre uma encomenda. Desmarque o que não quiser receber — «pagamento pendente» e «pagamento expirado» são geralmente os mais ruidosos.",
 			"orderEmailRecipientsOverridden": "A opção acima envia-lhe uma cópia de todos os e-mails de encomenda, pelo que esta lista não tem efeito. Desmarque-a para escolher e-mail a e-mail.",
+			"orderEmailRecipientsCustomerLocked": "As caixas a cinzento não podem ser desmarcadas: informam o cliente do que aconteceu ao seu pagamento.",
 			"orderEmailRecipientsEmail": "E-mail",
 			"orderEmailRecipientsToCustomer": "Ao cliente",
 			"orderEmailRecipientsToShop": "Cópia para si",

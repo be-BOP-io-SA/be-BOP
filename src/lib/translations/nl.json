@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Welke besteldmails verstuurd worden",
 			"orderEmailRecipientsHint": "Eén regel per e-mail die be-BOP over een bestelling verstuurt. Vink uit wat u niet wilt ontvangen — \"betaling in afwachting\" en \"betaling verlopen\" zijn doorgaans de luidruchtigste.",
 			"orderEmailRecipientsOverridden": "De optie hierboven stuurt u een kopie van elke bestelmail, dus deze lijst heeft geen effect. Vink haar uit om per e-mail te kiezen.",
+			"orderEmailRecipientsCustomerLocked": "De grijze vakjes kunnen niet worden uitgevinkt: ze laten de klant weten wat er met zijn betaling is gebeurd.",
 			"orderEmailRecipientsEmail": "E-mail",
 			"orderEmailRecipientsToCustomer": "Naar de klant",
 			"orderEmailRecipientsToShop": "Kopie naar u",

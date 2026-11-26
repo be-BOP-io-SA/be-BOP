@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+	CUSTOMER_ALWAYS_EMAILED,
 	ORDER_EMAIL_TEMPLATE_KEYS,
 	orderEmailRecipientsFor,
 	resetConfig,
@@ -36,13 +37,29 @@ describe('order e-mail recipients', () => {
 	it('follows the saved choices once the master switch is off', () => {
 		runtimeConfig.copyOrderEmailsToAdmin = false;
 		runtimeConfig.orderEmailRecipients = {
-			'order.payment.expired': { customer: false, shop: false },
+			'order.payment.pending.card': { customer: false, shop: false },
 			'order.paid': { customer: true, shop: true }
 		};
 
-		expect(orderEmailRecipientsFor('order.payment.expired').customer).toBe(false);
-		expect(shopGetsOrderEmail('order.payment.expired')).toBe(false);
+		expect(orderEmailRecipientsFor('order.payment.pending.card').customer).toBe(false);
+		expect(shopGetsOrderEmail('order.payment.pending.card')).toBe(false);
 		expect(shopGetsOrderEmail('order.paid')).toBe(true);
+	});
+
+	it('always e-mails the customer what became of a payment, even if saved as off', () => {
+		runtimeConfig.orderEmailRecipients = Object.fromEntries(
+			CUSTOMER_ALWAYS_EMAILED.map((key) => [key, { customer: false, shop: false }])
+		);
+
+		expect(CUSTOMER_ALWAYS_EMAILED).toEqual([
+			'order.paid',
+			'order.payment.paid',
+			'order.payment.expired',
+			'order.payment.canceled'
+		]);
+		for (const key of CUSTOMER_ALWAYS_EMAILED) {
+			expect(orderEmailRecipientsFor(key)).toEqual({ customer: true, shop: false });
+		}
 	});
 
 	it('copies every order e-mail to the shop while the master switch is on', () => {

@@ -688,14 +688,18 @@ export type OrderEmailTemplateKey = Extract<
 	'order.paid' | `order.payment.${string}`
 >;
 
-/**
- * The order e-mails a shop can switch on and off one by one.
- *
- * TODO: some of them must not be switched off — add a way to lock their value.
- */
+/** The order e-mails a shop can switch on and off one by one. */
 export const ORDER_EMAIL_TEMPLATE_KEYS = typedKeys(defaultConfig.emailTemplates).filter(
 	(key): key is OrderEmailTemplateKey => key === 'order.paid' || key.startsWith('order.payment.')
 );
+
+/** Order e-mails the customer always gets, whatever the shop saved. */
+export const CUSTOMER_ALWAYS_EMAILED: readonly OrderEmailTemplateKey[] = [
+	'order.paid',
+	'order.payment.paid',
+	'order.payment.expired',
+	'order.payment.canceled'
+];
 
 export const runtimeConfigUpdatedAt: Partial<Record<ConfigKey, Date>> = {};
 
@@ -991,7 +995,7 @@ export const runtimeConfig = structuredClone({
 export function orderEmailRecipientsFor(key: OrderEmailTemplateKey): OrderEmailRecipients {
 	const stored = runtimeConfig.orderEmailRecipients[key];
 	return {
-		customer: stored?.customer ?? true,
+		customer: CUSTOMER_ALWAYS_EMAILED.includes(key) || (stored?.customer ?? true),
 		shop: stored?.shop ?? runtimeConfig.copyOrderEmailsToAdmin
 	};
 }

@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Qué correos de pedido se envían",
 			"orderEmailRecipientsHint": "Una línea por cada correo que be-BOP envía sobre un pedido. Desmarque lo que no quiera recibir: «pago pendiente» y «pago vencido» suelen ser los más ruidosos.",
 			"orderEmailRecipientsOverridden": "La opción de arriba le envía copia de todos los correos de pedido, así que esta lista no tiene efecto. Desmárquela para elegir correo por correo.",
+			"orderEmailRecipientsCustomerLocked": "Las casillas en gris no se pueden desmarcar: informan al cliente de lo que ha pasado con su pago.",
 			"orderEmailRecipientsEmail": "Correo",
 			"orderEmailRecipientsToCustomer": "Al cliente",
 			"orderEmailRecipientsToShop": "Copia para usted",

@@ -825,6 +825,7 @@
 									name="customer:{key}"
 									class="form-checkbox"
 									checked={recipients.customer}
+									disabled={data.customerAlwaysEmailed.includes(key)}
 								/>
 							</td>
 							<td class="py-1 px-4 text-center">
@@ -841,6 +842,7 @@
 				</tbody>
 			</table>
 		</div>
+		<p class="text-sm text-gray-500">{t('admin.config.orderEmailRecipientsCustomerLocked')}</p>
 	</fieldset>
 
 	<label class="checkbox-label">

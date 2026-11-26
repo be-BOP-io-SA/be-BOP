@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Welche Auftrags-E-Mails versendet werden",
 			"orderEmailRecipientsHint": "Eine Zeile pro E-Mail, die be-BOP zu einem Auftrag verschickt. Haken Sie ab, was Sie nicht erhalten möchten — „Zahlung ausstehend“ und „Zahlung abgelaufen“ sind meist die lautesten.",
 			"orderEmailRecipientsOverridden": "Die Option oben sendet Ihnen eine Kopie jeder Auftrags-E-Mail, diese Liste hat daher keine Wirkung. Haken Sie sie ab, um E-Mail für E-Mail zu entscheiden.",
+			"orderEmailRecipientsCustomerLocked": "Die ausgegrauten Kästchen lassen sich nicht abwählen: Sie teilen dem Kunden mit, was aus seiner Zahlung geworden ist.",
 			"orderEmailRecipientsEmail": "E-Mail",
 			"orderEmailRecipientsToCustomer": "An den Kunden",
 			"orderEmailRecipientsToShop": "Kopie an Sie",

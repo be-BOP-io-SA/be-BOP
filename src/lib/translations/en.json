@@ -1281,6 +1281,7 @@
 			"orderEmailRecipientsTitle": "Which order e-mails go out",
 			"orderEmailRecipientsHint": "One line per e-mail be-BOP sends about an order. Untick what you do not want to receive — \"payment pending\" and \"payment expired\" are usually the noisy ones.",
 			"orderEmailRecipientsOverridden": "The option above sends you a copy of every order e-mail, so this list has no effect. Untick it to choose e-mail by e-mail.",
+			"orderEmailRecipientsCustomerLocked": "The greyed-out boxes cannot be unticked: they tell the customer what became of their payment.",
 			"orderEmailRecipientsEmail": "E-mail",
 			"orderEmailRecipientsToCustomer": "To the customer",
 			"orderEmailRecipientsToShop": "Copy to you",
