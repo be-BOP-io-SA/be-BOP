@@ -13,18 +13,21 @@ import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
 /**
- * The page is reserved to a session signed in with an e-mail or an npub: that address is proven
- * by the sign-in link, so the opt-ins saved here belong to whoever controls it. A blank session
- * or an employee sign-in alone is sent to the login page.
+ * The page is reserved to a session whose address is proven: by an e-mail or a Nostr sign-in
+ * link, or by a provider that attests the e-mail (Google, Facebook…). The opt-ins saved here
+ * belong to whoever controls that address. A blank session or an employee sign-in alone is sent
+ * to the login page.
  */
 function requireContactSignIn(locals: App.Locals) {
-	if (!locals.email && !locals.npub) {
+	const address = signedInConsentAddress(locals);
+	if (!address) {
 		throw redirect(303, '/login');
 	}
+	return address;
 }
 
 export async function load({ locals }) {
-	requireContactSignIn(locals);
+	const signedInAddress = requireContactSignIn(locals);
 	const personalInfoConnected = await collections.personalInfo.findOne(
 		userQuery(userIdentifier(locals)),
 		{
@@ -32,6 +35,7 @@ export async function load({ locals }) {
 		}
 	);
 	return {
+		signedInAddress,
 		consentOptins: await displayedConsentOptins(locals.language),
 		personalInfoConnected: {
 			firstName: personalInfoConnected?.firstName,

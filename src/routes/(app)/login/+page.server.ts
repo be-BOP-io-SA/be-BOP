@@ -18,6 +18,7 @@ import {
 import { validateEmailOrNpub } from '$lib/server/nostr.js';
 import { availableContactModes } from '$lib/server/contact-modes';
 import { contactModesOrEmail } from '$lib/types/ContactMode';
+import { signedInConsentAddress } from '$lib/server/consentOptins';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
@@ -32,7 +33,7 @@ function safeNext(next: string | null): string {
 	return next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
 }
 
-export const load = async ({ url }) => {
+export const load = async ({ url, locals }) => {
 	const token = url.searchParams.get('token');
 	const next = safeNext(url.searchParams.get('next'));
 
@@ -49,7 +50,9 @@ export const load = async ({ url }) => {
 					slug: o.slug
 				}))
 		},
-		next: next
+		next: next,
+		// The identity page accepts the same sessions: only show its button to those.
+		canOpenIdentity: !!signedInConsentAddress(locals)
 	};
 
 	if (token) {

@@ -54,12 +54,12 @@
 		{/each}
 	</ul>
 	{#if !data.emailToLogin && !data.npubToLogin}
-		<!-- The identity page needs a session signed in with an e-mail or an npub -->
-		{#if data.email || data.npub}
+		<!-- The identity page needs a session whose e-mail or npub is proven -->
+		{#if data.canOpenIdentity}
 			<p>{t('login.session.identityPrefill')}</p>
 		{/if}
 		<div class="flex flex-col items-center sm:flex-row sm:items-start gap-4">
-			{#if data.email || data.npub}
+			{#if data.canOpenIdentity}
 				<a class="btn body-mainCTA min-h-[2em] h-auto" href="/identity">{t('login.cta.identity')}</a
 				>
 			{/if}

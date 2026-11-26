@@ -8,7 +8,8 @@
  *   none yet: their first order. Ticking nothing records nothing. An address that already has a
  *   choice, or that belongs to a customer who signed in with it, is left untouched — no addition,
  *   no withdrawal — and the visitor is told nothing, which would reveal that the address is known.
- * - A customer signed in through an e-mail or a Nostr link finds the choice of that address, on
+ * - A customer signed in through an e-mail or a Nostr link, or through a provider that attests
+ *   the e-mail (Google, Facebook, GitHub, Twitter), finds the choice of that address, on
  *   checkout and on /identity, and may tick and untick freely. The notification address typed at
  *   checkout does not change whose choice it is.
  * - A record migrated from a customer file holding both an e-mail and an npub is found through
@@ -105,16 +106,24 @@ export async function displayedConsentOptins(
 	return optins.map((optin) => ({ id: optin._id, label: consentOptinLabel(optin, language) }));
 }
 
-/** The address a session is signed in with, through an e-mail or a Nostr link. */
+/**
+ * The address a session is signed in with: through an e-mail or a Nostr link, or through a
+ * provider that attests the e-mail it releases, which proves the address just as well.
+ */
 export function signedInConsentAddress(locals: {
 	email?: string;
 	npub?: string;
+	sso?: Array<{ email?: string; emailVerified?: boolean }>;
 }): ConsentAddress | null {
 	if (locals.email) {
 		return { kind: 'email', address: locals.email };
 	}
 	if (locals.npub) {
 		return { kind: 'npub', address: locals.npub };
+	}
+	const ssoEmail = locals.sso?.find((sso) => sso.email && sso.emailVerified)?.email;
+	if (ssoEmail) {
+		return { kind: 'email', address: ssoEmail };
 	}
 	return null;
 }

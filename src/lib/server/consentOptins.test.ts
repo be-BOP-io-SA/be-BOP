@@ -3,7 +3,12 @@ import { ObjectId } from 'mongodb';
 import { cleanDb } from './test-utils';
 import { collections, withTransaction } from './database';
 import { migrations } from './migrations';
-import { findConsentRecord, saveFirstConsent, saveSignedInConsent } from './consentOptins';
+import {
+	findConsentRecord,
+	saveFirstConsent,
+	saveSignedInConsent,
+	signedInConsentAddress
+} from './consentOptins';
 
 const EMAIL = { kind: 'email', address: 'paul@example.com' } as const;
 const NPUB = { kind: 'npub', address: 'npub1paul' } as const;
@@ -92,6 +97,18 @@ describe('consent opt-ins', () => {
 			expect(record).toMatchObject({ email: EMAIL.address, optinIds: ['x'] });
 			expect(record?.npub).toBeUndefined();
 			expect(await findConsentRecord(NPUB)).toBeNull();
+		});
+	});
+
+	describe('address a session is signed in with', () => {
+		it('counts an e-mail attested by the sign-in provider like an e-mail sign-in link', () => {
+			expect(
+				signedInConsentAddress({ sso: [{ email: EMAIL.address, emailVerified: true }] })
+			).toEqual(EMAIL);
+		});
+
+		it('ignores an e-mail the sign-in provider does not attest', () => {
+			expect(signedInConsentAddress({ sso: [{ email: EMAIL.address }] })).toBeNull();
 		});
 	});
 
