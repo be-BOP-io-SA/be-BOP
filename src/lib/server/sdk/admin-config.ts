@@ -19,7 +19,11 @@ import type { PaymentProcessor } from '../payment-methods';
 export function paymentConfigActions<K extends ConfigKey>(spec: {
 	key: K;
 	processor: PaymentProcessor;
-}) {
+}): {
+	save: (event: { request: Request }) => Promise<void>;
+	delete: () => Promise<void>;
+	testConnection: (event: { locals: App.Locals }) => ReturnType<typeof testProcessorConnection>;
+} {
 	/**
 	 * The shape of a provider's credentials is the provider's own business, so it is declared
 	 * on the processor. Reading it here rather than taking it as an argument is what will let

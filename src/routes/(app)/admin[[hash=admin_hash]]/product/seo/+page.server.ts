@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import type { Product } from '$lib/types/Product';
 import { redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const products = await collections.products
 		.find({})
 		.project<Pick<Product, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -15,7 +16,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

@@ -1,12 +1,13 @@
 import { env } from '$env/dynamic/private';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 function firstValue(header: string | null) {
 	return header?.split(',')[0].trim() || undefined;
 }
 
-export const GET = ({ request, url, locals }) => {
+export const GET: RequestHandler = ({ request, url, locals }) => {
 	const origin = env.ORIGIN ? new URL(env.ORIGIN) : undefined;
 	const requestHost =
 		firstValue(request.headers.get('x-forwarded-host')) ?? request.headers.get('host');

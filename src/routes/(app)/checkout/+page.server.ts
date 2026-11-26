@@ -40,8 +40,9 @@ import {
 	loadEnabledCheckoutFields,
 	toDisplayDTO
 } from '$lib/server/checkoutFields';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ parent, locals }) {
+export const load: PageServerLoad = async ({ parent, locals }) => {
 	const parentData = await parent();
 
 	const cartItemsWithResolvedStock = await Promise.all(
@@ -245,7 +246,7 @@ export async function load({ parent, locals }) {
 		desiredPaymentTimeout: runtimeConfig.desiredPaymentTimeout,
 		cartId: (await getCartFromDb({ user: userIdentifier(locals) }))._id.toString()
 	};
-}
+};
 
 async function orderPlacedFromCart(cartId: ObjectId, locals: App.Locals) {
 	const order = await collections.orders.findOne(
@@ -255,7 +256,7 @@ async function orderPlacedFromCart(cartId: ObjectId, locals: App.Locals) {
 	return order?._id;
 }
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
 		const cart = await getCartFromDb({ user: userIdentifier(locals) });
 		const formData = await request.formData();

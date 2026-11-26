@@ -7,8 +7,9 @@ import { collections } from '$lib/server/database.js';
 import type { JsonObject } from 'type-fest';
 import { pick } from '$lib/utils/pick.js';
 import { set } from '$lib/utils/set.js';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 

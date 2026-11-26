@@ -11,7 +11,7 @@ function prepareEvent(body: object) {
 	};
 }
 
-async function uploadUrl(response: Promise<Response>) {
+async function uploadUrl(response: Response | Promise<Response>) {
 	return new URL((await (await response).json()).uploadUrl);
 }
 

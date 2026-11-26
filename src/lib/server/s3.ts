@@ -12,7 +12,7 @@ export const S3_CHECKSUMS_WHEN_REQUIRED = {
 	responseChecksumValidation: 'WHEN_REQUIRED'
 } as const;
 
-export function s3IsConfigured() {
+export function s3IsConfigured(): string {
 	return runtimeConfig.s3.bucket && runtimeConfig.s3.keyId && runtimeConfig.s3.keySecret;
 }
 
@@ -57,13 +57,13 @@ export function getPublicS3Client(): AWS.S3 {
 	return _publicS3Client;
 }
 
-export async function resetS3Clients() {
+export async function resetS3Clients(): Promise<void> {
 	_s3client = null;
 	_publicS3Client = null;
 	await Promise.all([getS3Client(), getPublicS3Client()]);
 }
 
-export async function initializeS3Bucket() {
+export async function initializeS3Bucket(): Promise<void> {
 	const client = getS3Client();
 	const bucket = runtimeConfig.s3.bucket;
 	const region = runtimeConfig.s3.region;
@@ -125,7 +125,7 @@ if (!building && s3IsConfigured()) {
 	}
 }
 
-export function secureLink(url: string, params: { public: boolean }) {
+export function secureLink(url: string, params: { public: boolean }): string {
 	const endpointUrl = params.public
 		? runtimeConfig.s3.publicEndpointUrl || runtimeConfig.s3.endpointUrl
 		: runtimeConfig.s3.endpointUrl;
@@ -145,7 +145,7 @@ export async function getPublicS3DownloadLink(
 		expiresIn?: number;
 		input?: Partial<AWS.GetObjectCommandInput>;
 	}
-) {
+): Promise<string> {
 	const bucket = runtimeConfig.s3.bucket;
 
 	return secureLink(
@@ -171,7 +171,7 @@ export async function getPrivateS3DownloadLink(
 		expiresIn?: number;
 		input?: Partial<AWS.GetObjectCommandInput>;
 	}
-) {
+): Promise<string> {
 	const bucket = runtimeConfig.s3.bucket;
 
 	return secureLink(

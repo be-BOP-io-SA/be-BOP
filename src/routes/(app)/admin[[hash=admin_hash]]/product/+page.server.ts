@@ -2,7 +2,7 @@ import { collections } from '$lib/server/database';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 import { set } from '$lib/utils/set';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoadEvent } from './$types';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { pojo } from '$lib/server/pojo';
 import { withWebhookSecretForEditors } from '$lib/server/paid-order-webhook-secret';
@@ -27,7 +27,7 @@ const ATTRIBUTE_FILTERS: Record<(typeof PRODUCT_LIST_ATTRIBUTES)[number], Filter
 	isBookingSlot: BOOKABLE_PRODUCT_FILTER
 };
 
-export const load = async ({ url, locals }) => {
+const loadImpl = async ({ url, locals }: PageServerLoadEvent) => {
 	const querySchema = z.object({
 		skip: z.number({ coerce: true }).int().min(0).optional().default(0),
 		productId: z.string().optional(),
@@ -98,6 +98,9 @@ export const load = async ({ url, locals }) => {
 		tags: tags.map((tag) => pojo(tag))
 	};
 };
+
+// Not annotated `PageServerLoad`: that would widen the return its callers read to `void | …`.
+export const load = (event: PageServerLoadEvent): ReturnType<typeof loadImpl> => loadImpl(event);
 
 export const actions: Actions = {
 	update: async ({ request }) => {

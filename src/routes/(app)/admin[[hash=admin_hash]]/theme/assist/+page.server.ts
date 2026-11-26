@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import { adminPrefix } from '$lib/server/admin';
@@ -18,7 +18,7 @@ const assistFormValidator = z.object({
 	secondaryFont: z.enum(['', systemFonts[0], ...systemFonts.slice(1)])
 });
 
-export async function load() {}
+export const load: PageServerLoad = async () => {};
 
 export const actions: Actions = {
 	default: async ({ request }) => {

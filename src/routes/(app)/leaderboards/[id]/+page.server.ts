@@ -2,8 +2,9 @@ import { error } from '@sveltejs/kit';
 import { collections } from '$lib/server/database';
 import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { Product } from '$lib/types/Product';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const leaderboard = await collections.leaderboards.findOne<
 		Pick<Leaderboard, '_id' | 'name' | 'progress' | 'endsAt' | 'mode' | 'beginsAt'>
 	>(

@@ -3,8 +3,9 @@ import { collections } from '$lib/server/database.js';
 import { CUSTOMER_ROLE_ID, SUPER_ADMIN_ROLE_ID } from '$lib/types/User.js';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function (event) {
 		// Defining what a role may do is a super-admin act: otherwise a scoped ARM manager mints a
 		// role with write on /admin/* and assigns it to themselves, and the guard on editing an

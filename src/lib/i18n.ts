@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { getContext } from 'svelte';
-import { writable, get as storeGet } from 'svelte/store';
+import { writable, get as storeGet, type Writable } from 'svelte/store';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from './types/Country';
 import type { OrderAddress } from './types/Order';
 import type { FormatDistanceFn } from 'date-fns';
@@ -22,6 +22,17 @@ export interface InlineText {
 	text: LocalizedText;
 }
 
+export type I18n = {
+	t: (key: string, params?: Record<string, string | number | undefined>) => string;
+	tInline: (inline: InlineText) => string;
+	locale: Writable<string>;
+	countryName: (alpha2: string) => string;
+	te: (key: string) => boolean;
+	sortedCountryCodes: () => CountryAlpha2[];
+	textAddress: (address: OrderAddress) => string;
+	formatDistanceLocale: () => { formatDistance: FormatDistanceFn };
+};
+
 const locale = writable<string>('en');
 
 const data: LocalesDictionary = {};
@@ -29,7 +40,7 @@ const functions: Record<string, { formatDistance: FormatDistanceFn }> = {};
 
 let languagesLoaded = false;
 
-export function useI18n(language?: string) {
+export function useI18n(language?: string): I18n {
 	language ||= getContext<string>('language');
 
 	locale.set(language);
@@ -133,7 +144,7 @@ export function addTranslations(
 	locale: string,
 	translations: LocaleDictionary,
 	fns: { formatDistance: FormatDistanceFn }
-) {
+): void {
 	data[locale] = translations;
 	functions[locale] = fns;
 }

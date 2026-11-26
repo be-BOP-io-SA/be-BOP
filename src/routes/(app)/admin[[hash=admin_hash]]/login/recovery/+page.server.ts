@@ -5,10 +5,11 @@ import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { SMTP_USER } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async () => {};
+export const load: PageServerLoad = async () => {};
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, locals }) {
 		const data = await request.formData();
 

@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database.js';
 import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export const load = async ({ params }) => {
+export const load: LayoutServerLoad = async ({ params }) => {
 	const gallery = await collections.galleries.findOne({ _id: params.id });
 
 	if (!gallery) {

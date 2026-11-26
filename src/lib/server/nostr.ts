@@ -45,7 +45,7 @@ export function getNostrKeys(): NostrKeys {
 	return _nostrKeys;
 }
 
-export function resetNostrKeys() {
+export function resetNostrKeys(): void {
 	_nostrKeys = undefined;
 }
 
@@ -53,11 +53,11 @@ export function nostrToHex(key: string): string {
 	return Buffer.from(bech32.fromWords(bech32.decode(key).words)).toString('hex');
 }
 
-export function hexToNpub(hex: string) {
+export function hexToNpub(hex: string): string {
 	return bech32.encode('npub', bech32.toWords(Buffer.from(hex, 'hex')));
 }
 
-export function zodNpub() {
+export function zodNpub(): z.ZodEffects<z.ZodString, string, string> {
 	return z
 		.string()
 		.trim()
@@ -136,7 +136,7 @@ export function isAuthenticEvent(event: Event): boolean {
 	return validateEvent(event) && event.id === getEventHash(event) && verifySignature(event);
 }
 
-export function zodNsec() {
+export function zodNsec(): z.ZodEffects<z.ZodString, string, string> {
 	return z
 		.string()
 		.trim()

@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	const nonCustomers = await collections.users
 		.find({ roleId: { $ne: CUSTOMER_ROLE_ID } })
 		.sort({ _id: 1 })
@@ -23,8 +24,8 @@ export async function load() {
 		})),
 		adminWelcomMessage: runtimeConfig.adminWelcomMessage
 	};
-}
-export const actions = {
+};
+export const actions: Actions = {
 	updateWelcomeMessage: async function ({ request }) {
 		const formData = await request.formData();
 

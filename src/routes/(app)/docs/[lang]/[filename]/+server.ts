@@ -2,8 +2,9 @@ import { rootDir } from '$lib/server/root-dir';
 import fs from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export async function GET({ params }) {
+export const GET: RequestHandler = async ({ params }) => {
 	const docsDir = join(rootDir, 'docs');
 
 	const validFolderNameRegex = /^[a-z]{2}(-[a-z]{2})?$/i;
@@ -36,4 +37,4 @@ export async function GET({ params }) {
 		status: 200,
 		headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 	});
-}
+};

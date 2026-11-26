@@ -2,7 +2,11 @@ import { collections } from '$lib/server/database.js';
 import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { z } from 'zod';
 
-export async function updateLightningInvoiceDescription({ request }: { request: Request }) {
+export async function updateLightningInvoiceDescription({
+	request
+}: {
+	request: Request;
+}): Promise<void> {
 	const formData = await request.formData();
 	const parsed = z
 		.object({ qrCodeDescription: z.enum(['none', 'brand', 'brandAndOrderNumber', 'orderUrl']) })

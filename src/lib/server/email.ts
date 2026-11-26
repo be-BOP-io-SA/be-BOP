@@ -27,7 +27,7 @@ export function isEmailConfigured(): boolean {
 
 let _transporter: Transporter<SMTPTransport.SentMessageInfo> | null;
 
-export async function resetTransporter() {
+export async function resetTransporter(): Promise<void> {
 	_transporter = null;
 	await getTransporter();
 }
@@ -72,7 +72,7 @@ export async function sendEmail(params: {
 	subject: string;
 	html: string;
 	bcc?: string;
-}) {
+}): Promise<void> {
 	const transporter = await getTransporter();
 
 	const res = await transporter.sendMail({

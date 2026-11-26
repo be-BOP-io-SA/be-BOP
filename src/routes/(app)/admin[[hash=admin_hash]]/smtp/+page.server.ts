@@ -3,6 +3,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { resetTransporter } from '$lib/server/email.js';
 import { z } from 'zod';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import {
 	SMTP_FAKE,
 	SMTP_HOST,
@@ -34,13 +35,13 @@ function settingsEnforcedByEnvVars(): boolean {
 	return !!(SMTP_FAKE || SMTP_HOST || SMTP_PORT || SMTP_USER || SMTP_PASSWORD || SMTP_FROM);
 }
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		smtp: projectSettingsForFrontend(runtimeConfig.smtp),
 		defaultSmtpSettings: projectSettingsForFrontend(defaultSmtpSettings()),
 		settingsEnforcedByEnvVars: settingsEnforcedByEnvVars()
 	};
-}
+};
 
 export const actions: Actions = {
 	save: async function ({ request }: RequestEvent) {

@@ -17,8 +17,9 @@ import { paymentMethods, restrictToProducts } from '$lib/server/payment-methods.
 import { PAYMENT_RETURN_PARAM } from '$lib/types/Order.js';
 import type { OrderLabel } from '$lib/types/OrderLabel.js';
 import type { DigitalFile } from '$lib/types/DigitalFile.js';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ params, depends, locals, url }) {
+export const load: PageServerLoad = async ({ params, depends, locals, url }) => {
 	depends(UrlDependency.Order);
 
 	const order = await fetchOrderForUser(params.id, { userRoleId: locals.user?.roleId });
@@ -157,9 +158,9 @@ export async function load({ params, depends, locals, url }) {
 		canCleanPersonalData:
 			runtimeConfig.dataCleanup.allowUserManualCleanup && !!(locals.email || locals.npub)
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	cancel: async function ({ params, request }) {
 		let order = await collections.orders.findOne({ _id: params.id, status: 'pending' });
 

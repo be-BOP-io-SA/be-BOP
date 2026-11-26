@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { ContactForm } from '$lib/types/ContactForm';
+import type { PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		contactForms: await collections.contactForms
 			.find({})
@@ -12,4 +13,4 @@ export async function load() {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

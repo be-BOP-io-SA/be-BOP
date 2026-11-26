@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database.js';
 import type { Product } from '$lib/types/Product.js';
 import { isAllowedOnPage } from '$lib/types/Role.js';
 import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export async function load(event) {
+export const load: PageServerLoad = async (event) => {
 	const ticketId = event.params.id;
 
 	const ticket = await collections.tickets.findOne({ ticketId });
@@ -62,4 +63,4 @@ export async function load(event) {
 		product,
 		picture
 	};
-}
+};

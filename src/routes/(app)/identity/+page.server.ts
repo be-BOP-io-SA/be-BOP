@@ -6,8 +6,9 @@ import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country.js';
 import { set } from '$lib/utils/set';
 import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export async function load({ locals }) {
+export const load: PageServerLoad = async ({ locals }) => {
 	const personalInfoConnected = await collections.personalInfo.findOne(
 		userQuery(userIdentifier(locals)),
 		{
@@ -26,9 +27,9 @@ export async function load({ locals }) {
 			email: personalInfoConnected?.email
 		}
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const json: JsonObject = {};

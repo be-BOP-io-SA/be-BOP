@@ -1,5 +1,5 @@
 import { collections } from '$lib/server/database';
-import type { Actions } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import {
@@ -10,7 +10,7 @@ import {
 import { adminPrefix } from '$lib/server/admin';
 import { zodSlug } from '$lib/server/zod';
 
-export const load = async () => {};
+export const load: PageServerLoad = async () => {};
 
 export const actions: Actions = {
 	default: async ({ request }) => {

@@ -514,7 +514,7 @@ export function computeDeliveryFees(
 		quantity: number;
 	}>,
 	deliveryFeesConfig: RuntimeConfig['deliveryFees']
-) {
+): number {
 	items = items.filter(({ product }) => product.shipping);
 
 	if (!items.length) {

@@ -4,7 +4,7 @@ import { runtimeConfig } from '../runtime-config';
 export async function persistConfigElement<K extends keyof typeof runtimeConfig>(
 	key: K,
 	value: (typeof runtimeConfig)[K]
-) {
+): Promise<void> {
 	await collections.runtimeConfig.updateOne(
 		{
 			_id: key

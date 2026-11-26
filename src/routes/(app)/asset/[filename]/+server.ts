@@ -1,8 +1,9 @@
 import { bundledAssetUrl } from '$lib/server/bundled-assets';
 import { defaultPictureUrl, isDefaultPictureFile } from '$lib/server/default-picture';
 import { error, redirect } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-export async function GET({ params }) {
+export const GET: RequestHandler = async ({ params }) => {
 	const url = isDefaultPictureFile(params.filename)
 		? await defaultPictureUrl(params.filename)
 		: bundledAssetUrl(params.filename);
@@ -12,4 +13,4 @@ export async function GET({ params }) {
 	}
 
 	throw redirect(302, url);
-}
+};

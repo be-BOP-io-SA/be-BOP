@@ -138,7 +138,7 @@ export function findItemInCart(
 	 * When `lineId` is provided, `depositPercentage` is ignored
 	 */
 	depositPercentage?: number
-) {
+): Cart['items'][number] | undefined {
 	return cart.items.find(
 		(item) =>
 			item.productId === productId &&
@@ -171,7 +171,7 @@ export async function addToCartInDb(
 		cart?: Cart;
 		mode: 'eshop' | 'nostr' | 'pos';
 	}
-) {
+): Promise<Cart> {
 	if (!canAddToCart(product, params.user, params.mode)) {
 		cartError('NOT_FOR_SALE', "Product can't be added to basket ");
 	}
@@ -415,7 +415,7 @@ export async function removeFromCartInDb(
 		lineId?: string;
 		cart?: Cart;
 	}
-) {
+): Promise<Cart> {
 	if (quantity < 0) {
 		throw new TypeError('Quantity cannot be negative');
 	}
@@ -476,7 +476,7 @@ export async function checkCartItems(
 	opts?: {
 		user?: UserIdentifier;
 	}
-) {
+): Promise<void> {
 	const products = items.map((item) => item.product);
 	const productById = Object.fromEntries(products.map((product) => [product._id, product]));
 
@@ -515,6 +515,6 @@ export async function checkCartItems(
 	}
 }
 
-export async function removeUserCarts(user: UserIdentifier) {
+export async function removeUserCarts(user: UserIdentifier): Promise<void> {
 	await collections.carts.deleteMany({ user });
 }

@@ -4,11 +4,12 @@ import { themeValidator, type ThemeData } from '$lib/server/theme.js';
 import { trimSuffix } from '$lib/utils/trimSuffix.js';
 import { flatten } from 'flat';
 import { ObjectId } from 'mongodb';
+import type { RequestHandler } from './$types';
 
 let cache = '';
 let cacheId = -1;
 
-export const GET = async ({}) => {
+export const GET: RequestHandler = async ({}) => {
 	if (cacheId !== runtimeConfig.themeChangeNumber) {
 		const theme = runtimeConfig.mainThemeId
 			? await collections.themes.findOne({ _id: new ObjectId(runtimeConfig.mainThemeId) })

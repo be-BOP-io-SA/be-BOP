@@ -6,8 +6,9 @@ import { MAX_NAME_LIMIT } from '$lib/types/Product';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
+import type { Actions, PageServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: PageServerLoad = async ({ params }) => {
 	const contactForm = await collections.contactForms.findOne({
 		_id: params.id
 	});
@@ -19,8 +20,8 @@ export async function load({ params }) {
 	return {
 		contactForm
 	};
-}
-export const actions = {
+};
+export const actions: Actions = {
 	update: async function ({ request, params }) {
 		const contactForm = await collections.contactForms.findOne({
 			_id: params.id

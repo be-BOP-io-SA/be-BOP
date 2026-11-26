@@ -4,8 +4,9 @@ import type { JsonObject } from 'type-fest';
 import { mapObject } from '$lib/utils/mapObject.js';
 import { z } from 'zod';
 import { specificationTranslatableSchema } from '../specification-schema.js';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request, params }) {
 		const json: JsonObject = {};
 

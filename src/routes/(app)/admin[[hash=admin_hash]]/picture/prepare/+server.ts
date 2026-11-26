@@ -8,8 +8,9 @@ import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
 import { error } from '@sveltejs/kit';
 import { MAX_PICTURE_SIZE } from '$lib/types/Picture';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request }) {
+export const POST: RequestHandler = async ({ request }) => {
 	const body = z
 		.object({
 			fileSize: z.number().int().min(1),
@@ -60,4 +61,4 @@ export async function POST({ request }) {
 	return new Response(JSON.stringify({ uploadUrl: presignedUrl, pictureId }), {
 		headers: { 'Content-Type': 'application/json' }
 	});
-}
+};

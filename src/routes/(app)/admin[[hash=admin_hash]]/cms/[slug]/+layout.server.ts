@@ -2,8 +2,9 @@ import { collections } from '$lib/server/database.js';
 import { cmsRemovedContent } from '$lib/server/cms';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export async function load({ params }) {
+export const load: LayoutServerLoad = async ({ params }) => {
 	const cmsPage = await collections.cmsPages.findOne({
 		_id: params.slug
 	});
@@ -23,4 +24,4 @@ export async function load({ params }) {
 		cmsPage,
 		removedContent: sanitized ? [...new Set(contents.flatMap(cmsRemovedContent))] : []
 	};
-}
+};

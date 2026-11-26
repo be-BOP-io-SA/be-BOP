@@ -8,8 +8,9 @@ import { error } from '@sveltejs/kit';
 import * as mimeTypes from 'mime-types';
 import { z } from 'zod';
 import { MAX_DIGITAL_FILE_SIZE } from '$lib/types/DigitalFile';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request }) {
+export const POST: RequestHandler = async ({ request }) => {
 	const body = z
 		.object({
 			name: z.string().trim().min(1).max(100),
@@ -73,4 +74,4 @@ export async function POST({ request }) {
 	return new Response(JSON.stringify({ uploadUrl: presignedUrl, digitalFileId }), {
 		headers: { 'Content-Type': 'application/json' }
 	});
-}
+};

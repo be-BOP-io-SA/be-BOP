@@ -6,8 +6,9 @@ import type { Currency } from '$lib/types/Currency';
 import { resolvePoolLabel } from '$lib/types/PosTabGroup';
 import { toCurrency } from '$lib/utils/toCurrency';
 import { ObjectId } from 'mongodb';
+import type { PageServerLoad } from './$types';
 
-export async function load({ locals, params }) {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const tab = await getOrCreateOrderTab({ slug: params.orderTabSlug });
 
 	const products = await collections.products
@@ -167,4 +168,4 @@ export async function load({ locals, params }) {
 		companyLogoUrl: companyLogoId ? `/picture/raw/${companyLogoId}/format/128` : undefined,
 		showBebopLogo: !runtimeConfig.removeBebopLogoPOS
 	};
-}
+};

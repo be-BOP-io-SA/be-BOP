@@ -8,8 +8,9 @@ import sharp from 'sharp';
 import { error } from '@sveltejs/kit';
 import { getNostrKeys, isNostrConfigured } from '$lib/server/nostr';
 import { rateLimit } from '$lib/server/rateLimit';
+import type { RequestHandler } from './$types';
 
-export const OPTIONS = () => {
+export const OPTIONS: RequestHandler = () => {
 	return new Response(null, {
 		headers: {
 			'access-control-allow-origin': '*',
@@ -57,7 +58,7 @@ async function logoAsPng(): Promise<Buffer | null> {
 	}
 }
 
-export const GET = async ({ params, url, locals }) => {
+export const GET: RequestHandler = async ({ params, url, locals }) => {
 	// Generous: a custodial wallet's server fetches on behalf of all its users from one address.
 	rateLimit(locals.clientIp, 'lnurlp', 120, { minutes: 1 });
 

@@ -17,7 +17,12 @@ const rateLimitCache = new Map<string, Record<string, Date[]>>();
 /**
  * Note that rate limiting cache is cleared every hour and not persisted across deploys.
  */
-export function rateLimit(ip: string | undefined, key: string, max: number, duration: Duration) {
+export function rateLimit(
+	ip: string | undefined,
+	key: string,
+	max: number,
+	duration: Duration
+): void {
 	if (isRateLimited(ip, key, max, duration)) {
 		throw error(429, 'Too many requests, wait a few minutes before trying again.');
 	}
@@ -41,7 +46,7 @@ export function isRateLimited(
 }
 
 /** Counts one hit, for a limit checked separately with `isRateLimited`. */
-export function countHit(ip: string | undefined, key: string, duration: Duration) {
+export function countHit(ip: string | undefined, key: string, duration: Duration): void {
 	if (!ip) {
 		return;
 	}

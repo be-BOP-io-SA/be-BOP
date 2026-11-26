@@ -31,3 +31,13 @@ export interface Tag extends Timestamps, TagTranslatableFields {
 
 	translations?: Partial<Record<LanguageKey, Partial<TagTranslatableFields>>>;
 }
+
+/**
+ * Minimal tag projection consumed by the tag widget components and the CMS
+ * tag-widget token. Keep the picked fields in sync with the projection in
+ * `cms.ts` and the `tag/[id]` page loader.
+ */
+export type TagWidgetTag = Pick<
+	Tag,
+	'_id' | 'name' | 'title' | 'subtitle' | 'content' | 'shortContent' | 'cta'
+>;

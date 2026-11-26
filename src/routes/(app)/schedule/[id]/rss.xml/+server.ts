@@ -3,8 +3,9 @@ import { collections } from '$lib/server/database';
 import { escapeHtml as escapeXml } from '$lib/utils/escapeHtml';
 import { error } from '@sveltejs/kit';
 import { addMinutes, format } from 'date-fns';
+import type { RequestHandler } from './$types';
 
-export const GET = async ({ params }) => {
+export const GET: RequestHandler = async ({ params }) => {
 	const schedule = await collections.schedules.findOne({ _id: params.id });
 
 	if (!schedule) {

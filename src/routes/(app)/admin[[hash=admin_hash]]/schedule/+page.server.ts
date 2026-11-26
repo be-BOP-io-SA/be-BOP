@@ -1,7 +1,8 @@
 import { collections } from '$lib/server/database';
 import type { Schedule } from '$lib/types/Schedule';
+import type { PageServerLoad } from './$types';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
 	return {
 		schedules: await collections.schedules
 			.find({})
@@ -12,4 +13,4 @@ export async function load() {
 			.sort({ updatedAt: -1 })
 			.toArray()
 	};
-}
+};

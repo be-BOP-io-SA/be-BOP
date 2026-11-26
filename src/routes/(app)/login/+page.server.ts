@@ -21,6 +21,7 @@ import { contactModesOrEmail } from '$lib/types/ContactMode';
 import { renewSessionId } from '$lib/server/user.js';
 import { rateLimit } from '$lib/server/rateLimit.js';
 import { SESSION_COOKIE_NAME } from '$lib/server/cookies';
+import type { PageServerLoad, Actions } from './$types';
 
 // HP-2026-08-12 (Peak Learn) : post-authLink redirect restricted to a
 // strict allowlist (never an external URL, never an open redirect).
@@ -32,7 +33,7 @@ function safeNext(next: string | null): string {
 	return next && (SAFE_NEXT.includes(next) || CART_NEXT_RE.test(next)) ? next : '/login';
 }
 
-export const load = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const token = url.searchParams.get('token');
 	const next = safeNext(url.searchParams.get('next'));
 
@@ -85,7 +86,7 @@ export const load = async ({ url }) => {
 	return base;
 };
 
-export const actions = {
+export const actions: Actions = {
 	sendLink: async function ({ request, locals }) {
 		const data = await request.formData();
 		const result = validateEmailOrNpub(

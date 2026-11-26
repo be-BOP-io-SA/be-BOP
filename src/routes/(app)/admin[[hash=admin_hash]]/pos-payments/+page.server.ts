@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { collections } from '$lib/server/database';
 import { fail } from '@sveltejs/kit';
 import { getProcessor, tapToPayProcessors } from '$lib/server/sdk/pp';
@@ -30,7 +30,7 @@ const regularSubtypeUpdateSchema = z.object({
 	paymentDetailRequired: z.boolean().optional()
 });
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const subtypesRaw = await collections.posPaymentSubtypes
 		.find({})
 		.sort({ sortOrder: 1 })

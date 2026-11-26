@@ -3,11 +3,12 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { getPrivateS3DownloadLink } from '$lib/server/s3';
 import { error } from '@sveltejs/kit';
 import sharp from 'sharp';
+import type { RequestHandler } from './$types';
 
 let cachedFavicon: Buffer | null = null;
 let cachedFaviconPictureId: string | null = null;
 
-export const GET = async ({ params }) => {
+export const GET: RequestHandler = async ({ params }) => {
 	if (params.pictureId !== runtimeConfig.faviconPictureId) {
 		throw error(403, 'Favicon not found');
 	}

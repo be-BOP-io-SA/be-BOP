@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient, ObjectId, type Document } from 'mongodb';
 
 // Same database as the web server started by playwright.config.ts.
 const E2E_DB = 'bebop-e2e';
@@ -24,7 +24,7 @@ export function orderAwaiting(
 		price?: { amount: number; currency: string };
 		[field: string]: unknown;
 	}
-) {
+): Document {
 	const createdAt = new Date();
 	const price = payment.price ?? { amount: 10, currency: 'EUR' };
 

@@ -4,8 +4,9 @@ import type { JsonObject } from 'type-fest';
 import { set } from '$lib/utils/set';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product';
 import { error } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const products = await collections.products
 		.find({})
 		.project<Pick<Product, '_id' | 'name' | 'alias'>>({ _id: 1, name: 1, alias: 1 })
@@ -16,7 +17,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 

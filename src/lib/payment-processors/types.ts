@@ -31,7 +31,7 @@ declare const payDataType: unique symbol;
 /** Marks a processor that shows its own payment form on the pay page, fed with `Data`. */
 export type PayZone<Data> = true & { readonly [payDataType]?: Data };
 
-export const payData = <Data>() => true as PayZone<Data>;
+export const payData = <Data>(): PayZone<Data> => true as PayZone<Data>;
 
 /**
  * The static facts about a payment processor. Nothing here may import `$lib/server/*` for a

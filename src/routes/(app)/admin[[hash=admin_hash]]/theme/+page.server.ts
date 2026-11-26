@@ -3,8 +3,9 @@ import { runtimeConfig } from '$lib/server/runtime-config.js';
 import { increaseThemeChangeNumber } from '$lib/server/theme.js';
 import type { Theme } from '$lib/types/Theme';
 import { z } from 'zod';
+import type { PageServerLoad, Actions } from './$types';
 
-export const load = async () => {
+export const load: PageServerLoad = async () => {
 	const themes = await collections.themes
 		.find()
 		.project<Pick<Theme, '_id' | 'name'>>({ _id: 1, name: 1 })
@@ -17,7 +18,7 @@ export const load = async () => {
 	};
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async function ({ request }) {
 		const formData = await request.formData();
 
