@@ -10,7 +10,7 @@ import { cmsFromContent } from '$lib/server/cms';
 import { collections, withTransaction } from '$lib/server/database';
 import { findActivePromoDiscount, hasAnyActivePromoDiscount } from '$lib/server/discount';
 import { picturesForProducts } from '$lib/server/picture';
-import { SALE_LOCK_CODES, withStoredWhitelists } from '$lib/server/saleLock';
+import { SALE_LOCK_CODES } from '$lib/server/saleLock';
 import { cartErrorKey } from '$lib/cartErrorKey';
 import { applyResolvedStock, refreshAvailableStockInDb } from '$lib/server/product.js';
 import { rateLimit } from '$lib/server/rateLimit';
@@ -229,17 +229,12 @@ export async function load({ parent, locals, url }) {
 
 	const parentData = await parent();
 
-	// The layout hands the cart over without the customer lists, which are read again here: a
-	// customer taken off a list after filling their cart must be told before checking out.
-	const cartProducts = await withStoredWhitelists(
-		parentData.cart.items.map((item) => item.product)
-	);
-
-	// Resolve stock for cart items first: the refusals below read it
+	// Resolve stock for cart items first: the refusals below read it. The sale lock settings,
+	// customer list included, are read by the evaluator itself.
 	const cartItemsWithResolvedStock = await Promise.all(
-		parentData.cart.items.map(async (item, index) => ({
+		parentData.cart.items.map(async (item) => ({
 			...item,
-			product: await applyResolvedStock(cartProducts[index])
+			product: await applyResolvedStock(item.product)
 		}))
 	);
 

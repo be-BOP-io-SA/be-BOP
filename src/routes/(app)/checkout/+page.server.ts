@@ -23,7 +23,6 @@ import {
 	getCartFromDb
 } from '$lib/server/cart.js';
 import { applyResolvedStock } from '$lib/server/product.js';
-import { withStoredWhitelists } from '$lib/server/saleLock';
 import { subscriptionRightsQuery, userIdentifier, userQuery } from '$lib/server/user.js';
 import { sha256 } from '$lib/utils/sha256';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User.js';
@@ -51,15 +50,12 @@ import {
 export async function load({ parent, locals }) {
 	const parentData = await parent();
 
-	// The layout hands the cart over without the customer lists: read them again, so that a
-	// customer taken off a list after filling their cart is sent back to it with the reason.
-	const cartProducts = await withStoredWhitelists(
-		parentData.cart.items.map((item) => item.product)
-	);
+	// Resolve stock for cart items first: the refusals below read it. The sale lock settings,
+	// customer list included, are read by the evaluator itself.
 	const cartItemsWithResolvedStock = await Promise.all(
-		parentData.cart.items.map(async (item, index) => ({
+		parentData.cart.items.map(async (item) => ({
 			...item,
-			product: await applyResolvedStock(cartProducts[index])
+			product: await applyResolvedStock(item.product)
 		}))
 	);
 

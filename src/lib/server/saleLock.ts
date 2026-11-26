@@ -164,23 +164,47 @@ export const SALE_LOCK_PROJECTION = {
 	stockReference: 1
 } as const satisfies Record<keyof ProductWithSaleLocks, 1>;
 
+/** The settings of a product that decide its sale locks, as the shop last saved them. */
+const STORED_SALE_LOCK_FIELDS = [
+	'type',
+	'requiresAuthentication',
+	'whitelist',
+	'maxQuantityPerUser',
+	'posOverridesMaxQuantityPerUser',
+	'subscriptionReminderSeconds',
+	'maxQuantityPerOrder'
+] as const satisfies ReadonlyArray<keyof ProductWithSaleLocks>;
+
 /**
- * Products read from the database again for their customer list.
- *
- * Pages receive products without it, so a load that evaluates a cart built from page data
- * would otherwise judge it with no list at all, and never tell a customer who was taken off it.
+ * The products with their sale lock settings read from the database, whatever the page handed
+ * in: no page has to remember to load them, and a page that strips the customer list before
+ * sending a product to the browser cannot make the evaluator judge without it. Stock is the
+ * caller's, already resolved.
  */
-export async function withStoredWhitelists<T extends { _id: string }>(
-	products: T[]
-): Promise<Array<T & Pick<Product, 'whitelist'>>> {
+async function withStoredSaleLocks(
+	products: ProductWithSaleLocks[],
+	session?: ClientSession
+): Promise<ProductWithSaleLocks[]> {
 	const ids = [...new Set(products.map((product) => product._id))];
-	const stored = ids.length
-		? await collections.products
-				.find({ _id: { $in: ids } }, { projection: { whitelist: 1 } })
-				.toArray()
-		: [];
-	const whitelistById = new Map(stored.map((product) => [product._id, product.whitelist]));
-	return products.map((product) => ({ ...product, whitelist: whitelistById.get(product._id) }));
+	const stored = await collections.products
+		.find(
+			{ _id: { $in: ids } },
+			{
+				session,
+				projection: Object.fromEntries(STORED_SALE_LOCK_FIELDS.map((field) => [field, 1]))
+			}
+		)
+		.toArray();
+	const storedById = new Map(stored.map((product) => [product._id, product]));
+	return products.map((product) => {
+		const saved = storedById.get(product._id);
+		return saved
+			? {
+					...product,
+					...Object.fromEntries(STORED_SALE_LOCK_FIELDS.map((field) => [field, saved[field]]))
+			  }
+			: product;
+	});
 }
 
 export type SaleLockContext = {
@@ -321,21 +345,22 @@ export function hasSaleLocks(product: ProductWithSaleLocks): boolean {
 /**
  * The verdict for each product, by product id. A product absent from the map may be bought.
  *
- * Every query is made once for the whole batch, and only when some product needs it: a cart of
- * ordinary products costs nothing.
+ * The products' sale lock settings are read once for the whole batch; every other query is
+ * made once, and only when some product needs it.
  */
 export async function evaluateSaleLocks(
-	products: ProductWithSaleLocks[],
+	productsHandedIn: ProductWithSaleLocks[],
 	user: UserIdentifier | undefined,
 	context?: SaleLockContext
 ): Promise<Map<string, SaleLock[]>> {
 	const locks = new Map<string, SaleLock[]>();
 
-	if (!products.length) {
+	if (!productsHandedIn.length) {
 		return locks;
 	}
 
 	const session = context?.session;
+	const products = await withStoredSaleLocks(productsHandedIn, session);
 	const employee = isEmployee(user);
 
 	// A per-person cap read from a till would count the seller instead of the buyer. Whether the
