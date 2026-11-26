@@ -17,16 +17,16 @@ import { subscriptionRightsQuery, userQuery } from './user';
 
 /**
  * A sale lock is a per-product rule that answers one question: may *this* customer buy *this*
- * product right now? Three rules share the mechanism — they differ only in what they check and
- * in what the customer is told.
+ * product right now? Three rules share the mechanism — sign-in required, a list of customers,
+ * a maximum per person — and the evaluator answers the stock and the maximum per order with
+ * them, so the customer reads every reason the same way.
  *
- * Every rule is enforced in the same three places, and nowhere else:
- *   - `addToCartInDb`, so the product never enters the cart;
- *   - `checkCartItems`, which the cart page, the checkout page and order creation all call;
- *   - the front, which asks for the same verdict to grey a CTA out before it is clicked.
- *
- * Adding a fourth rule means adding a case below and a translation. It must not mean touching
- * the cart, the checkout or the order again.
+ * The evaluator is asked by `addToCartInDb`, so the product never enters the cart; by
+ * `cartLocks` and `checkCartItems`, which the cart page, the checkout page and order creation
+ * call; and by the product page and the listings, to grey a CTA out before it is clicked. A
+ * list the shop did not tie to signing in is answered at checkout only, on the address typed
+ * there, for a visitor who is not signed in. One subscription per person is also checked by
+ * order creation, through `subscriptionsAwaitingPayment` and `subscriptionOccupiesSlot`.
  */
 export const SALE_LOCK_CODES = [
 	'LOGIN_REQUIRED',
@@ -306,7 +306,10 @@ export async function subscriptionsAwaitingPayment(
 	return new Set(rows.map((row) => row._id));
 }
 
-/** True when at least one rule could possibly apply — lets callers skip every query. */
+/**
+ * True when one of the three sale locks may apply, which lets callers skip their queries.
+ * Stock and the maximum per order are not counted here.
+ */
 export function hasSaleLocks(product: ProductWithSaleLocks): boolean {
 	return (
 		requiresAuthenticationToOrder(product) ||

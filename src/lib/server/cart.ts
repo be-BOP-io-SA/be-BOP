@@ -37,12 +37,11 @@ export const CART_ERROR_CODES = [
 	'SUBSCRIPTION_CUSTOM_PRICE',
 	'NOT_PREORDER',
 	'MAX_ITEMS_REACHED',
-	'OUT_OF_STOCK',
 	'STANDALONE_QTY_ONE',
 	'VARIATION_INVALID',
-	'MAX_PER_ORDER',
 	'INVALID_QUANTITY',
 	'INVALID_PRICE',
+	// Includes OUT_OF_STOCK and MAX_PER_ORDER, which the sale lock evaluator answers too
 	...SALE_LOCK_CODES
 ] as const;
 export type CartErrorCode = (typeof CART_ERROR_CODES)[number];
