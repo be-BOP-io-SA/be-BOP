@@ -36,9 +36,9 @@ import { set } from '$lib/utils/set';
 import {
 	acceptedConsentOptinIds as acceptedOptinIdsFor,
 	displayedConsentOptins,
-	saveFirstConsent,
-	saveSignedInConsent,
-	signedInConsentAddress
+	recordConsentChoice,
+	signedInConsentAddress,
+	type ConsentAddress
 } from '$lib/server/consentOptins';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
@@ -406,7 +406,6 @@ export const actions = {
 		if (shippingInfo && !shippingInfo.shipping.state) {
 			delete shippingInfo.shipping.state;
 		}
-		const acceptedConsentOptinIds = formData.getAll('consentOptinIds').map(String);
 		const note = json.noteContent
 			? z
 					.object({
@@ -509,25 +508,13 @@ export const actions = {
 			throw error(400, 'You must acknowledge that you offer delivery fees and add a justification');
 		}
 
-		const displayedConsentIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
-		if (displayedConsentIds.length) {
-			const signedInAddress = signedInConsentAddress(locals);
-			if (signedInAddress) {
-				await saveSignedInConsent({
-					address: signedInAddress,
-					displayedIds: displayedConsentIds,
-					acceptedIds: acceptedConsentOptinIds
-				});
-			} else if (email || npubAddress) {
-				await saveFirstConsent({
-					address: email
-						? { kind: 'email', address: email }
-						: { kind: 'npub', address: npubAddress as string },
-					displayedIds: displayedConsentIds,
-					acceptedIds: acceptedConsentOptinIds
-				});
-			}
+		let typedConsentAddress: ConsentAddress | null = null;
+		if (email) {
+			typedConsentAddress = { kind: 'email', address: email };
+		} else if (npubAddress) {
+			typedConsentAddress = { kind: 'npub', address: npubAddress };
 		}
+		await recordConsentChoice({ locals, formData, typedAddress: typedConsentAddress });
 		const physicalFullyPaid =
 			locals.user?.hasPosOptions && runtimeConfig.defaultOnLocation
 				? z

@@ -229,3 +229,28 @@ export async function saveFirstConsent(params: {
 		}
 	}
 }
+
+/**
+ * Records the opt-ins ticked on /checkout or /identity, following the rules at the top of this
+ * file. Both pages go through it, so neither has to remember them: nothing is recorded while the
+ * shop shows no opt-in; a signed-in customer's choice is set on the opt-ins they were shown; a
+ * visitor who is not signed in only records the first choice of the address they typed at
+ * checkout (`typedAddress`).
+ */
+export async function recordConsentChoice(params: {
+	locals: Pick<App.Locals, 'email' | 'npub' | 'sso' | 'language'>;
+	formData: FormData;
+	typedAddress?: ConsentAddress | null;
+}): Promise<void> {
+	const displayedIds = (await displayedConsentOptins(params.locals.language)).map(({ id }) => id);
+	if (!displayedIds.length) {
+		return;
+	}
+	const acceptedIds = params.formData.getAll('consentOptinIds').map(String);
+	const signedInAddress = signedInConsentAddress(params.locals);
+	if (signedInAddress) {
+		await saveSignedInConsent({ address: signedInAddress, displayedIds, acceptedIds });
+	} else if (params.typedAddress) {
+		await saveFirstConsent({ address: params.typedAddress, displayedIds, acceptedIds });
+	}
+}

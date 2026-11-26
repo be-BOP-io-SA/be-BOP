@@ -3,7 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import {
 	acceptedConsentOptinIds,
 	displayedConsentOptins,
-	saveSignedInConsent,
+	recordConsentChoice,
 	signedInConsentAddress
 } from '$lib/server/consentOptins';
 import { userIdentifier, userQuery } from '$lib/server/user';
@@ -114,14 +114,6 @@ export const actions = {
 			}
 		);
 
-		const consentAddress = signedInConsentAddress(locals);
-		const displayedIds = (await displayedConsentOptins(locals.language)).map(({ id }) => id);
-		if (consentAddress && displayedIds.length) {
-			await saveSignedInConsent({
-				address: consentAddress,
-				displayedIds,
-				acceptedIds: formData.getAll('consentOptinIds').map(String)
-			});
-		}
+		await recordConsentChoice({ locals, formData });
 	}
 };
