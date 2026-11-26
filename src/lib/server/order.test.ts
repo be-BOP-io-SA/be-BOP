@@ -295,8 +295,10 @@ describe('order', () => {
 	});
 
 	it('should allow free method payment when only item is fully discounted due to an active subscription', async () => {
+		// A subscription is bought with a contact address, the one the order below types again.
 		await createPaidSubscription(TEST_SUBSCRIPTION_PRODUCT._id, {
-			sessionId: 'test-session-id'
+			sessionId: 'test-session-id',
+			npub: 'test-npub'
 		});
 		await createDiscount({
 			discountedProductId: TEST_DISCOUNTED_PRODUCT._id,

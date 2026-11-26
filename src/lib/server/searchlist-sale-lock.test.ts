@@ -42,7 +42,7 @@ describe('searchProducts and sale locks', () => {
 		});
 	});
 
-	it('never returns the list of authorised customers, and flags the product as locked', async () => {
+	it('never returns the list of authorised customers, and lets a visitor who is not signed in through', async () => {
 		const { products } = await searchProducts(
 			SEARCHLIST,
 			readUrlState(new URL('https://shop.test/searchlist/test'), SEARCHLIST),
@@ -59,6 +59,8 @@ describe('searchProducts and sale locks', () => {
 		expect(products).toHaveLength(1);
 		expect(products[0]).not.toHaveProperty('whitelist');
 		expect(JSON.stringify(products)).not.toContain('alice@example.com');
-		expect(products[0].saleLocked).toBe(true);
+		// The list alone does not ask to sign in: a visitor is matched on the address typed at
+		// checkout, so a listing does not stop them.
+		expect(products[0].saleLocked).toBe(false);
 	});
 });
