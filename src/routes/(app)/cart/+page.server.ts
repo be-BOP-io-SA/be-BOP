@@ -265,9 +265,10 @@ export async function load({ parent, locals, url }) {
 					{}
 				),
 				// Without this the banner cannot see stock: it would stay silent on a cart the
-				// checkout is about to refuse, and the customer would learn it by clicking.
+				// checkout is about to refuse, and the customer would learn it by clicking. The products
+				// with their stock resolved, so one drawing on another's stock is seen running out.
 				availableByProductId: await resolveAvailableAmounts(
-					parentData.cart.items.map((item) => item.product),
+					cartItemsWithResolvedStock.map((item) => item.product),
 					userIdentifier(locals)
 				)
 			})

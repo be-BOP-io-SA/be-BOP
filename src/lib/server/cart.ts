@@ -283,10 +283,14 @@ export async function addToCartInDb(
 	// a pre-configured cart link, the point-of-sale alias field, NostR — so none of them needs
 	// its own copy of the rules. Evaluated once the cart is known, because a per-person cap
 	// counts what already sits in it on top of what was already ordered.
-	// The cart's own "+" and quantity field send the new total, not what to add. Counting the
-	// cart again on top of it would read a cart of six asking for seven as thirteen, and refuse
-	// a button that only meant to go from six to seven.
-	const alreadyInCart = params.totalQuantity ? 0 : totalQuantityInCart();
+	// The cart's own "+" and quantity field send the new total of one line, not what to add, so
+	// that line is left out of the count: counting it again would read a cart of six asking for
+	// seven as thirteen. The product's other lines still count, or each one gets the whole cap.
+	const replacedQuantity =
+		params.totalQuantity && existingItem && !product.standalone && !product.bookingSpec
+			? existingItem.quantity
+			: 0;
+	const alreadyInCart = totalQuantityInCart() - replacedQuantity;
 
 	const lockOnAdd = (
 		await evaluateSaleLocks([product], params.user, {
