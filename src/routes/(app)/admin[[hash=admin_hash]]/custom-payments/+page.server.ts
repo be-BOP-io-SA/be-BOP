@@ -26,7 +26,8 @@ export const actions = {
 				z.object({
 					id: z.string().trim().optional(),
 					label: z.string().trim(),
-					instructions: z.string()
+					instructions: z.string(),
+					allowOrderWithoutContactAddress: z.boolean().default(false)
 				})
 			)
 			.parse(raw);
@@ -43,7 +44,8 @@ export const actions = {
 		const customPaymentMethods = rows.map((method) => ({
 			id: method.id || crypto.randomUUID(),
 			label: method.label,
-			instructions: method.instructions
+			instructions: method.instructions,
+			allowOrderWithoutContactAddress: method.allowOrderWithoutContactAddress
 		}));
 
 		await collections.runtimeConfig.updateOne(
