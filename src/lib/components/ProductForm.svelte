@@ -1824,6 +1824,7 @@
 							{#if globalDeliveryFees.mode === 'perItem'}
 								<DeliveryFeesSelector
 									bind:deliveryFees={product.deliveryFees}
+									defaultBlacklist={product.defaultBlacklist}
 									defaultCurrency={product.price.currency}
 								/>
 

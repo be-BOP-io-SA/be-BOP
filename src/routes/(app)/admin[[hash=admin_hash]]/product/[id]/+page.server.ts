@@ -235,6 +235,9 @@ export const actions: Actions = {
 						standalone: parsed.payWhatYouWant || hasVariations || parsed.standalone,
 						free: parsed.free,
 						...(parsed.deliveryFees && { deliveryFees: parsed.deliveryFees }),
+						...(parsed.defaultBlacklist?.length && {
+							defaultBlacklist: parsed.defaultBlacklist
+						}),
 						applyDeliveryFeesOnlyOnce: parsed.applyDeliveryFeesOnlyOnce,
 						requireSpecificDeliveryFee: parsed.requireSpecificDeliveryFee,
 						...(parsed.maxQuantityPerOrder && { maxQuantityPerOrder: parsed.maxQuantityPerOrder }),
@@ -328,6 +331,7 @@ export const actions: Actions = {
 						...(!parsed.customPreorderText && { customPreorderText: '' }),
 						...(!parsed.availableDate && { availableDate: '' }),
 						...(!parsed.deliveryFees && { deliveryFees: '' }),
+						...(!parsed.defaultBlacklist?.length && { defaultBlacklist: '' }),
 						...(parsed.stock === undefined && { stock: '' }),
 						...(!parsed.stockReferenceProductId && { stockReference: '' }),
 						...(!parsed.maxQuantityPerOrder && { maxQuantityPerOrder: '' }),
