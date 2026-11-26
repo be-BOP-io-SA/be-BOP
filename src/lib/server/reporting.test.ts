@@ -335,29 +335,6 @@ describe('computeReportingSynthesis', () => {
 		expect(synthesis.products.map((p) => p.productId)).toEqual(['coffee']);
 	});
 
-	it('shares the recorded VAT by price when the item rates could not be reconstructed', () => {
-		// As the VAT repair leaves an order it labels vat-rate-to-check: each rate is the list.
-		const rates = [20, 10] as unknown as number;
-		const tagged = item('coffee', 10, {
-			product: { _id: 'coffee', name: 'Coffee', tagIds: ['hot'] },
-			vatRate: rates
-		});
-		const synthesis = computeReportingSynthesis(
-			[
-				order({
-					items: [tagged, item('juice', 5, { vatRate: rates })],
-					currencySnapshot: {
-						main: { totalPrice: eur(15), vat: [eur(2), eur(0.5)] }
-					} as ReportingOrder['currencySnapshot']
-				})
-			],
-			filters('tagId=hot'),
-			'EUR'
-		);
-
-		expect(synthesis.vatTotal).toBe(1.67);
-	});
-
 	it('groups PoS payments by subtype and custom payments by label', () => {
 		const synthesis = computeReportingSynthesis(
 			[

@@ -379,37 +379,6 @@ function paymentSynthesisKey(payment: ReportingPayment) {
 }
 
 /**
- * VAT of the items of an order that carry the tag. An item whose rate could not be reconstructed
- * after the VAT-to-array migration (still a list, order labelled vat-rate-to-check) takes a share of
- * the VAT the order recorded, in proportion to its price among the order's items.
- */
-function taggedItemsVat(order: ReportingOrder, tagId: string, mainCurrency: Currency): Price[] {
-	const tagged = order.items.filter((item) => itemMatchesTag(item, tagId));
-	const itemsTotal = sumCurrency(
-		mainCurrency,
-		order.items.map((item) => ({
-			amount: orderItemPrice(item, 'main'),
-			currency: item.currencySnapshot.main.price.currency
-		}))
-	);
-	const orderVat = sumCurrency(mainCurrency, order.currencySnapshot.main.vat ?? []);
-
-	return tagged.map((item) => {
-		const price = {
-			amount: orderItemPrice(item, 'main'),
-			currency: item.currencySnapshot.main.price.currency
-		};
-		if (typeof item.vatRate === 'number') {
-			return { amount: (price.amount * item.vatRate) / 100, currency: price.currency };
-		}
-		return {
-			amount: itemsTotal ? (orderVat * sumCurrency(mainCurrency, [price])) / itemsTotal : 0,
-			currency: mainCurrency
-		};
-	});
-}
-
-/**
  * Order, product, VAT and delivery totals count the paid orders among the searched ones: an
  * unpaid or partially paid order has not taken its total. The payment synthesis counts the
  * payments shown, which is where a partial payment appears.
@@ -421,7 +390,6 @@ export function computeReportingSynthesis(
 ) {
 	const searchedOrders = selectOrderDetail(orders, filters);
 	const paidOrders = searchedOrders.filter((order) => order.status === 'paid');
-	const { tagId } = filters;
 	const taggedItems = filters.tagId
 		? paidOrders.flatMap((order) =>
 				order.items.filter((item) => itemMatchesTag(item, filters.tagId))
@@ -486,8 +454,11 @@ export function computeReportingSynthesis(
 		vatTotal: fixCurrencyRounding(
 			sumCurrency(
 				mainCurrency,
-				tagId
-					? paidOrders.flatMap((order) => taggedItemsVat(order, tagId, mainCurrency))
+				filters.tagId
+					? taggedItems.map((item) => ({
+							amount: (orderItemPrice(item, 'main') * item.vatRate) / 100,
+							currency: item.currencySnapshot.main.price.currency
+					  }))
 					: paidOrders.flatMap((order) => order.currencySnapshot.main.vat ?? [])
 			),
 			mainCurrency

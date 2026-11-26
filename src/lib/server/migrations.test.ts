@@ -437,7 +437,8 @@ describe('migration — Reconstruct VAT rates and lists damaged by the VAT-to-ar
 		expect(warn.mock.calls).toEqual([]);
 		expect(await collections.labels.countDocuments()).toBe(0);
 		expect(migrated?.orderLabelIds).toBeUndefined();
-		// A wrapped list made this total NaN.
+		// A wrapped list made this total NaN. It holds without a tag filter only: with one, the total
+		// reads item.vatRate, so an order whose rates stay unreconstructed still gives NaN there.
 		const synthesis = computeReportingSynthesis(
 			[migrated as unknown as ReportingOrder],
 			parseReportingFilters(new URL('http://x/admin/reporting'), ['bank-transfer']),
