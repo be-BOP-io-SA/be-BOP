@@ -5,10 +5,8 @@ import { COUNTRY_ALPHA2S } from '$lib/types/Country.js';
 import { type Order, ORDER_PAGINATION_LIMIT } from '$lib/types/Order';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
 import { escapeForRegex } from '$lib/utils/escapeForRegex';
-import { set } from '$lib/utils/set';
 
 import type { Filter } from 'mongodb';
-import type { JsonObject } from 'type-fest';
 import { z } from 'zod';
 
 /** More rows than an admin would ever fill; anything beyond is ignored. */
@@ -34,10 +32,11 @@ export async function load({ url, locals }) {
 		value: z.string().trim().optional().default('')
 	});
 
+	const searchParams = Object.fromEntries(url.searchParams.entries());
+	const result = querySchema.parse(searchParams);
+
 	// The custom field rows are read key by key, `customFields[n].slug` and
-	// `customFields[n].value` only, with `n` bounded: a gap in the numbering or an arbitrary index
-	// in the URL must not reach the generic parser.
-	const searchParams: JsonObject = {};
+	// `customFields[n].value` only, with `n` bounded.
 	const customFieldRows = new Map<number, Record<string, string>>();
 	for (const [key, value] of url.searchParams) {
 		const match = /^customFields\[(\d{1,2})\]\.(slug|value)$/.exec(key);
@@ -46,14 +45,8 @@ export async function load({ url, locals }) {
 			if (index < MAX_CUSTOM_FIELD_FILTERS) {
 				customFieldRows.set(index, { ...customFieldRows.get(index), [match[2]]: value });
 			}
-			continue;
 		}
-		if (key.startsWith('customFields')) {
-			continue;
-		}
-		set(searchParams, key, value);
 	}
-	const result = querySchema.parse(searchParams);
 
 	// A row left half empty filters nothing.
 	const customFieldFilters = [...customFieldRows.entries()]

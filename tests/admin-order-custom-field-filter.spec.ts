@@ -49,6 +49,7 @@ function seededOrder(suffix: string, number: number, size: string, team: string)
 			}
 		],
 		currencySnapshot: { main: { totalPrice: price }, priceReference: { totalPrice: price } },
+		notifications: { paymentStatus: {} },
 		customCheckoutFields: [answer(SIZE, size), answer(TEAM, team)]
 	};
 }
@@ -160,5 +161,5 @@ test('the clear link empties the rows', async ({ page }) => {
 
 	await expect(page).not.toHaveURL(/customFields/);
 	await expect(page.locator('select[name^="customFields"]')).toHaveCount(0);
-	await expect(orderLink(page, MEDIUM_RED)).toBeVisible();
+	await expect(page.locator(`a[href^="/order/${ID_PREFIX}"]`)).toHaveCount(50);
 });
