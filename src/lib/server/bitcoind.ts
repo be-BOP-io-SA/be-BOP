@@ -9,6 +9,8 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { runtimeConfig } from './runtime-config';
 import { socksDispatcher } from 'fetch-socks';
+// The global fetch rejects dispatchers built on another undici major, such as fetch-socks's
+import { fetch } from 'undici';
 import type { ObjectId } from 'mongodb';
 
 export const isBitcoinConfigured =
@@ -161,7 +163,7 @@ export async function createWallet(name: string) {
 			throw error(500, 'Could not import descriptors');
 		}
 
-		const json2 = await response2.json();
+		const json2 = (await response2.json()) as { result: Array<{ success: boolean }> };
 
 		if (!json2.result[0].success) {
 			console.error('import descriptors 2', json2);

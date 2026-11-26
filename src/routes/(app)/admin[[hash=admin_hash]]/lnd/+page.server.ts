@@ -15,12 +15,12 @@ import { z } from 'zod';
 
 export async function load() {
 	return {
-		info: lndGetInfo(),
+		info: await lndGetInfo(),
 		lightningInvoiceDescription: runtimeConfig.lightningQrCodeDescription,
-		walletBalance: lndWalletBalance(),
-		channelsBalance: lndChannelsBalance(),
-		channels: lndListChannels(),
-		autopilotActive: lndAutopilotActive(),
+		walletBalance: await lndWalletBalance(),
+		channelsBalance: await lndChannelsBalance(),
+		channels: await lndListChannels(),
+		autopilotActive: await lndAutopilotActive(),
 		rpc: ALLOW_LND_RPC === 'true' || ALLOW_LND_RPC === '1'
 	};
 }

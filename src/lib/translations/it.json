@@ -171,8 +171,6 @@
 			"productsAliases": "Alias dei prodotti",
 			"productsTags": "Tag dei prodotti",
 			"productsDefaultPicture": "Immagine predefinita dei prodotti",
-			"exportCatalog": "Esporta catalogo",
-			"importCatalog": "Importa catalogo",
 			"defaultActionSettingsTitle": "Impostazioni azioni predefinite",
 			"actionColumn": "Azione",
 			"eshopAnyoneColumn": "Negozio online (chiunque)",
@@ -191,7 +189,6 @@
 			"selectTagPlaceholder": "Seleziona un tag",
 			"previous": "Precedente",
 			"next": "Successivo",
-			"exportError": "Errore {status}: {message}",
 			"type": {
 				"resource": "Risorsa",
 				"subscription": "Abbonamento",
@@ -332,15 +329,6 @@
 			"assistSameAsMainFont": "Uguale al font principale",
 			"assistGenerate": "Genera tema"
 		},
-		"stripe": {
-			"secretKey": "Chiave segreta",
-			"publicKey": "Chiave pubblica",
-			"currency": "Valuta",
-			"testing": "Test in corso…",
-			"testConnection": "Prova connessione",
-			"testSuccess": "Connessione riuscita. Le credenziali Stripe funzionano.",
-			"testFailed": "Connessione fallita: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Negozio",
@@ -403,28 +391,6 @@
 			"enableLabel": "La mia attività online richiede limitazione e verifica dell'età",
 			"legalReason": "Motivo legale"
 		},
-		"backup": {
-			"title": "Backup",
-			"createLink": "Crea backup",
-			"importLink": "Importa backup",
-			"exportTitle": "Esporta dati",
-			"exportButton": "Esporta",
-			"exportError": "Errore {status}: {message}",
-			"importSuccess": "Dati importati",
-			"importWarning": "Alcuni file sono danneggiati",
-			"importErrorMessage": "Alcuni file non sono stati importati",
-			"importTitle": "Importa backup",
-			"uploadFile": "Carica il tuo file",
-			"importType": "Tipo di importazione",
-			"importTypeGlobal": "Globale",
-			"importTypeCatalog": "Catalogo",
-			"importTypeShopConfig": "Configurazione del negozio",
-			"specificImport": "Importazione specifica",
-			"orders": "Ordini",
-			"passedChallenges": "Sfide passate",
-			"importFiles": "Importa immagini e file digitali",
-			"importButton": "Importa"
-		},
 		"bitcoind": {
 			"walletNamePrompt": "Nome del wallet",
 			"errorDumpingWallet": "Errore durante l'esportazione del wallet: {error}",
@@ -466,44 +432,6 @@
 			"txid": "Txid:",
 			"noTransactionsYet": "Ancora nessuna transazione"
 		},
-		"btcpayServer": {
-			"invoices": "Fatture",
-			"serverUrl": "URL del server",
-			"storeId": "ID del negozio",
-			"apiKey": "Chiave API",
-			"lightningWarningPrefix": "Assicurati di abilitare lightning in",
-			"storeSettingsLink": "le impostazioni del tuo negozio",
-			"lightningLinkFallbackStore": "Se il link sopra non funziona, controlla l'URL del server e l'ID del negozio forniti.",
-			"apiKeyManagePrefix": "Puoi gestire le tue chiavi API in",
-			"accountSettingsLink": "le impostazioni del tuo account",
-			"apiKeyPermissionsPrefix": "Assicurati di includere i",
-			"apiKeyPermissionsMiddle": "e",
-			"apiKeyPermissionsSuffix": "autorizzazioni.",
-			"apiKeyLinkFallback": "Se il link sopra non funziona, controlla l'URL del server fornito.",
-			"ariaLightningSettings": "Impostazioni lightning nel tuo negozio BTCPay Server",
-			"serverUrlPlaceholder": "es. https://mainnet.demo.btcpayserver.org",
-			"storeIdPlaceholder": "es. 7ceW79TUirU5J32KdWJh7VFzVcKqFCVDgBAk3vXjJrJQ",
-			"enableLightningPrefix": "Assicurati di abilitare lightning in",
-			"storeSettingsLinkText": "le impostazioni del tuo negozio",
-			"lightningSettingsAriaLabel": "Impostazioni Lightning nel tuo negozio BTCPay Server",
-			"checkServerUrlAndStoreId": "Se il link sopra non funziona, controlla l'URL del server e l'ID del negozio forniti.",
-			"apiKeyPlaceholder": "es. 5VBP0koD4gJB9L1zKUEbpUMi2cYyE3wxahHL3Vi6",
-			"manageApiKeysPrefix": "Puoi gestire le tue chiavi API in",
-			"accountSettingsLinkText": "le impostazioni del tuo account",
-			"includePermissionsPrefix": "Assicurati di includere i permessi",
-			"includePermissionsAnd": "e",
-			"includePermissionsSuffix": "seguenti.",
-			"checkServerUrl": "Se il link sopra non funziona, controlla l'URL del server fornito."
-		},
-		"blink": {
-			"intro": "Ricevi pagamenti Lightning sul tuo account Blink. Configura <0>una</0> delle due opzioni seguenti. Un indirizzo Lightning non richiede alcuna chiave API e funziona sia per gli account Blink in custodia sia per gli indirizzi auto-custoditi (Spark). Sono supportati solo i wallet BTC.",
-			"option1Title": "Opzione 1 — indirizzo Lightning (senza chiave API)",
-			"lnAddress": "Indirizzo Lightning",
-			"option2Title": "Opzione 2 — chiave API (account in custodia)",
-			"apiKey": "Chiave API",
-			"walletId": "ID wallet (facoltativo — per impostazione predefinita, il wallet BTC predefinito del tuo account)",
-			"invoices": "Fatture"
-		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Inserisci la tua o le tue chiavi pubbliche. be-BOP potrà generare nuovi indirizzi e verificare i fondi ricevuti, ma tu mantieni il pieno controllo dei fondi nel tuo portafoglio.",
@@ -536,7 +464,11 @@
 			"nextAddressesDescription": "Questi saranno i prossimi indirizzi generati da be-BOP",
 			"warning": "Attenzione:",
 			"alreadyUsedAddressWarning": "Almeno un indirizzo è già stato utilizzato. Usa un XPub del portafoglio specifico per il tuo be-BOP o definisci un altro indirizzo di derivazione per evitare il doppio utilizzo del tuo indirizzo.",
-			"alreadyUsed": "già utilizzato"
+			"keyRunningOutWarning": "Questa chiave ha quasi esaurito gli indirizzi di ricezione. Elimina questa configurazione e imposta una nuova chiave per continuare a ricevere pagamenti in bitcoin.",
+			"keyExhaustedWarning": "Questa chiave non ha più indirizzi di ricezione, quindi i pagamenti in bitcoin non vanno a buon fine. Elimina questa configurazione e imposta una nuova chiave.",
+			"keyLastAddressWarning": "A questa chiave resta solo l'ultimo indirizzo di ricezione. Elimina questa configurazione e imposta una nuova chiave per continuare a ricevere pagamenti in bitcoin.",
+			"alreadyUsed": "già utilizzato",
+			"alreadySetUpError": "Bitcoin nodeless è già configurato. Elimina la configurazione per usare un'altra chiave."
 		},
 		"challenge": {
 			"addChallenge": "Aggiungi sfida",
@@ -610,6 +542,9 @@
 			"associatedProduct": "Prodotto associato:",
 			"add": "Aggiungi",
 			"uploading": "Caricamento in corso...",
+			"uploadFailed": "Non è stato possibile inviare il file allo spazio di archiviazione. Controlla le impostazioni S3 e riprova.",
+			"uploadTooLarge": "Il file supera i {max} MB. Scegli un file più piccolo.",
+			"uploadSessionExpired": "La sessione è scaduta. Accedi di nuovo, poi invia di nuovo il file.",
 			"backToProduct": "Torna al prodotto",
 			"backToFiles": "Torna ai file",
 			"downloadFile": "Scarica il file",
@@ -995,18 +930,6 @@
 			"delete": "Elimina",
 			"confirmDelete": "Vuoi eliminare questa classifica?"
 		},
-		"osb": {
-			"shopId": "ID negozio",
-			"restApiPassword": "Password API REST",
-			"hmacKeyOptional": "Chiave HMAC-SHA-256 (opzionale)",
-			"currencyFixed": "Valuta: XPF (fissa)"
-		},
-		"paypal": {
-			"clientId": "ID cliente",
-			"secret": "Segreto",
-			"sandboxCredentials": "Queste credenziali sono per l'ambiente sandbox",
-			"currency": "Valuta"
-		},
 		"login": {
 			"login": "Accedi",
 			"loginPlaceholder": "Inserisci il tuo login",
@@ -1024,6 +947,7 @@
 			"recoveryTitle": "Recupero password",
 			"recoveryLoginPlaceholder": "Inserisci il login amministratore",
 			"recoveryDisclaimer": "Un'email per il reset della password verrà inviata alle informazioni di recupero dell'utente oppure all'indirizzo email del negozio.",
+			"recoverySentIfExists": "Se questo login esiste, un link per il reset della password è stato inviato al suo indirizzo email o npub di recupero, oppure all'indirizzo email del negozio.",
 			"recoverySentToShopEmail": "Un link per il reset della password è stato inviato all'indirizzo email del negozio.",
 			"recoverySentToUserEmail": "Un link per il reset della password è stato inviato all'indirizzo email di recupero dell'utente.",
 			"recoverySentToNpub": "Un link per il reset della password è stato inviato all'npub di recupero dell'utente.",
@@ -1059,6 +983,7 @@
 			"privateKeyEnvVarsDescription": "La chiave privata Nostr è attualmente controllata dalla configurazione dell'ambiente, che ha la precedenza sul modulo sottostante. Per modificarla, aggiorna o rimuovi i seguenti valori di ambiente (ad esempio, nel file di configurazione di be-BOP o nelle impostazioni del tuo provider di hosting), quindi riavvia be-BOP.",
 			"configurePrivateKeyDescription": "Configura la tua chiave privata Nostr.",
 			"privateKeyNsecFormat": "Chiave privata (formato nsec)",
+			"privateKeyIsSet": "La chiave privata è impostata",
 			"savePrivateKey": "Salva chiave privata",
 			"deleteKeyFirstToSave": "Elimina prima la chiave privata per salvarne una nuova",
 			"generateNewKey": "Genera nuova chiave",
@@ -1228,6 +1153,7 @@
 			"bitcoindViaEnvVars": "Bitcoind tramite variabili d'ambiente",
 			"preferredLightningProcessor": "Processore Lightning preferito",
 			"lndViaEnvVars": "LND tramite variabili d'ambiente",
+			"processorViaEnvVars": "{processor} tramite variabili d'ambiente",
 			"timing": "Tempistiche",
 			"subscriptionDuration": "Durata dell'abbonamento",
 			"subscriptionReminder": "Promemoria abbonamento",
@@ -1375,6 +1301,9 @@
 			"delete": "Elimina"
 		},
 		"picture": {
+			"uploadFailed": "Non è stato possibile inviare l'immagine allo spazio di archiviazione. Controlla le impostazioni S3 e riprova.",
+			"uploadTooLarge": "L'immagine supera i {max} MB. Scegli un file più piccolo.",
+			"uploadSessionExpired": "La sessione è scaduta. Accedi di nuovo, poi invia di nuovo l'immagine.",
 			"listTitle": "Elenco delle immagini senza prodotto o widget associato",
 			"newPicture": "Nuova immagine",
 			"bulkNameEditor": "Editor collettivo dei nomi delle immagini",
@@ -1676,15 +1605,6 @@
 			"noteFakeMode": "Attiva la modalità \"finta\" per lo sviluppo/test senza un vero server SMTP",
 			"noteOverrides": "Queste impostazioni sovrascrivono le variabili d'ambiente quando configurate"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "Chiave API",
-			"invoices": "Fatture"
-		},
-		"sumup": {
-			"apiKey": "Chiave API",
-			"merchantCode": "Codice commerciante",
-			"currency": "Valuta"
-		},
 		"productForm": {
 			"allowSameDayBooking": "Consenti la prenotazione lo stesso giorno",
 			"maxHourSameDayBooking": "Ora limite per la prenotazione lo stesso giorno (fuso orario del programma)",
@@ -1856,11 +1776,6 @@
 			"phaseReminderHint": "0 = nessun promemoria",
 			"addPhase": "Aggiungi fase"
 		},
-		"taler": {
-			"backendUrl": "URL del backend",
-			"backendApiKey": "Chiave API del backend",
-			"currency": "Valuta"
-		},
 		"specification": {
 			"addSpecification": "Aggiungi specifica",
 			"listTitle": "Elenco delle specifiche",
@@ -1915,6 +1830,7 @@
 			"addCustomMetaBalise": "Aggiungi meta tag personalizzato",
 			"useAdvancedHtmlEdition": "Usa l'edizione HTML avanzata",
 			"advancedHtmlWarning": "Attenzione: da usare a proprio rischio, solo se sei un Jedi del web o un McGyver di be-BOP. Non usarlo mai su una pagina CMS già esistente, altrimenti rischi di perdere il contenuto del tuo CMS.",
+			"removedContentWarning": "I visitatori non vedranno una parte di questo contenuto, viene rimossa quando la pagina viene visualizzata: {items}. Un super admin può attivare la modifica HTML avanzata per conservare tutto.",
 			"showTips": "Mostra suggerimenti",
 			"tipsProduct": "Per includere prodotti, aggiungi un paragrafo con solo <code class=\"font-mono\">[Product=slug]</code>, dove <code class=\"font-mono\">slug</code> è lo slug del tuo prodotto. Puoi specificare l'opzione di visualizzazione così: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Per includere immagini, aggiungi un paragrafo con solo <code class=\"font-mono\">[Picture=slug]</code>. Puoi anche impostare larghezza, altezza e adattamento: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> o <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> E anche msubstitute (immagine sostitutiva su mobile), posizione <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",
@@ -2172,6 +2088,9 @@
 			"priceAmount": "Importo del prezzo",
 			"pricePlaceholder": "Prezzo"
 		},
+		"paymentProcessor": {
+			"invoices": "Fatture"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Nessun processore configurato. Configurali nella scheda Impostazioni di pagamento qui sopra",
 			"or": "o",
@@ -2256,7 +2175,20 @@
 		"maxQuantityReached": "Quantità massima per ordine raggiunta ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Le prenotazioni per oggi non sono disponibili per questo prodotto.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Le prenotazioni per oggi non sono più possibili dopo le {maxHour}.",
+			"NOT_FOR_SALE": "Questo prodotto non può essere aggiunto al carrello.",
+			"NOT_PWYW": "Non puoi scegliere il prezzo di questo prodotto.",
+			"BOOKING_INFO_REQUIRED": "Scegli prima un orario e una durata di prenotazione.",
+			"MAX_PRICE_EXCEEDED": "Il prezzo non può superare {max} {currency}.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Non puoi scegliere il prezzo di un abbonamento.",
+			"NOT_PREORDER": "Questo prodotto non è ancora disponibile e non può essere preordinato.",
+			"MAX_ITEMS_REACHED": "Il tuo carrello ha raggiunto la dimensione massima. Per aggiungere altri articoli, rimuovine alcuni dal carrello.",
+			"OUT_OF_STOCK": "Questo prodotto è esaurito.",
+			"STANDALONE_QTY_ONE": "Puoi ordinare un solo esemplare di questo prodotto.",
+			"VARIATION_INVALID": "Scegli una delle opzioni proposte per questo prodotto.",
+			"MAX_PER_ORDER": "Puoi ordinare al massimo {max} esemplari di questo prodotto.",
+			"INVALID_QUANTITY": "Inserisci una quantità valida.",
+			"INVALID_PRICE": "Inserisci un prezzo valido."
 		}
 	},
 	"cartFromUrl": {
@@ -2333,6 +2265,9 @@
 		"multiplePaymentMethodsHelpText": "Potrete decidere il vostro tipo di pagamento alla prossima tappa.",
 		"noDeliveryInCountry": "La spedizione non è disponibile nel vostro paese per alcuni articoli presenti nel carrello.",
 		"paymentGenerationFailed": "Non è stato possibile avviare il pagamento. Si prega di riprovare tra qualche istante, o di contattare il negoziante se il problema persiste.",
+		"paymentTimeoutOutOfRange": "Il termine di pagamento deve essere di almeno 1 minuto.",
+		"cartAlreadyCheckedOut": "Questo carrello è già stato ordinato, quindi non è stato effettuato un secondo ordine. Trovi il tuo ordine nel tuo account o nel relativo messaggio di conferma.",
+		"subscriptionAtTill": "Gli abbonamenti non si vendono in cassa: il cliente si abbona dalla pagina del prodotto. Rimuovi l'abbonamento per incassare il resto.",
 		"note": {
 			"label": "Lascia un messaggio per il venditore",
 			"title": "Messaggio"
@@ -2801,9 +2736,11 @@
 		"paymentAmount": "Somma",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Il tuo paiment è fallito, puoi tentare un nuovo paiment",
+		"discountTiedToPaymentMethod": "Questo ordine ha ricevuto uno sconto legato al suo metodo di pagamento attuale. Effettua un nuovo ordine per pagare in un altro modo.",
 		"paymentDoneCustomerCTA": "Ho finito",
 		"paymentExpiresAt": "Scadenza del pagamento: <0></0>",
 		"paymentIban": "IBAN a cui spedire il bonifico",
+		"paymentConfirming": "Conferma del pagamento in corso…",
 		"paymentLink": "Clicca qui per pagare con la carta",
 		"paymentLinkGeneric": "Clicca qui per pagare con",
 		"paymentPaidAt": "Pagamento effetuato il {date}",
@@ -3320,14 +3257,14 @@
 			"title": "Una parola da be-BOP:",
 			"description1": "Per supportare gratuitamente il software be-BOP, puoi rendere pubblica l'esistenza del tuo negozio.",
 			"description2": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URI del tuo negozio e il tuo consenso a comunicare al riguardo. Le tue informazioni private e quelle dei tuoi clienti non verranno condivise.",
-			"description3": "La tua condivisione sarà utilizzata per statistiche anonime sul numero di utenti be-BOP (che non viene tracciato automaticamente perché rispettiamo la privacy e il consenso), e per condurre occasionalmente campagne di comunicazione e promozione sui be-BOP distribuiti in tutto il mondo. Una prima notifica verrà inviata al bot Nostr di be-BOP.io, poi settimanalmente finché il tuo be-BOP è attivo. Puoi successivamente disattivare questo messaggio regolare in <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a>.",
+			"description3": "La tua condivisione sarà utilizzata per statistiche anonime sul numero di utenti be-BOP (che non viene tracciato automaticamente perché rispettiamo la privacy e il consenso), e per condurre occasionalmente campagne di comunicazione e promozione sui be-BOP distribuiti in tutto il mondo. Una prima notifica verrà inviata al bot Nostr di be-BOP.io, poi settimanalmente finché il tuo be-BOP è attivo. Puoi successivamente disattivare questo messaggio regolare in <0>/admin/SEO</0>.",
 			"question": "Accetti di condividere l'esistenza del tuo be-BOP?",
 			"acceptButton": "Condividi",
 			"declineButton": "Ricordamelo tra 30 giorni",
 			"configureNostrButton": "Configura Nostr",
 			"accepted": {
 				"thankYou": "Grazie per aver scelto di condividere l'esistenza del tuo negozio con be-BOP.io per scopi statistici e promozionali!",
-				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> per disattivare questa telemetria opzionale.",
+				"message": "Nessun dato verrà inviato a be-BOP.io SA, tranne l'URL del tuo negozio e il tuo consenso a comunicare al riguardo. Puoi andare su <0>/admin/seo</0> per disattivare questa telemetria opzionale.",
 				"autoHideCountdown": "Questo messaggio scomparirà tra {seconds} secondi..."
 			},
 			"declined": {

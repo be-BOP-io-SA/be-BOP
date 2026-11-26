@@ -7,7 +7,7 @@ import {
 	S3_KEY_SECRET
 } from '$lib/server/env-config';
 import { runtimeConfig } from '$lib/server/runtime-config';
-import { resetS3Clients } from '$lib/server/s3.js';
+import { resetS3Clients, S3_CHECKSUMS_WHEN_REQUIRED } from '$lib/server/s3.js';
 import { z } from 'zod';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import { persistConfigElement } from '$lib/server/utils/persistConfig';
@@ -59,7 +59,8 @@ async function simpleListTest(s3: typeof runtimeConfig.s3) {
 				accessKeyId: s3.keyId,
 				secretAccessKey: s3.keySecret
 			},
-			forcePathStyle: true
+			forcePathStyle: true,
+			...S3_CHECKSUMS_WHEN_REQUIRED
 		});
 		await client.send(new ListBucketsCommand({}));
 		if (s3.bucket) {

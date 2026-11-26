@@ -3,6 +3,7 @@ import { collections } from '$lib/server/database.js';
 import { MAX_NAME_LIMIT, type Product } from '$lib/types/Product.js';
 import type { Tag } from '$lib/types/Tag';
 import { COUNTRY_ALPHA2S, type CountryAlpha2 } from '$lib/types/Country';
+import { ALL_PAYMENT_METHODS } from '$lib/server/payment-methods';
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { logPublicDiscountPriceChange, parseDiscountConditionFields } from '$lib/server/discount';
@@ -45,6 +46,9 @@ export async function load({ params }) {
 		products,
 		subscriptions,
 		tags,
+		// The form used to list these by hand, and the list stopped being updated: taler, osb
+		// and free were missing, so no discount could be scoped to them.
+		paymentMethods: [...ALL_PAYMENT_METHODS],
 		countries: [...COUNTRY_ALPHA2S] as CountryAlpha2[]
 	};
 }

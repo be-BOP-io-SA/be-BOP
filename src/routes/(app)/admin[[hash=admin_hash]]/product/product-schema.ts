@@ -8,6 +8,15 @@ import { deliveryFeesSchema } from '../config/delivery/schema';
 import { MAX_CONTENT_LIMIT } from '$lib/types/CmsPage';
 import { zodObjectId } from '$lib/server/zod';
 import { paymentMethods, type PaymentMethod } from '$lib/server/payment-methods';
+import { safeHref } from '$lib/utils/safeUrl';
+
+// Rendering neutralises an unusable scheme to `#`; rejecting the same values here keeps them out
+// of the database, and shares the renderer's allowlist so the two cannot drift.
+const zodSafeHref = () =>
+	z
+		.string()
+		.trim()
+		.refine((href) => !href || safeHref(href) !== '#', 'Unsupported link scheme');
 import { webhookApiRouteIssue } from '$lib/server/webhook-url-guard';
 
 export const productBaseSchema = () => ({
@@ -219,7 +228,7 @@ export const productBaseSchema = () => ({
 	cta: z
 		.array(
 			z.object({
-				href: z.string().trim(),
+				href: zodSafeHref(),
 				label: z.string().trim(),
 				fallback: z.boolean({ coerce: true }).default(false)
 			})
@@ -229,7 +238,7 @@ export const productBaseSchema = () => ({
 	externalResources: z
 		.array(
 			z.object({
-				href: z.string().trim(),
+				href: zodSafeHref(),
 				label: z.string().trim()
 			})
 		)

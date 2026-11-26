@@ -1,0 +1,134 @@
+import { runtimeConfig } from '$lib/server/runtime-config';
+import { CURRENCIES } from '$lib/types/Currency';
+import { typedInclude } from '$lib/utils/typedIncludes';
+import { ORIGIN } from '$lib/server/env-config';
+import { z } from 'zod';
+import {
+	definePaymentProcessor,
+	orderReturnUrl,
+	type CreatePaymentParams,
+	type CreatePaymentResult,
+	type CheckPaymentResult
+} from '$lib/server/sdk/pp';
+import type { Order } from '$lib/types/Order';
+import declaration from './declaration';
+
+export default definePaymentProcessor(declaration, {
+	presentation: { kind: 'qr' },
+
+	async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResult> {
+		const { amount, currency } = params.toPay;
+
+		const resp = await fetch('https://api.sumup.com/v0.1/checkouts', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${runtimeConfig.sumUp.apiKey}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				amount,
+				currency,
+				checkout_reference: params.orderId + '-' + params.paymentId,
+				merchant_code: runtimeConfig.sumUp.merchantCode,
+				redirect_url: orderReturnUrl(params.orderId, params.paymentId),
+				description: 'Order ' + params.orderNumber,
+				...(params.expiresAt && {
+					valid_until: params.expiresAt.toISOString()
+				})
+			}),
+			...{ autoSelectFamily: true }
+		});
+
+		if (!resp.ok) {
+			const err = await resp.text();
+			throw new Error(`SumUp checkout creation failed (${resp.status}): ${err}`);
+		}
+
+		const json = z.object({ id: z.string() }).parse(await resp.json());
+
+		return {
+			checkoutId: json.id,
+			address: `${ORIGIN}/order/${params.orderId}/payment/${params.paymentId}/pay`,
+			processor: 'sumup'
+		};
+	},
+
+	async checkPayment(
+		payment: Order['payments'][number],
+		order: Order
+	): Promise<CheckPaymentResult> {
+		if (!runtimeConfig.sumUp.apiKey) {
+			throw new Error('Missing sumup API key');
+		}
+
+		const checkoutId = payment.checkoutId;
+
+		if (!checkoutId) {
+			throw new Error('Missing checkout ID on SumUp order');
+		}
+
+		const response = await fetch('https://api.sumup.com/v0.1/checkouts/' + checkoutId, {
+			headers: {
+				Authorization: 'Bearer ' + runtimeConfig.sumUp.apiKey
+			},
+			...{ autoSelectFamily: true }
+		});
+
+		if (!response.ok) {
+			throw new Error(
+				'Failed to fetch checkout status for order ' + order._id + ', checkout ' + checkoutId
+			);
+		}
+
+		const checkout = z
+			.object({
+				status: z.string(),
+				amount: z.number().optional(),
+				currency: z.string().optional(),
+				transactions: z
+					.array(
+						z.object({
+							id: z.string(),
+							amount: z.number(),
+							currency: z.string(),
+							transaction_code: z.string().optional()
+						})
+					)
+					.optional()
+			})
+			.parse(await response.json());
+
+		if (checkout.status === 'PAID') {
+			const rawCurrency = checkout.currency?.toUpperCase();
+			if (!typedInclude(CURRENCIES, rawCurrency)) {
+				throw new Error(`SumUp returned unknown currency: ${rawCurrency}`);
+			}
+			if (checkout.amount === undefined) {
+				throw new Error(`SumUp returned no amount for checkout ${checkoutId}`);
+			}
+			return {
+				status: 'paid',
+				received: {
+					amount: checkout.amount,
+					currency: rawCurrency
+				},
+				transactions: checkout.transactions?.map((t) => ({
+					...t,
+					currency: rawCurrency
+				}))
+			};
+		}
+
+		if (checkout.status === 'FAILED') {
+			return { status: 'failed' };
+		}
+
+		if (checkout.status === 'EXPIRED') {
+			return { status: 'expired' };
+		}
+
+		return { status: 'pending' };
+	},
+
+	payData: (payment) => ({ checkoutId: payment.checkoutId })
+});

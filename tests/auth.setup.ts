@@ -1,4 +1,4 @@
-import { expect, test as setup } from '@playwright/test';
+import { expect, test as setup } from './client-ip.js';
 
 export const ADMIN_STATE = 'playwright/.auth/admin.json';
 

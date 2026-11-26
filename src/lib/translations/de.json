@@ -171,8 +171,6 @@
 			"productsAliases": "Produkt-Aliase",
 			"productsTags": "Produkt-Tags",
 			"productsDefaultPicture": "Standardbild für Produkte",
-			"exportCatalog": "Katalog exportieren",
-			"importCatalog": "Katalog importieren",
 			"defaultActionSettingsTitle": "Standardaktionseinstellungen",
 			"actionColumn": "Aktion",
 			"eshopAnyoneColumn": "Online-Shop (jeder)",
@@ -191,7 +189,6 @@
 			"selectTagPlaceholder": "Tag auswählen",
 			"previous": "Zurück",
 			"next": "Weiter",
-			"exportError": "Fehler {status}: {message}",
 			"type": {
 				"resource": "Ressource",
 				"subscription": "Abonnement",
@@ -332,15 +329,6 @@
 			"assistSameAsMainFont": "Gleich wie Hauptschriftart",
 			"assistGenerate": "Theme generieren"
 		},
-		"stripe": {
-			"secretKey": "Geheimer Schlüssel",
-			"publicKey": "Öffentlicher Schlüssel",
-			"currency": "Währung",
-			"testing": "Wird getestet…",
-			"testConnection": "Verbindung testen",
-			"testSuccess": "Verbindung erfolgreich. Die Stripe-Zugangsdaten funktionieren.",
-			"testFailed": "Verbindung fehlgeschlagen: {reason}"
-		},
 		"nav": {
 			"section": {
 				"merch": "Shop",
@@ -403,28 +391,6 @@
 			"enableLabel": "Mein Online-Geschäft benötigt Altersbeschränkung und -überprüfung",
 			"legalReason": "Rechtlicher Grund"
 		},
-		"backup": {
-			"title": "Sicherung",
-			"createLink": "Sicherung erstellen",
-			"importLink": "Sicherung importieren",
-			"exportTitle": "Daten exportieren",
-			"exportButton": "Exportieren",
-			"exportError": "Fehler {status}: {message}",
-			"importSuccess": "Daten importiert",
-			"importWarning": "Einige Dateien sind beschädigt",
-			"importErrorMessage": "Einige Dateien wurden nicht importiert",
-			"importTitle": "Sicherung importieren",
-			"uploadFile": "Laden Sie Ihre Datei hoch",
-			"importType": "Importtyp",
-			"importTypeGlobal": "Global",
-			"importTypeCatalog": "Katalog",
-			"importTypeShopConfig": "Shop-Konfiguration",
-			"specificImport": "Spezifischer Import",
-			"orders": "Bestellungen",
-			"passedChallenges": "Vergangene Challenges",
-			"importFiles": "Bilder und digitale Dateien importieren",
-			"importButton": "Importieren"
-		},
 		"bitcoind": {
 			"walletNamePrompt": "Wallet-Name",
 			"errorDumpingWallet": "Fehler beim Exportieren der Wallet: {error}",
@@ -466,44 +432,6 @@
 			"txid": "Txid:",
 			"noTransactionsYet": "Noch keine Transaktionen"
 		},
-		"btcpayServer": {
-			"invoices": "Rechnungen",
-			"serverUrl": "Server-URL",
-			"storeId": "Store-ID",
-			"apiKey": "API-Schlüssel",
-			"lightningWarningPrefix": "Bitte stellen Sie sicher, dass Lightning aktiviert ist in",
-			"storeSettingsLink": "den Einstellungen Ihres Stores",
-			"lightningLinkFallbackStore": "Wenn der obige Link nicht funktioniert, überprüfen Sie die angegebene Server-URL und Store-ID.",
-			"apiKeyManagePrefix": "Sie können Ihre API-Schlüssel verwalten in",
-			"accountSettingsLink": "den Einstellungen Ihres Kontos",
-			"apiKeyPermissionsPrefix": "Bitte stellen Sie sicher, dass Sie die",
-			"apiKeyPermissionsMiddle": "und",
-			"apiKeyPermissionsSuffix": "Berechtigungen einschließen.",
-			"apiKeyLinkFallback": "Wenn der obige Link nicht funktioniert, überprüfen Sie die angegebene Server-URL.",
-			"ariaLightningSettings": "Lightning-Einstellungen in Ihrem BTCPay Server Store",
-			"serverUrlPlaceholder": "z. B. https://mainnet.demo.btcpayserver.org",
-			"storeIdPlaceholder": "z. B. 7ceW79TUirU5J32KdWJh7VFzVcKqFCVDgBAk3vXjJrJQ",
-			"enableLightningPrefix": "Bitte stellen Sie sicher, dass Lightning aktiviert ist in",
-			"storeSettingsLinkText": "Ihren Store-Einstellungen",
-			"lightningSettingsAriaLabel": "Lightning-Einstellungen in Ihrem BTCPay-Server-Store",
-			"checkServerUrlAndStoreId": "Wenn der obige Link nicht funktioniert, überprüfen Sie die angegebene Server-URL und Store-ID.",
-			"apiKeyPlaceholder": "z. B. 5VBP0koD4gJB9L1zKUEbpUMi2cYyE3wxahHL3Vi6",
-			"manageApiKeysPrefix": "Sie können Ihre API-Schlüssel verwalten in",
-			"accountSettingsLinkText": "Ihren Kontoeinstellungen",
-			"includePermissionsPrefix": "Bitte stellen Sie sicher, dass die Berechtigungen",
-			"includePermissionsAnd": "und",
-			"includePermissionsSuffix": "enthalten sind.",
-			"checkServerUrl": "Wenn der obige Link nicht funktioniert, überprüfen Sie die angegebene Server-URL."
-		},
-		"blink": {
-			"intro": "Empfangen Sie Lightning-Zahlungen auf Ihrem Blink-Konto. Konfigurieren Sie <0>eine</0> der beiden folgenden Optionen. Eine Lightning-Adresse benötigt keinen API-Schlüssel und funktioniert sowohl für verwahrte Blink-Konten als auch für selbstverwahrte (Spark) Adressen. Es werden nur BTC-Wallets unterstützt.",
-			"option1Title": "Option 1 — Lightning-Adresse (ohne API-Schlüssel)",
-			"lnAddress": "Lightning-Adresse",
-			"option2Title": "Option 2 — API-Schlüssel (verwahrtes Konto)",
-			"apiKey": "API-Schlüssel",
-			"walletId": "Wallet-ID (optional — standardmäßig das Standard-BTC-Wallet Ihres Kontos)",
-			"invoices": "Rechnungen"
-		},
 		"bitcoinNodeless": {
 			"title": "Bitcoin nodeless",
 			"intro": "Geben Sie Ihre öffentlichen Schlüssel ein. be-BOP kann dann neue Adressen generieren und eingehende Gelder prüfen, aber Sie behalten die volle Kontrolle über die Gelder in Ihrer eigenen Wallet.",
@@ -536,7 +464,11 @@
 			"nextAddressesDescription": "Dies werden die nächsten von be-BOP generierten Adressen sein",
 			"warning": "Warnung:",
 			"alreadyUsedAddressWarning": "Mindestens eine Adresse wurde bereits verwendet. Verwenden Sie ein spezielles Wallet-XPub für Ihr be-BOP oder legen Sie eine andere Ableitungsadresse fest, um die Doppelverwendung Ihrer Adresse zu vermeiden.",
-			"alreadyUsed": "bereits verwendet"
+			"keyRunningOutWarning": "Dieser Schlüssel hat fast keine Empfangsadressen mehr. Löschen Sie diese Konfiguration und richten Sie einen neuen Schlüssel ein, um weiterhin Bitcoin-Zahlungen zu empfangen.",
+			"keyExhaustedWarning": "Dieser Schlüssel hat keine Empfangsadresse mehr, daher schlagen Bitcoin-Zahlungen fehl. Löschen Sie diese Konfiguration und richten Sie einen neuen Schlüssel ein.",
+			"keyLastAddressWarning": "Dieser Schlüssel hat nur noch seine letzte Empfangsadresse. Löschen Sie diese Konfiguration und richten Sie einen neuen Schlüssel ein, um weiterhin Bitcoin-Zahlungen zu empfangen.",
+			"alreadyUsed": "bereits verwendet",
+			"alreadySetUpError": "Bitcoin nodeless ist bereits eingerichtet. Löschen Sie die Konfiguration, um einen anderen Schlüssel zu verwenden."
 		},
 		"challenge": {
 			"addChallenge": "Herausforderung hinzufügen",
@@ -610,6 +542,9 @@
 			"associatedProduct": "Zugehöriges Produkt:",
 			"add": "Hinzufügen",
 			"uploading": "Wird hochgeladen...",
+			"uploadFailed": "Die Datei konnte nicht in den Speicher hochgeladen werden. Prüfen Sie die S3-Einstellungen und versuchen Sie es erneut.",
+			"uploadTooLarge": "Die Datei ist größer als {max} MB. Wählen Sie eine kleinere Datei.",
+			"uploadSessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an und senden Sie die Datei noch einmal.",
 			"backToProduct": "Zurück zum Produkt",
 			"backToFiles": "Zurück zu den Dateien",
 			"downloadFile": "Datei herunterladen",
@@ -995,18 +930,6 @@
 			"delete": "Löschen",
 			"confirmDelete": "Möchten Sie diese Rangliste löschen?"
 		},
-		"osb": {
-			"shopId": "Shop-ID",
-			"restApiPassword": "REST-API-Passwort",
-			"hmacKeyOptional": "HMAC-SHA-256-Schlüssel (optional)",
-			"currencyFixed": "Währung: XPF (fest)"
-		},
-		"paypal": {
-			"clientId": "Client-ID",
-			"secret": "Geheimnis",
-			"sandboxCredentials": "Diese Zugangsdaten sind für die Sandbox-Umgebung",
-			"currency": "Währung"
-		},
 		"login": {
 			"login": "Login",
 			"loginPlaceholder": "Geben Sie Ihren Login ein",
@@ -1024,6 +947,7 @@
 			"recoveryTitle": "Passwort-Wiederherstellung",
 			"recoveryLoginPlaceholder": "Geben Sie den Admin-Login ein",
 			"recoveryDisclaimer": "Eine E-Mail zum Zurücksetzen des Passworts wird entweder an die Wiederherstellungsinformationen des Benutzers oder an die E-Mail-Adresse des Shops gesendet.",
+			"recoverySentIfExists": "Falls dieses Login existiert, wurde ein Link zum Zurücksetzen des Passworts an seine Wiederherstellungs-E-Mail-Adresse oder seinen Wiederherstellungs-npub oder an die E-Mail-Adresse des Shops gesendet.",
 			"recoverySentToShopEmail": "Ein Link zum Zurücksetzen des Passworts wurde an die E-Mail-Adresse des Shops gesendet.",
 			"recoverySentToUserEmail": "Ein Link zum Zurücksetzen des Passworts wurde an die Wiederherstellungs-E-Mail-Adresse des Benutzers gesendet.",
 			"recoverySentToNpub": "Ein Link zum Zurücksetzen des Passworts wurde an den Wiederherstellungs-npub des Benutzers gesendet.",
@@ -1059,6 +983,7 @@
 			"privateKeyEnvVarsDescription": "Der Nostr-Privatschlüssel wird derzeit über Ihre Umgebungskonfiguration gesteuert, die Vorrang vor dem untenstehenden Formular hat. Um ihn zu ändern, aktualisieren oder entfernen Sie die folgenden Umgebungswerte (zum Beispiel in der be-BOP-Konfigurationsdatei oder den Einstellungen Ihres Hosting-Anbieters) und starten Sie be-BOP anschließend neu.",
 			"configurePrivateKeyDescription": "Konfigurieren Sie Ihren Nostr-Privatschlüssel.",
 			"privateKeyNsecFormat": "Privater Schlüssel (nsec-Format)",
+			"privateKeyIsSet": "Privater Schlüssel ist gesetzt",
 			"savePrivateKey": "Privaten Schlüssel speichern",
 			"deleteKeyFirstToSave": "Löschen Sie zuerst den privaten Schlüssel, um einen neuen zu speichern",
 			"generateNewKey": "Neuen Schlüssel generieren",
@@ -1228,6 +1153,7 @@
 			"bitcoindViaEnvVars": "Bitcoind über Umgebungsvariablen",
 			"preferredLightningProcessor": "Bevorzugter Lightning-Anbieter",
 			"lndViaEnvVars": "LND über Umgebungsvariablen",
+			"processorViaEnvVars": "{processor} über Umgebungsvariablen",
 			"timing": "Zeitsteuerung",
 			"subscriptionDuration": "Abonnementdauer",
 			"subscriptionReminder": "Abonnementerinnerung",
@@ -1375,6 +1301,9 @@
 			"delete": "Löschen"
 		},
 		"picture": {
+			"uploadFailed": "Das Bild konnte nicht in den Speicher hochgeladen werden. Prüfen Sie die S3-Einstellungen und versuchen Sie es erneut.",
+			"uploadTooLarge": "Das Bild ist größer als {max} MB. Wählen Sie eine kleinere Datei.",
+			"uploadSessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an und senden Sie das Bild noch einmal.",
 			"listTitle": "Liste der Bilder ohne zugeordnetes Produkt oder Widget",
 			"newPicture": "Neues Bild",
 			"bulkNameEditor": "Massen-Editor für Bildnamen",
@@ -1676,15 +1605,6 @@
 			"noteFakeMode": "Aktivieren Sie den „Fake“-Modus für Entwicklung/Tests ohne echten SMTP-Server",
 			"noteOverrides": "Diese Einstellungen überschreiben Umgebungsvariablen, wenn sie konfiguriert sind"
 		},
-		"swissBitcoinPay": {
-			"apiKey": "API-Schlüssel",
-			"invoices": "Rechnungen"
-		},
-		"sumup": {
-			"apiKey": "API-Schlüssel",
-			"merchantCode": "Händlercode",
-			"currency": "Währung"
-		},
 		"productForm": {
 			"allowSameDayBooking": "Buchung am selben Tag erlauben",
 			"maxHourSameDayBooking": "Späteste Uhrzeit für eine Buchung am selben Tag (Zeitzone des Zeitplans)",
@@ -1856,11 +1776,6 @@
 			"phaseReminderHint": "0 = keine Erinnerung",
 			"addPhase": "Phase hinzufügen"
 		},
-		"taler": {
-			"backendUrl": "Backend-URL",
-			"backendApiKey": "Backend-API-Schlüssel",
-			"currency": "Währung"
-		},
 		"specification": {
 			"addSpecification": "Spezifikation hinzufügen",
 			"listTitle": "Liste der Spezifikationen",
@@ -1915,6 +1830,7 @@
 			"addCustomMetaBalise": "Benutzerdefinierten Meta-Tag hinzufügen",
 			"useAdvancedHtmlEdition": "Erweiterte HTML-Bearbeitung verwenden",
 			"advancedHtmlWarning": "Warnung: Verwendung auf eigene Gefahr, nur wenn Sie ein Web-Jedi oder ein be-BOP-McGyver sind. Verwenden Sie diese Funktion niemals auf einer bereits bestehenden CMS-Seite, da Sie sonst riskieren, Ihren CMS-Inhalt zu verlieren.",
+			"removedContentWarning": "Ein Teil dieses Inhalts ist für Besucher nicht sichtbar, er wird beim Anzeigen der Seite entfernt: {items}. Ein Super-Admin kann die erweiterte HTML-Bearbeitung aktivieren, um alles zu behalten.",
 			"showTips": "Tipps anzeigen",
 			"tipsProduct": "Um Produkte einzufügen, fügen Sie einen Absatz hinzu, der nur <code class=\"font-mono\">[Product=slug]</code> enthält, wobei <code class=\"font-mono\">slug</code> der Slug Ihres Produkts ist. Sie können die Anzeigeoption so angeben: <code class=\"font-mono\">[Product=slug?display=img-1]</code>",
 			"tipsPicture": "Um Bilder einzufügen, fügen Sie einen Absatz hinzu, der nur <code class=\"font-mono\">[Picture=slug]</code> enthält. Sie können auch Breite, Höhe und Anpassung festlegen: <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=cover]</code> oder <code class=\"font-mono\">[Picture=slug width=100 height=100 fit=contain]</code> Und auch msubstitute (Ersatzbild auf Mobilgeräten), Position <code class=\"font-mono\">[Picture=slug msubstitute=slug position=right|center|full-width]</code>",
@@ -2172,6 +2088,9 @@
 			"priceAmount": "Preisbetrag",
 			"pricePlaceholder": "Preis"
 		},
+		"paymentProcessor": {
+			"invoices": "Rechnungen"
+		},
 		"processorSelector": {
 			"noProcessorsConfigured": "Keine Zahlungsanbieter konfiguriert. Konfigurieren Sie sie im obigen Tab Zahlungseinstellungen",
 			"or": "oder",
@@ -2256,7 +2175,20 @@
 		"maxQuantityReached": "Maximale Menge pro Bestellung erreicht ({max})",
 		"error": {
 			"BOOKING_SAME_DAY_DISABLED": "Buchungen für heute sind für dieses Produkt nicht verfügbar.",
-			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich."
+			"BOOKING_SAME_DAY_CUTOFF_PASSED": "Buchungen für heute sind nach {maxHour} nicht mehr möglich.",
+			"NOT_FOR_SALE": "Dieses Produkt kann nicht in den Warenkorb gelegt werden.",
+			"NOT_PWYW": "Sie können den Preis dieses Produkts nicht selbst wählen.",
+			"BOOKING_INFO_REQUIRED": "Wählen Sie zuerst Uhrzeit und Dauer der Buchung.",
+			"MAX_PRICE_EXCEEDED": "Der Preis darf {max} {currency} nicht überschreiten.",
+			"SUBSCRIPTION_CUSTOM_PRICE": "Sie können den Preis eines Abonnements nicht selbst wählen.",
+			"NOT_PREORDER": "Dieses Produkt ist noch nicht verfügbar und kann nicht vorbestellt werden.",
+			"MAX_ITEMS_REACHED": "Ihr Warenkorb hat die maximale Größe erreicht. Entfernen Sie Artikel, um weitere hinzuzufügen.",
+			"OUT_OF_STOCK": "Dieses Produkt ist nicht vorrätig.",
+			"STANDALONE_QTY_ONE": "Von diesem Produkt können Sie nur ein Exemplar bestellen.",
+			"VARIATION_INVALID": "Wählen Sie eine der für dieses Produkt angebotenen Optionen.",
+			"MAX_PER_ORDER": "Von diesem Produkt können Sie nur {max} Stück bestellen.",
+			"INVALID_QUANTITY": "Geben Sie eine gültige Menge ein.",
+			"INVALID_PRICE": "Geben Sie einen gültigen Preis ein."
 		}
 	},
 	"cartFromUrl": {
@@ -2333,6 +2265,9 @@
 		"multiplePaymentMethodsHelpText": "Sie können Zahlungsmethoden im nächsten Schritt festlegen.",
 		"noDeliveryInCountry": "Die Lieferung ist in Ihrem Land für einige Artikel in Ihrem Warenkorb nicht möglich.",
 		"paymentGenerationFailed": "Die Zahlung konnte nicht initiiert werden. Bitte versuchen Sie es in wenigen Augenblicken erneut, oder kontaktieren Sie den Shop-Betreiber, falls das Problem weiterhin besteht.",
+		"paymentTimeoutOutOfRange": "Die Zahlungsfrist muss mindestens 1 Minute betragen.",
+		"cartAlreadyCheckedOut": "Dieser Warenkorb wurde bereits bestellt, daher wurde keine zweite Bestellung aufgegeben. Sie finden Ihre Bestellung in Ihrem Konto oder in der Bestätigungsnachricht.",
+		"subscriptionAtTill": "Abonnements werden nicht an der Kasse verkauft: Der Kunde schließt das Abonnement über die Produktseite ab. Entfernen Sie das Abonnement, um den Rest zu kassieren.",
 		"note": {
 			"label": "Hinterlassen Sie eine Nachricht für den Händler",
 			"title": "Notiz"
@@ -2801,9 +2736,11 @@
 		"paymentAmount": "Zahlungsbetrag",
 		"paymentBic": "BIC",
 		"paymentCBFailed": "Ihre Zahlung ist fehlgeschlagen, Sie können einen neuen Zahlungsversuch starten",
+		"discountTiedToPaymentMethod": "Diese Bestellung wurde für ihre aktuelle Zahlungsart rabattiert. Geben Sie eine neue Bestellung auf, um anders zu bezahlen.",
 		"paymentDoneCustomerCTA": "ich bin fertig",
 		"paymentExpiresAt": "Zahlungsfrist: ",
 		"paymentIban": "IBAN für die Überweisung",
+		"paymentConfirming": "Ihre Zahlung wird bestätigt…",
 		"paymentLink": "Klicken Sie hier, um per Karte mit zu bezahlen",
 		"paymentLinkGeneric": "Klicken Sie hier, um mit zu bezahlen",
 		"paymentPaidAt": "Zahlung erfolgt am {date}",
@@ -3320,14 +3257,14 @@
 			"title": "Ein Wort von be-BOP:",
 			"description1": "Um die kostenlose be-BOP-Software zu unterstützen, können Sie die Existenz Ihres Shops öffentlich machen.",
 			"description2": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URI Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Ihre privaten Informationen und die Informationen Ihrer Kunden werden nicht weitergegeben.",
-			"description3": "Ihr Beitrag wird für anonyme Statistiken über die Anzahl der be-BOP-Benutzer verwendet (die nicht automatisch erfasst werden, da wir Datenschutz und Einwilligung respektieren) und um gelegentlich Kommunikations- und Promotionskampagnen über weltweit eingesetzte be-BOPs durchzuführen. Eine erste Benachrichtigung wird an den Nostr-Bot von be-BOP.io gesendet, dann wöchentlich, solange Ihr be-BOP aktiv ist. Sie können diese regelmäßige Nachricht später unter <a href=\"/admin/seo\" class=\"underline font-semibold\">/admin/SEO</a> deaktivieren.",
+			"description3": "Ihr Beitrag wird für anonyme Statistiken über die Anzahl der be-BOP-Benutzer verwendet (die nicht automatisch erfasst werden, da wir Datenschutz und Einwilligung respektieren) und um gelegentlich Kommunikations- und Promotionskampagnen über weltweit eingesetzte be-BOPs durchzuführen. Eine erste Benachrichtigung wird an den Nostr-Bot von be-BOP.io gesendet, dann wöchentlich, solange Ihr be-BOP aktiv ist. Sie können diese regelmäßige Nachricht später unter <0>/admin/SEO</0> deaktivieren.",
 			"question": "Akzeptieren Sie, die Existenz Ihres be-BOP zu teilen?",
 			"acceptButton": "Teilen",
 			"declineButton": "Erinnern Sie mich in 30 Tagen",
 			"configureNostrButton": "Nostr konfigurieren",
 			"accepted": {
 				"thankYou": "Vielen Dank, dass Sie sich entschieden haben, die Existenz Ihres Shops mit be-BOP.io für statistische und Werbezwecke zu teilen!",
-				"message": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URL Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Sie können unter <a href=\"/admin/seo\" class=\"underline font-semibold text-blue-600 hover:text-blue-800\">/admin/seo</a> diese optionale Telemetrie deaktivieren.",
+				"message": "Es werden keine Daten an be-BOP.io SA gesendet, außer der URL Ihres Shops und Ihrer Zustimmung zur Kommunikation darüber. Sie können unter <0>/admin/seo</0> diese optionale Telemetrie deaktivieren.",
 				"autoHideCountdown": "Diese Nachricht verschwindet in {seconds} Sekunden..."
 			},
 			"declined": {

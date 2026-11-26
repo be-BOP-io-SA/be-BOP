@@ -6,7 +6,8 @@ import { load } from './+page.server';
 
 async function listedIds(productAttribute: string) {
 	const data = await load({
-		url: new URL(`http://x/admin/product?productAttribute=${productAttribute}`)
+		url: new URL(`http://x/admin/product?productAttribute=${productAttribute}`),
+		locals: {}
 	} as Parameters<typeof load>[0]);
 	return data.products.map((product) => product._id).sort();
 }
