@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
 import { cleanDb, createDiscount, createPaidSubscription } from './test-utils';
 import { collections } from './database';
@@ -529,6 +529,92 @@ describe('order', () => {
 			expect((await collections.orders.findOne({ _id: orderId }))?.payments[0].method).toBe(
 				'point-of-sale'
 			);
+		});
+	});
+
+	describe('without a contact address', () => {
+		const NO_CONTACT_PRODUCT = {
+			...TEST_DIGITAL_PRODUCT,
+			_id: 'no-contact-product',
+			alias: ['no-contact-product'],
+			allowOrderWithoutContactAddress: true
+		};
+		const COUNTER = {
+			id: 'counter',
+			label: 'Cash at the counter',
+			instructions: '',
+			allowOrderWithoutContactAddress: true
+		};
+		const CHEQUE = { id: 'cheque', label: 'Cheque', instructions: '' };
+		const REFUSED = {
+			status: 400,
+			body: { message: expect.stringContaining('Missing npub') }
+		};
+		let previousMethods: typeof runtimeConfig.customPaymentMethods;
+
+		beforeEach(async () => {
+			previousMethods = runtimeConfig.customPaymentMethods;
+			runtimeConfig.customPaymentMethods = [COUNTER, CHEQUE];
+			await collections.products.insertOne(NO_CONTACT_PRODUCT);
+		});
+
+		afterEach(() => {
+			runtimeConfig.customPaymentMethods = previousMethods;
+		});
+
+		function order(
+			items: Parameters<typeof createOrder>[0],
+			paymentMethod: 'custom' | 'bank-transfer',
+			customPaymentMethodId?: string
+		) {
+			return createOrder(items, paymentMethod, {
+				locale: 'en',
+				user: { sessionId: 'test-session-id' },
+				shippingAddress: null,
+				userVatCountry: 'FR',
+				customPaymentMethodId
+			});
+		}
+
+		it('accepts an allowed product paid with a custom method that allows it', async () => {
+			await expect(
+				order([{ product: NO_CONTACT_PRODUCT, quantity: 1 }], 'custom', COUNTER.id)
+			).resolves.toEqual(expect.any(String));
+		});
+
+		it('refuses a custom method that does not allow it', async () => {
+			await expect(
+				order([{ product: NO_CONTACT_PRODUCT, quantity: 1 }], 'custom', CHEQUE.id)
+			).rejects.toMatchObject(REFUSED);
+		});
+
+		it('refuses a bank transfer', async () => {
+			await expect(
+				order([{ product: NO_CONTACT_PRODUCT, quantity: 1 }], 'bank-transfer')
+			).rejects.toMatchObject(REFUSED);
+		});
+
+		it('refuses a cart line that still carries a deposit', async () => {
+			await expect(
+				order(
+					[{ product: NO_CONTACT_PRODUCT, quantity: 1, depositPercentage: 50 }],
+					'custom',
+					COUNTER.id
+				)
+			).rejects.toMatchObject(REFUSED);
+		});
+
+		it('refuses a cart that mixes in a product without the option', async () => {
+			await expect(
+				order(
+					[
+						{ product: NO_CONTACT_PRODUCT, quantity: 1 },
+						{ product: TEST_DIGITAL_PRODUCT_UNLIMITED, quantity: 1 }
+					],
+					'custom',
+					COUNTER.id
+				)
+			).rejects.toMatchObject(REFUSED);
 		});
 	});
 });
