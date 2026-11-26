@@ -6,13 +6,7 @@
 	import { page } from '$app/stores';
 	export let contactForm: Pick<
 		ContactForm,
-		| '_id'
-		| 'subject'
-		| 'content'
-		| 'target'
-		| 'displayFromField'
-		| 'prefillWithSession'
-		| 'disclaimer'
+		'_id' | 'subject' | 'content' | 'displayFromField' | 'prefillWithSession' | 'disclaimer'
 	>;
 	export let sessionEmail: string | undefined = undefined;
 	let className = '';
@@ -74,7 +68,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			bind:value={content}
 			class="form-input block w-full"
-		/>
+		></textarea>
 	</label>
 	{#if contactForm.disclaimer}
 		<h2 class="text-xl font-bold">{contactForm.disclaimer?.label}</h2>

@@ -64,10 +64,16 @@ export async function freeProductsForUser(
 	}
 	const existingSubscriptions = await collections.paidSubscriptions
 		.find({
-			...userQuery(user),
-			$or: products.map((productId) => ({
-				[`freeProductsById.${productId}.available`]: { $gt: 0 }
-			})),
+			// `userQuery()` is itself an `$or`, so a sibling `$or` key overwrites it and the query
+			// stops being scoped to anyone — every subscription in the shop would be credited here.
+			$and: [
+				userQuery(user),
+				{
+					$or: products.map((productId) => ({
+						[`freeProductsById.${productId}.available`]: { $gt: 0 }
+					}))
+				}
+			],
 			paidUntil: { $gt: new Date() }
 		})
 		.sort({ createdAt: 1 })

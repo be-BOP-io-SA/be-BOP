@@ -20,6 +20,8 @@ export interface NostRNotification extends Timestamps {
 	minCreatedAt?: Date;
 
 	processedAt?: Date;
+	/** Why it was marked processed without being sent. */
+	error?: string;
 
 	// NIP-57 Zap Receipt fields (when kind === Kind.Zap):
 

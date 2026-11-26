@@ -17,6 +17,25 @@ module.exports = {
 			parserOptions: {
 				parser: '@typescript-eslint/parser'
 			}
+		},
+		{
+			// A processor's declaration and front reach the browser: only its `.server.ts` may load server code.
+			files: ['src/lib/payment-processors/**'],
+			excludedFiles: ['*.server.ts', '*.test.ts'],
+			rules: {
+				'@typescript-eslint/no-restricted-imports': [
+					'error',
+					{
+						patterns: [
+							{
+								group: ['$lib/server/**', '**/*.server'],
+								message: 'Only a processor.server.ts may import server code.',
+								allowTypeImports: true
+							}
+						]
+					}
+				]
+			}
 		}
 	],
 	settings: {

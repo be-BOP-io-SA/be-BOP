@@ -171,7 +171,6 @@
 	{/if}
 
 	{#if subscriptions.length || data.discount.subscriptionIds?.length}
-		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="form-label"
 			>{t('admin.discount.requiredSubscription')}
 			<MultiSelect
@@ -226,7 +225,7 @@
 
 		<fieldset class="form-label">
 			<legend>{t('admin.discount.paymentMethod')}</legend>
-			{#each ['lightning', 'bank-transfer', 'point-of-sale', 'card', 'bitcoin', 'paypal', 'custom'] as pm}
+			{#each data.paymentMethods as pm}
 				<label class="checkbox-label">
 					<input
 						type="checkbox"
@@ -308,7 +307,6 @@
 			{t('admin.discount.appliesToWholeCatalog')}
 		</label>
 		{#if !wholeCatalog}
-			<!-- svelte-ignore a11y-label-has-associated-control -->
 			<label class="form-label"
 				>{t('admin.discount.products')}
 				<MultiSelect
@@ -322,7 +320,6 @@
 				/>
 			</label>
 			{#if data.tags.length}
-				<!-- svelte-ignore a11y-label-has-associated-control -->
 				<label class="form-label"
 					>{t('admin.discount.requiredTag')}
 					<MultiSelect

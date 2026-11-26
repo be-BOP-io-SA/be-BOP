@@ -1,0 +1,20 @@
+diff --git a/src/internal/client/dom/elements/attributes.js b/src/internal/client/dom/elements/attributes.js
+index 0fe1b8b2d3f9d176a9ecd55ae761b62788c9fcf7..85271a66d7f25617f9b50e2a2e5e4b6783ec09f6 100644
+--- a/src/internal/client/dom/elements/attributes.js
++++ b/src/internal/client/dom/elements/attributes.js
+@@ -68,13 +68,13 @@ export function remove_input_defaults(input) {
+ 		// Remove the attributes but preserve the values
+ 		if (input.hasAttribute('value')) {
+ 			var value = input.value;
+-			set_attribute(input, 'value', null);
++			input.removeAttribute('value');
+ 			input.value = value;
+ 		}
+ 
+ 		if (input.hasAttribute('checked')) {
+ 			var checked = input.checked;
+-			set_attribute(input, 'checked', null);
++			input.removeAttribute('checked');
+ 			input.checked = checked;
+ 		}
+ 	};

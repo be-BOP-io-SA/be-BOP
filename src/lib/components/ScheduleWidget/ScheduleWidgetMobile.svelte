@@ -2,6 +2,7 @@
 	import type { Picture } from '$lib/types/Picture';
 	import type { Schedule } from '$lib/types/Schedule';
 	import PictureComponent from '../Picture.svelte';
+	import { safeHref } from '$lib/utils/safeUrl';
 	import { useI18n } from '$lib/i18n';
 	import { upperFirst } from '$lib/utils/upperFirst';
 	import { addMinutes, isSameDay } from 'date-fns';
@@ -119,7 +120,7 @@
 						})}
 					{/if}
 					{#if event.location?.name}
-						- <a href={event.location.link} target="_blank" class="body-hyperlink"
+						- <a href={safeHref(event.location.link)} target="_blank" class="body-hyperlink"
 							>{event.location.name}</a
 						>
 					{/if}
@@ -128,11 +129,11 @@
 					{/if}
 				</p>
 				{#if event.url}
-					<a href={event.url} target="_blank" class="btn cartPreview-secondaryCTA w-full">
+					<a href={safeHref(event.url)} target="_blank" class="btn cartPreview-secondaryCTA w-full">
 						{t('schedule.moreInfo')}
 					</a>
 				{/if}
-				{#if event.rsvp?.target && event.endsAt && event.endsAt > new Date()}
+				{#if event.rsvp && event.endsAt && event.endsAt > new Date()}
 					<a
 						href="/schedule/{schedule._id}/rsvp/{event.slug}"
 						target="_blank"

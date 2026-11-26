@@ -7,7 +7,7 @@ import type { Currency } from '$lib/types/Currency';
 import { trimPrefix } from '$lib/utils/trimPrefix';
 import { trimSuffix } from '$lib/utils/trimSuffix';
 import { JSDOM } from 'jsdom';
-import DOMPurify from 'dompurify';
+import DOMPurify, { type WindowLike } from 'dompurify';
 import { collections } from './database';
 import { ALLOW_JS_INJECTION } from '$lib/server/env-config';
 import type { Specification } from '$lib/types/Specification';
@@ -22,6 +22,8 @@ import { subMinutes } from 'date-fns';
 import { z } from 'zod';
 import type { ProductWidgetProduct } from '$lib/components/ProductWidget/ProductWidgetProduct';
 import { loadVatContext, readUrlState, searchProducts } from './searchlist';
+import { hideRsvpTargets } from './schedule';
+import { assertPublicWebhookTarget } from './webhook-url-guard';
 export type ExternalProductData = ProductWidgetProduct & {
 	externalUrl: string;
 	pictures: Picture[];
@@ -29,7 +31,16 @@ export type ExternalProductData = ProductWidgetProduct & {
 
 const window = new JSDOM('').window;
 
-const purify = DOMPurify(window);
+// jsdom's window carries every DOM constructor DOMPurify reads, but its declared type is not
+// assignable to `WindowLike` — the two describe the same object from different sides.
+const purify = DOMPurify(window as unknown as WindowLike);
+
+const SANITIZE_CONFIG = {
+	// Otherwise a <style> that opens the content is parsed into <head> and silently dropped.
+	FORCE_BODY: true,
+	ADD_TAGS: ['iframe'],
+	ADD_ATTR: ['target', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy']
+};
 
 purify.addHook('afterSanitizeAttributes', function (node) {
 	// set all elements owning target to target=_blank
@@ -38,6 +49,22 @@ purify.addHook('afterSanitizeAttributes', function (node) {
 		node.setAttribute('rel', 'noopener');
 	}
 });
+
+function sanitizeCmsHtml(html: string) {
+	return purify.sanitize(html, SANITIZE_CONFIG);
+}
+
+/** What the sanitizer strips from content shown without the raw-content setting, for the editor. */
+export function cmsRemovedContent(html: string): string[] {
+	sanitizeCmsHtml(html);
+	const removed = purify.removed.map((item) =>
+		'attribute' in item ? item.attribute?.name ?? '' : `<${item.element.nodeName.toLowerCase()}>`
+	);
+	// `<remove>` is the placeholder FORCE_BODY inserts, `<#…>` text and comment nodes.
+	return [...new Set(removed)].filter(
+		(name) => name && name !== '<remove>' && !name.startsWith('<#')
+	);
+}
 
 // Zod schema for external product picture validation
 const externalPictureSchema = z.object({
@@ -74,6 +101,10 @@ const externalProductSchema = z.object({
 	pictures: z.array(externalPictureSchema).optional()
 });
 
+/** Every visitor would otherwise trigger one outbound request per external product widget. */
+const EXTERNAL_PRODUCT_TTL_MS = 5 * 60_000;
+const externalProductCache = new Map<string, { product: ExternalProductData; expiresAt: number }>();
+
 async function fetchExternalProduct(url: string): Promise<ExternalProductData | null> {
 	try {
 		// Parse URL to extract base and slug
@@ -90,8 +121,16 @@ async function fetchExternalProduct(url: string): Promise<ExternalProductData | 
 		const slug = pathMatch[1];
 		const apiUrl = `${urlObj.origin}/api/product/${slug}`;
 
+		const cached = externalProductCache.get(apiUrl);
+		if (cached && cached.expiresAt > Date.now()) {
+			return cached.product;
+		}
+
+		// The host comes from CMS content and is fetched on every page view.
+		await assertPublicWebhookTarget(apiUrl);
 		const response = await fetch(apiUrl, {
 			headers: { Accept: 'application/json' },
+			redirect: 'error',
 			signal: AbortSignal.timeout(5000) // 5s timeout
 		});
 
@@ -143,6 +182,10 @@ async function fetchExternalProduct(url: string): Promise<ExternalProductData | 
 			hasVariations: false
 		};
 
+		externalProductCache.set(apiUrl, {
+			product: result,
+			expiresAt: Date.now() + EXTERNAL_PRODUCT_TTL_MS
+		});
 		return result;
 	} catch (err) {
 		console.error('[fetchExternalProduct] Error fetching external product:', err);
@@ -230,6 +273,28 @@ type TokenObject =
 			raw: string;
 	  };
 
+// One group per option, so the index of the group that matched is the option's rank.
+const PICTURE_OPTION_REGEX =
+	/[?\s](?:(msubstitute)|(width)|(height)|(fit)|(position))=(?<value>[\p{L}\d_-]+)/giu;
+
+// Published pages rely on msubstitute counting only when it opens the last run of options
+// written in msubstitute, width, height, fit, position order.
+function pictureMsubstitute(raw: string): string | undefined {
+	let msubstitute: string | undefined;
+	let previousRank = -1;
+	for (const option of raw.matchAll(PICTURE_OPTION_REGEX)) {
+		const rank = option.slice(1, 6).findIndex((name) => name !== undefined);
+		if (rank <= previousRank) {
+			msubstitute = undefined;
+		}
+		if (rank === 0) {
+			msubstitute = option.groups?.value;
+		}
+		previousRank = rank;
+	}
+	return msubstitute;
+}
+
 export async function cmsFromContent(
 	{
 		desktopContent,
@@ -267,7 +332,7 @@ export async function cmsFromContent(
 
 	const SPECIFICATION_WIDGET_REGEX = /\[Specification=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const PICTURE_WIDGET_REGEX =
-		/\[Picture=(?<slug>[\p{L}\d_-]+)((?:[?\s]msubstitute=(?<msubstitute>[\p{L}\d_-]+))?(?:[?\s]width=(?<width>\d+))?(?:[?\s]height=(?<height>\d+))?(?:[?\s]fit=(?<fit>cover|contain))?(?:[?\s]position=(?<position>right|center|full-width))?)*\]/giu;
+		/\[Picture=(?<slug>[\p{L}\d_-]+)(?:[?\s](?:msubstitute=[\p{L}\d_-]+|width=\d+|height=\d+|fit=(?:cover|contain)|position=(?:right|center|full-width)))*\]/giu;
 	const CONTACTFORM_WIDGET_REGEX = /\[Form=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const COUNTDOWN_WIDGET_REGEX = /\[Countdown=(?<slug>[\p{L}\d_-]+)\]/giu;
 	const TAG_PRODUCTS_REGEX =
@@ -307,6 +372,16 @@ export async function cmsFromContent(
 
 	const index = 0;
 
+	// Single gate for every html chunk, so no call site can end up sanitising differently from
+	// its neighbour. Raw HTML stays opt-in, via the env flag or the page's own setting.
+	const pushHtml = (token: TokenObject[], html: string) => {
+		const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
+		token.push({
+			type: 'html',
+			raw: displayUnsanitizedContent ? html : sanitizeCmsHtml(html)
+		});
+	};
+
 	const processMatches = (token: TokenObject[], content: string, index: number) => {
 		const matches = [
 			...matchAndSort(content, PRODUCT_WIDGET_REGEX, 'productWidget'),
@@ -326,12 +401,7 @@ export async function cmsFromContent(
 			...matchAndSort(content, SEARCHLIST_WIDGET_REGEX, 'searchlistWidget')
 		].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 		for (const match of matches) {
-			const html = trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>');
-			const displayUnsanitizedContent = ALLOW_JS_INJECTION === 'true' || forceUnsanitizedContent;
-			token.push({
-				type: 'html',
-				raw: displayUnsanitizedContent ? html : purify.sanitize(html, { ADD_ATTR: ['target'] })
-			});
+			pushHtml(token, trimPrefix(trimSuffix(content.slice(index, match.index), '<p>'), '</p>'));
 			if (match.groups?.slug) {
 				switch (match.type) {
 					case 'productWidget':
@@ -397,7 +467,10 @@ export async function cmsFromContent(
 						break;
 					case 'pictureWidget':
 						pictureSlugs.add(match.groups.slug);
-						pictureSlugs.add(match.groups.msubstitute);
+						const msubstitute = pictureMsubstitute(match[0]);
+						if (msubstitute) {
+							pictureSlugs.add(msubstitute);
+						}
 						// With multiple options, to handle any ordering for the options, we need to parse the string again
 						const raw = match[0];
 						const fit = /[?\s]fit=(?<fit>(cover|contain))/.exec(raw)?.groups?.fit as
@@ -411,7 +484,7 @@ export async function cmsFromContent(
 						token.push({
 							type: 'pictureWidget',
 							slug: match.groups.slug,
-							msubstitute: match.groups.msubstitute,
+							msubstitute,
 							raw,
 							fit,
 							width: width ? Number(width) : undefined,
@@ -504,10 +577,7 @@ export async function cmsFromContent(
 			}
 			index = match.index + match[0].length;
 		}
-		token.push({
-			type: 'html',
-			raw: trimPrefix(content.slice(index), '</p>')
-		});
+		pushHtml(token, trimPrefix(content.slice(index), '</p>'));
 	};
 
 	const tokens: {
@@ -702,7 +772,6 @@ export async function cmsFromContent(
 							ContactForm,
 							| '_id'
 							| 'content'
-							| 'target'
 							| 'subject'
 							| 'displayFromField'
 							| 'prefillWithSession'
@@ -710,7 +779,6 @@ export async function cmsFromContent(
 						>
 					>({
 						content: { $ifNull: [`$translations.${locals.language}.content`, '$content'] },
-						target: 1,
 						displayFromField: 1,
 						prefillWithSession: 1,
 						subject: { $ifNull: [`$translations.${locals.language}.subject`, '$subject'] },
@@ -816,14 +884,16 @@ export async function cmsFromContent(
 		galleries,
 		leaderboards,
 		searchlists,
-		schedules: schedules.map((schedule) => ({
-			...schedule,
-			events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
-				!schedule.displayPastEvents
-					? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
-					: true
-			)
-		})),
+		schedules: schedules.map((schedule) =>
+			hideRsvpTargets({
+				...schedule,
+				events: [...schedule.events, ...(scheduleEventsById[schedule._id] ?? [])].filter((event) =>
+					!schedule.displayPastEvents
+						? (event.endsAt ?? Infinity) > subMinutes(new Date(), schedule.pastEventDelay ?? 0)
+						: true
+				)
+			})
+		),
 		pictures,
 		digitalFiles,
 		hasPosOptions: locals.user?.hasPosOptions

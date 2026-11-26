@@ -334,6 +334,11 @@
 				{t('checkout.paymentGenerationFailed')}
 			</div>
 		{/if}
+		{#if form?.subscriptionAtTill}
+			<div class="alert-error m-2">
+				{t('checkout.subscriptionAtTill')}
+			</div>
+		{/if}
 		<div
 			class="grid {isMobile && (rightPannel !== 'menu' || isPortrait)
 				? 'grid-cols-1'
@@ -874,4 +879,4 @@
 	style="width: 1px; height: 1px; position: absolute; left: -1000px; top: -1000px;"
 	title="Global Ticket"
 	bind:this={ticketIframe}
-/>
+></iframe>

@@ -72,7 +72,7 @@ export async function load({ params, locals, url }) {
 
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
-		cmsData: cmsFromContent(
+		cmsData: await cmsFromContent(
 			{
 				desktopContent: cmsPage.content,
 				employeeContent: (cmsPage.hasEmployeeContent && cmsPage.employeeContent) || undefined,

@@ -40,4 +40,31 @@ describe('adminLinks integrity', () => {
 			expect(link.label.trim().length, `href ${link.href}`).toBeGreaterThan(0);
 		}
 	});
+
+	// A new processor takes its place among these without being listed here.
+	it('keeps the payment settings shop owners know in the order they know', () => {
+		const known = [
+			['/admin/sumup', 'SumUp'],
+			['/admin/stripe', 'Stripe'],
+			['/admin/swiss-bitcoin-pay', 'Swiss Bitcoin Pay'],
+			['/admin/btcpay-server', 'BTCPay Server'],
+			['/admin/phoenixd', 'PhoenixD'],
+			['/admin/lnd', 'Lightning LND node'],
+			['/admin/blink', 'Blink'],
+			['/admin/bitcoin-nodeless', 'Bitcoin nodeless'],
+			['/admin/bitcoind', 'Bitcoin core node'],
+			['/admin/paypal', 'Paypal'],
+			['/admin/taler', 'Taler'],
+			['/admin/osb', 'OSB'],
+			['/admin/pos-payments', 'PoS Payments'],
+			['/admin/custom-payments', 'Custom payment methods']
+		];
+		const payment = adminLinks.find((section) => section.section === 'Payment Settings');
+
+		expect(
+			payment?.links
+				.map((link) => [link.href, link.label])
+				.filter(([href]) => known.some(([knownHref]) => knownHref === href))
+		).toEqual(known);
+	});
 });

@@ -339,7 +339,7 @@
 						rows="5"
 						placeholder={t('admin.config.checkoutFieldOptionsPlaceholder')}
 						bind:value={optionsInput}
-					/>
+					></textarea>
 					<p class="text-xs text-gray-500 mt-1">{t('admin.config.checkoutFieldOptionsHint')}</p>
 				</label>
 			{/if}

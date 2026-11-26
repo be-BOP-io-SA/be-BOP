@@ -1259,7 +1259,7 @@
 		}
 	}}
 	bind:this={kitchenTicketIframe}
-/>
+></iframe>
 
 <!-- Item Edit Dialog -->
 {#if itemToEditIndex !== undefined && itemToEditIndex >= 0}

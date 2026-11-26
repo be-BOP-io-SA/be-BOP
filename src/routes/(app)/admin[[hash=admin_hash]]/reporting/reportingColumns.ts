@@ -1,13 +1,11 @@
+import { csvCell } from '$lib/utils/csvCell';
+
 /** One definition drives both the paginated table cell and the full CSV export. */
 export interface ReportingColumn<Row> {
 	header: string;
 	cell: (row: Row) => string | number | undefined;
 	href?: (row: Row) => string;
 	title?: (row: Row) => string | undefined;
-}
-
-function csvCell(value: string) {
-	return /[",\n\r]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 }
 
 /**
