@@ -73,6 +73,7 @@ import { restrictToProducts } from './payment-methods';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { LanguageKey } from '$lib/translations';
 import { filterNullish } from '$lib/utils/fillterNullish';
+import { warnOnAlmostFullChannels } from './phoenixd';
 import type { Discount } from '$lib/types/Discount';
 import {
 	collectUserAddresses,
@@ -365,6 +366,14 @@ export async function onOrderPayment(
 	if ((!alreadyPaid || params?.firstPaidTransition) && updated.status === 'paid') {
 		void firePaidOrderWebhooks(updated).catch((err) => {
 			console.error('[paidOrderWebhook] failed to fire for order', updated.number, err);
+		});
+	}
+
+	// Receiving is what fills a channel. Detached and caught: a node that answers badly must never
+	// hold back a payment that went through.
+	if (!alreadyPaid && payment.processor === 'phoenixd') {
+		void warnOnAlmostFullChannels().catch((err) => {
+			console.error('[phoenixd] could not check channel capacity', err);
 		});
 	}
 
