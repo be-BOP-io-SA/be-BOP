@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 export async function load() {
 	return {
-		emails: collections.emailNotifications
+		emails: await collections.emailNotifications
 			.find({})
 			.project<Pick<EmailNotification, 'subject' | 'dest' | 'error' | 'processedAt'>>({
 				subject: 1,

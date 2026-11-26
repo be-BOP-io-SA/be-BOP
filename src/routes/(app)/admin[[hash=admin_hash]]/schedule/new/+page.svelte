@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import { MAX_NAME_LIMIT, MAX_SHORT_DESCRIPTION_LIMIT } from '$lib/types/Product';
 	import { generateId } from '$lib/utils/generateId';
 	import { applyAction, deserialize } from '$app/forms';
@@ -9,9 +14,9 @@
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
-	const { t } = useI18n();
-
 	export let data;
+
+	const { t } = useI18n();
 
 	let name = '';
 	let slug = '';
@@ -37,16 +42,25 @@
 			submitting = true;
 			const formData = new FormData(formElement);
 
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				eventPictures.map(async (picture, index) => {
 					if (picture) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0], {
+						const upload = await preUploadPicture(data.adminPrefix, picture[0], {
 							fileName: name
 						});
-						formData.set(`eventPictures[${index}]`, pictureId);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
+							return;
+						}
+						formData.set(`eventPictures[${index}]`, upload.pictureId);
 					}
 				})
 			);
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',
@@ -181,7 +195,7 @@
 				rows="2"
 				maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 				class="form-input"
-			/>
+			></textarea>
 		</label>
 		<label class="form-label">
 			{t('admin.schedule.description')}
@@ -191,7 +205,7 @@
 				rows="10"
 				maxlength="10000"
 				class="block form-input"
-			/>
+			></textarea>
 		</label>
 		<div class="flex flex-wrap gap-4">
 			<label class="form-label">

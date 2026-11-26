@@ -3,7 +3,12 @@
 	import PictureComponent from '$lib/components/Picture.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
-	import { PICTURE_UPLOAD_ACCEPT, preUploadPicture } from '$lib/types/Picture.js';
+	import {
+		PICTURE_UPLOAD_ACCEPT,
+		pictureUploadFailureMessage,
+		preUploadPicture
+	} from '$lib/types/Picture.js';
+	import type { StorageUploadFailure } from '$lib/utils/sendToStorage';
 	import S3NotConfiguredWarning from '$lib/components/S3NotConfiguredWarning.svelte';
 	import { useI18n } from '$lib/i18n';
 
@@ -28,14 +33,23 @@
 			submitting = true;
 			// Need to load here, or for some reason, some inputs disappear afterwards
 			const formData = new FormData(formElement);
+			let uploadFailure: StorageUploadFailure | undefined;
 			await Promise.all(
 				galleryPictures.map(async (picture, i) => {
 					if (picture[0]) {
-						const pictureId = await preUploadPicture(data.adminPrefix, picture[0]);
-						formData.set(`secondary[${i}].pictureId`, pictureId);
+						const upload = await preUploadPicture(data.adminPrefix, picture[0]);
+						if ('failure' in upload) {
+							uploadFailure = upload.failure;
+							return;
+						}
+						formData.set(`secondary[${i}].pictureId`, upload.pictureId);
 					}
 				})
 			);
+			if (uploadFailure) {
+				alert(pictureUploadFailureMessage(t, uploadFailure));
+				return;
+			}
 
 			const finalResponse = await fetch(formElement.action, {
 				method: 'POST',
@@ -106,7 +120,7 @@
 			rows="5"
 			maxlength="10000"
 			class="form-input"
-		/>
+		></textarea>
 	</label>
 	<div class="flex gap-4">
 		<label class="form-label">
@@ -160,7 +174,7 @@
 				maxlength="160"
 				class="form-input"
 				value={data.gallery.secondary[i]?.content || ''}
-			/>
+			></textarea>
 		</label>
 		<div class="flex flex-col">
 			<a

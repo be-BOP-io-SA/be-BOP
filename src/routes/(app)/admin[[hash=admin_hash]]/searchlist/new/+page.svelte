@@ -205,7 +205,6 @@
 		{t('admin.searchlist.tagFilter')}
 	</label>
 	{#if tagsEnabled}
-		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="form-label">
 			{t('admin.searchlist.tagsToExpose')}
 			<MultiSelect

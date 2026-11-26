@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import type { Paths } from 'type-fest';
 
 export function set<T extends object, K extends Paths<T> | string>(
@@ -18,6 +19,7 @@ export function set<T extends object, K extends Paths<T> | string>(
 		const subKey = keys[i + 1];
 		const isArrayIndex = typeof subKey === 'string' && /^\d*$/.test(subKey);
 
+		assertSafeArrayIndex(obj, k);
 		const prop = Object.getOwnPropertyDescriptor(obj, k);
 
 		if (typeof prop?.value !== 'object' || prop?.value === null) {
@@ -34,6 +36,7 @@ export function set<T extends object, K extends Paths<T> | string>(
 	const lastKey = (
 		keys[keys.length - 1] === '' && Array.isArray(obj) ? obj.length : keys[keys.length - 1]
 	) as keyof T;
+	assertSafeArrayIndex(obj, lastKey);
 	Object.defineProperty(obj, lastKey, {
 		value: value as T[keyof T],
 		writable: true,
@@ -42,14 +45,64 @@ export function set<T extends object, K extends Paths<T> | string>(
 	});
 }
 
-function splitKey(key: string) {
-	const regex = /([^[.\]]+)|\[(.*?)\]/g;
+const MAX_ARRAY_INDEX = 10_000;
 
-	const matches = [];
-	let match;
-	while ((match = regex.exec(key)) !== null) {
-		matches.push(match[1] || match[2]);
+// A field name like "items[4294967294]" would make the array sparse with ~4 billion slots, and zod
+// then spreads it and exhausts the heap.
+function assertSafeArrayIndex(obj: object, key: PropertyKey) {
+	if (Array.isArray(obj) && typeof key === 'string' && /^(0|[1-9]\d*)$/.test(key)) {
+		if (Number(key) > MAX_ARRAY_INDEX) {
+			throw error(400, `Array index ${key} is too large`);
+		}
+	}
+}
+
+// Not a regex: keys come from request form fields, and a bracket-matching regex rescans the
+// rest of the key from every unclosed `[`, which is quadratic on "[[[[...".
+function splitKey(key: string) {
+	const keys: string[] = [];
+	// A scan that finds no `]` sets this: the `[`s it ran past cannot close either
+	let unclosedBefore = 0;
+	let i = 0;
+
+	while (i < key.length) {
+		if (key[i] === '[' && i >= unclosedBefore) {
+			const end = bracketContentEnd(key, i + 1);
+			if (key[end] === ']') {
+				keys.push(key.slice(i + 1, end));
+				i = end + 1;
+				continue;
+			}
+			unclosedBefore = end;
+		}
+
+		if (isKeyDelimiter(key[i])) {
+			i++;
+			continue;
+		}
+
+		let end = i + 1;
+		while (end < key.length && !isKeyDelimiter(key[end])) {
+			end++;
+		}
+		keys.push(key.slice(i, end));
+		i = end;
 	}
 
-	return matches;
+	return keys;
+}
+
+function isKeyDelimiter(char: string) {
+	return char === '[' || char === '.' || char === ']';
+}
+
+const lineTerminators = '\n\r\u2028\u2029';
+
+// A bracket cannot close across a line break, so "a[b\n.c]" still splits on its "."
+function bracketContentEnd(key: string, start: number) {
+	let end = start;
+	while (end < key.length && key[end] !== ']' && !lineTerminators.includes(key[end])) {
+		end++;
+	}
+	return end;
 }

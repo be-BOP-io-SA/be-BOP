@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './client-ip.js';
 
 test('the picture upload names and accepts every supported format', async ({ page }) => {
 	await page.goto('/admin/picture/new');

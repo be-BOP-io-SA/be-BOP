@@ -79,7 +79,7 @@
 				>{t('admin.config.maximumAmount', { currency: thresholds.currency })}</span
 			>
 			<span class="form-label">{t('admin.config.confirmationBlocks')}</span>
-			<span />
+			<span></span>
 			{#each thresholds.thresholds as threshold, i}
 				<input
 					type="number"

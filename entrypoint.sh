@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 set -o pipefail
 
 ENV_LOCAL_PATH=/app/.env.local

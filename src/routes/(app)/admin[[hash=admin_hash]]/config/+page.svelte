@@ -134,37 +134,43 @@
 
 	let allPaymentMethods = data.allPaymentMethods;
 
-	const { countryName, sortedCountryCodes, locale, t, formatDistanceLocale } = useI18n();
+	const { countryName, sortedCountryCodes, locale, t, te, formatDistanceLocale } = useI18n();
 	let selectedContactMode =
 		data.contactModes?.map((contact) => ({
 			value: contact,
 			label: ['email', 'nostr'].find((cont) => cont === contact) ?? contact
 		})) ?? [];
 
-	// Available processors (based on configured ones)
-	const availableCardProcessors = [
-		{ name: 'sumup' as const, configured: data.sumUpConfigured },
-		{ name: 'stripe' as const, configured: data.stripeConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	// Who serves each method comes from the server, which asks the registry. This page used to
+	// keep three hand-written copies of that map, and three more of the links below.
+	const processorsFor = (method: 'card' | 'bitcoin' | 'lightning') =>
+		data.processorsByMethod[method] ?? [];
 
-	const availableBitcoinProcessors = [
-		{ name: 'bitcoin-nodeless' as const, configured: data.bitcoinNodelessConfigured },
-		{ name: 'bitcoind' as const, configured: data.bitcoindConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	const availableProcessors = (method: 'card' | 'bitcoin' | 'lightning') =>
+		processorsFor(method)
+			.filter((p) => p.configured)
+			.map((p) => p.slug);
 
-	const availableLightningProcessors = [
-		{ name: 'swiss-bitcoin-pay' as const, configured: data.swissBitcoinPayConfigured },
-		{ name: 'btcpay-server' as const, configured: data.btcpayServerConfigured },
-		{ name: 'phoenixd' as const, configured: data.phoenixdConfigured },
-		{ name: 'lnd' as const, configured: data.lndConfigured },
-		{ name: 'blink' as const, configured: data.blinkConfigured }
-	]
-		.filter((p) => p.configured)
-		.map((p) => p.name);
+	// A processor label is also its admin nav entry, so it reads the nav's derived key.
+	const processorName = (label: string) => {
+		const slug = label
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+		return te(`admin.nav.link.${slug}`) ? t(`admin.nav.link.${slug}`) : label;
+	};
+
+	const configLinks = (method: 'card' | 'bitcoin' | 'lightning') =>
+		processorsFor(method).map((p) => ({
+			href: p.hasSettingsPage ? `${data.adminPrefix}/${p.slug}` : '#',
+			name: p.hasSettingsPage
+				? processorName(p.label)
+				: t('admin.config.processorViaEnvVars', { processor: processorName(p.label) })
+		}));
+
+	const availableCardProcessors = availableProcessors('card');
+	const availableBitcoinProcessors = availableProcessors('bitcoin');
+	const availableLightningProcessors = availableProcessors('lightning');
 
 	// Reactive local state for live preview
 	let selectedCardProcessor = data.preferredProcessorCard;
@@ -266,7 +272,6 @@
 		</div>
 	</div>
 	<h2 class="text-2xl">{t('admin.config.notifications')}</h2>
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.config.contactModes')}
 		<MultiSelect
@@ -549,7 +554,10 @@
 
 	<h2 class="text-2xl">{t('admin.config.paymentMethods')}</h2>
 
-	<div class="grid gap-4" style="grid-template-columns: max-content max-content max-content;">
+	<div
+		class="grid gap-4"
+		style="grid-template-columns: minmax(0, max-content) max-content max-content;"
+	>
 		{#each allPaymentMethods as paymentMethod, i (paymentMethod)}
 			<label class="checkbox-label">
 				<input
@@ -609,10 +617,7 @@
 		availableProcessors={availableCardProcessors}
 		bind:selectedProcessor={selectedCardProcessor}
 		preferredProcessor={data.preferredProcessorCard}
-		configLinks={[
-			{ href: `${data.adminPrefix}/sumup`, name: 'SumUp' },
-			{ href: `${data.adminPrefix}/stripe`, name: 'Stripe' }
-		]}
+		configLinks={configLinks('card')}
 	/>
 
 	<ProcessorSelector
@@ -621,10 +626,7 @@
 		availableProcessors={availableBitcoinProcessors}
 		bind:selectedProcessor={selectedBitcoinProcessor}
 		preferredProcessor={data.preferredProcessorBitcoin}
-		configLinks={[
-			{ href: `${data.adminPrefix}/bitcoin-nodeless`, name: 'Bitcoin Nodeless' },
-			{ href: '#', name: t('admin.config.bitcoindViaEnvVars') }
-		]}
+		configLinks={configLinks('bitcoin')}
 	/>
 
 	<ProcessorSelector
@@ -633,13 +635,7 @@
 		availableProcessors={availableLightningProcessors}
 		bind:selectedProcessor={selectedLightningProcessor}
 		preferredProcessor={data.preferredProcessorLightning}
-		configLinks={[
-			{ href: `${data.adminPrefix}/phoenixd`, name: 'PhoenixD' },
-			{ href: `${data.adminPrefix}/swiss-bitcoin-pay`, name: 'Swiss Bitcoin Pay' },
-			{ href: `${data.adminPrefix}/btcpay-server`, name: 'BTCPay Server' },
-			{ href: `${data.adminPrefix}/blink`, name: 'Blink' },
-			{ href: '#', name: t('admin.config.lndViaEnvVars') }
-		]}
+		configLinks={configLinks('lightning')}
 	/>
 
 	<h2 class="text-2xl">{t('admin.config.timing')}</h2>
@@ -907,7 +903,7 @@
 			name="analyticsScriptSnippet"
 			placeholder={t('admin.config.analyticsScriptPlaceholder')}
 			value={data.analyticsScriptSnippet}
-		/>
+		></textarea>
 	</label>
 	<h2 class="text-2xl font-semibold mt-8">{t('admin.config.customerDataCleaning')}</h2>
 	<p class="text-sm text-gray-500 mb-2">
