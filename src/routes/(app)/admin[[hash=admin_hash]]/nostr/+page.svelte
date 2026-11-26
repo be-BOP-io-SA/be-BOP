@@ -10,7 +10,7 @@
 
 	let nsecInputEl: HTMLInputElement;
 	let readOnlyForm = data.settingsEnforcedByEnvVars;
-	let writeNsecDisabled = !!data.nostr.privateKey || readOnlyForm;
+	let writeNsecDisabled = data.nostrPrivateKeyIsSet || readOnlyForm;
 	let showNsec = false;
 
 	let relays = data.nostrRelays;
@@ -86,11 +86,9 @@
 				type={showNsec ? 'text' : 'password'}
 				class="form-input flex-1"
 				name="privateKey"
-				value={data.nostr.privateKey ?? ''}
-				on:input={(e) => (data.nostr.privateKey = e.currentTarget.value)}
 				disabled={writeNsecDisabled}
 				required
-				placeholder="nsec1..."
+				placeholder={data.nostrPrivateKeyIsSet ? t('admin.nostr.privateKeyIsSet') : 'nsec1...'}
 			/>
 			<button
 				type="button"
@@ -145,7 +143,7 @@
 	</p>
 {/if}
 
-{#if data.nostrPrivateKey}
+{#if data.nostrPrivateKeyIsSet}
 	{#if data.origin}
 		<form action="?/certify" class="flex flex-col gap-4" method="post">
 			<button class="btn btn-black self-start" type="submit">{t('admin.nostr.certify')}</button>

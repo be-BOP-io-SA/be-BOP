@@ -5,6 +5,7 @@ import { redirect } from '@sveltejs/kit';
 import { addYears } from 'date-fns';
 import { omit } from '$lib/utils/omit';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { sameOriginPath } from '$lib/server/utils/sameOriginPath';
 
 export const load = async ({ locals, url }) => {
 	const cmsPage = await collections.cmsPages.findOne(
@@ -42,7 +43,7 @@ export const load = async ({ locals, url }) => {
 	if (!cmsPage) {
 		return {
 			// @ts-expect-error only locals is needed
-			catalog: catalogLoad({ locals })
+			catalog: await catalogLoad({ locals })
 		};
 	}
 
@@ -57,7 +58,7 @@ export const load = async ({ locals, url }) => {
 
 	return {
 		cmsPage: omit(cmsPage, ['content', 'mobileContent', 'employeeContent']),
-		cmsData: cmsFromContent(
+		cmsData: await cmsFromContent(
 			{
 				desktopContent: cmsPage.content,
 				mobileContent: (cmsPage.hasMobileContent && cmsPage.mobileContent) || undefined,
@@ -75,18 +76,11 @@ export const load = async ({ locals, url }) => {
 };
 
 export const actions = {
-	navigate: async ({ locals, request }) => {
+	navigate: async ({ locals, request, url }) => {
 		const formData = await request.formData();
-		let redirectTo = formData.get('redirectTo')?.toString() || '/';
-
-		// Only allow redirect to public pages (not employee-only areas)
-		if (
-			!redirectTo.startsWith('/') ||
-			redirectTo.startsWith('/admin') ||
-			redirectTo.startsWith('/pos')
-		) {
-			redirectTo = '/';
-		}
+		const path = sameOriginPath(formData.get('redirectTo')?.toString() || '/', url.origin);
+		// Employee areas are not where a visitor clearing the age wall is headed.
+		const redirectTo = !path || path.startsWith('/admin') || path.startsWith('/pos') ? '/' : path;
 
 		await collections.sessions.updateOne(
 			{

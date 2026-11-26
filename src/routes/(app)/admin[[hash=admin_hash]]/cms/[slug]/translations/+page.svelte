@@ -42,7 +42,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.content}
 			value={data.cmsPage.translations?.[language]?.content ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.cms.substitutionContent')}
@@ -53,7 +53,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.mobileContent}
 			value={data.cmsPage.translations?.[language]?.mobileContent ?? ''}
-		/>
+		></textarea>
 	</label>
 	<label class="form-label">
 		{t('admin.cms.employeeContent')}
@@ -64,7 +64,7 @@
 			maxlength={MAX_CONTENT_LIMIT}
 			placeholder={data.cmsPage.employeeContent}
 			value={data.cmsPage.translations?.[language]?.employeeContent ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<label class="form-label">
@@ -76,7 +76,7 @@
 			maxlength={MAX_SHORT_DESCRIPTION_LIMIT}
 			placeholder={data.cmsPage.shortDescription}
 			value={data.cmsPage.translations?.[language]?.shortDescription ?? ''}
-		/>
+		></textarea>
 	</label>
 
 	<button class="btn btn-black self-start" type="submit">{t('admin.action.save')}</button>

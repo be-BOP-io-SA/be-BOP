@@ -3,6 +3,7 @@
 	import { TinySlider } from 'svelte-tiny-slider';
 	import PictureComponent from './Picture.svelte';
 	import { onMount } from 'svelte';
+	import { safeHref } from '$lib/utils/safeUrl';
 
 	export let pictures: Picture[];
 	export let autoplay: number;
@@ -30,12 +31,17 @@
 	<TinySlider bind:currentIndex transitionDuration={1000}>
 		{#each pictures as picture, i}
 			<div class="flex-row" style="display: {currentIndex === i ? 'block' : 'none'};">
-				<a href={picture.slider?.url} target={picture.slider?.openNewTab ? '_blank' : '_self'}>
+				<a
+					href={safeHref(picture.slider?.url)}
+					target={picture.slider?.openNewTab ? '_blank' : '_self'}
+				>
 					<PictureComponent {picture} class="object-fill h-auto w-auto" />
 				</a>
 			</div>
 		{/each}
-		<svelte:fragment slot="controls" let:currentIndex>
+		<!-- `setIndex` stays the component's own: it also restarts the autoplay timer,
+		     which the slider's does not. -->
+		{#snippet controls({ currentIndex })}
 			<!-- Pagination Points -->
 			<div class="relative bottom-10 mx-auto w-full flex justify-center p-4 space-x-2">
 				{#each Array.from({ length: pictures.length }, (_, index) => index) as i}
@@ -43,10 +49,12 @@
 						class="w-3 h-3 rounded-full transition-colors duration-300 shadow-[2px_2px_4px_rgba(255,255,255,0.5)]"
 						class:body-mainCTA={currentIndex === i}
 						class:bg-gray-200={currentIndex !== i}
+						aria-label={String(i + 1)}
+						aria-current={currentIndex === i}
 						on:click={() => setIndex(i)}
-					/>
+					></button>
 				{/each}
 			</div>
-		</svelte:fragment>
+		{/snippet}
 	</TinySlider>
 </div>

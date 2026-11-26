@@ -61,7 +61,7 @@
 					</select>
 				</label>
 
-				<span class="col-span-3" />
+				<span class="col-span-3"></span>
 
 				<label class="form-label col-span-2">
 					{t('address.state')}

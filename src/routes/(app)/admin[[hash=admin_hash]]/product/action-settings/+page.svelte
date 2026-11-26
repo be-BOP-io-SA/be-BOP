@@ -67,7 +67,7 @@
 				<td class="py-2 px-4 border border-gray-300 text-center">
 					<input type="checkbox" bind:checked={retailBasket} name="retailBasket" class="rounded" />
 				</td>
-				<td class="py-2 px-4 border border-gray-300 text-center" />
+				<td class="py-2 px-4 border border-gray-300 text-center"></td>
 				<td class="py-2 px-4 border border-gray-300 text-center">
 					<input type="checkbox" bind:checked={nostrBasket} name="nostrBasket" class="rounded" />
 				</td>

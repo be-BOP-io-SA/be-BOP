@@ -1,8 +1,11 @@
 import { collections } from '$lib/server/database';
 import { getProductPriceHistory } from '$lib/server/price-history';
+import { isVisibleToViewer } from '$lib/server/product-visibility';
 import { rateLimit } from '$lib/server/rateLimit';
 import { runtimeConfig } from '$lib/server/runtime-config';
+import { isAllowedOnPage } from '$lib/types/Role';
 import { CUSTOMER_ROLE_ID } from '$lib/types/User';
+import { csvCell } from '$lib/utils/csvCell';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -12,12 +15,6 @@ const RANGE_DAYS: Record<string, number | null> = {
 	'5y': 1825,
 	all: null
 };
-
-function escapeCSV(value: string): string {
-	// Prefix formula-trigger characters to prevent spreadsheet injection.
-	const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-	return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
 	if (!runtimeConfig.priceHistoryEnabled) {
@@ -29,9 +26,13 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	const product = await collections.products.findOne(
 		{ _id: params.id },
-		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1 } }
+		{ projection: { price: 1, payWhatYouWant: 1, free: 1, bookingSpec: 1, actionSettings: 1 } }
 	);
-	if (!product) {
+	// The admin price-history tab reads this endpoint for products the shop does not show yet.
+	const canReadAdminProduct =
+		!!locals.user?.role && isAllowedOnPage(locals.user.role, `/admin/product/${params.id}`, 'read');
+	// The product page redirects away from hidden products; their prices must not leak from here.
+	if (!product || (!canReadAdminProduct && !isVisibleToViewer(product, locals))) {
 		throw error(404, 'Product not found');
 	}
 	// No fixed catalogue price for these products — the calendar is not available.
@@ -55,15 +56,16 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		const header = 'series,date,price,currency';
 		const rows = [
 			...history.catalogue.points.map((p) =>
-				['catalogue', p.t, String(p.price), history.currency].map(escapeCSV).join(',')
+				['catalogue', p.t, p.price, history.currency].map(csvCell).join(',')
 			),
 			...history.paid.points.map((p) =>
-				['average_paid', p.t, String(p.price), history.paid.currency].map(escapeCSV).join(',')
+				['average_paid', p.t, p.price, history.paid.currency].map(csvCell).join(',')
 			)
 		];
 		const csv = [header, ...rows].join('\n');
 		return new Response(csv, {
 			headers: {
+				'cache-control': 'private',
 				'content-type': 'text/csv; charset=utf-8',
 				'content-disposition': `attachment; filename="price-history-${params.id}.csv"`
 			}
@@ -85,5 +87,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 				}
 		  };
 
-	return json(payload, { headers: { 'Cache-Control': 'public, max-age=60' } });
+	// Staff get figures and hidden products a shared cache must not hand to the next visitor.
+	const cacheControl =
+		isStaff || canReadAdminProduct ? 'private, max-age=60' : 'public, max-age=60';
+	// The body depends on who is signed in, so a shared cache keys its public copy on the cookie.
+	return json(payload, { headers: { 'Cache-Control': cacheControl, Vary: 'Cookie' } });
 };

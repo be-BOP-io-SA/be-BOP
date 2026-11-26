@@ -189,7 +189,6 @@
 
 	<input type="hidden" name="endsAt" value={endsAtISO} />
 
-	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="form-label">
 		{t('admin.challenge.products')}
 		<MultiSelect

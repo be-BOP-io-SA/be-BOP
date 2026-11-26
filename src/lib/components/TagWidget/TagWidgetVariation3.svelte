@@ -2,6 +2,7 @@
 	import type { Picture } from '$lib/types/Picture';
 	import type { Tag } from '$lib/types/Tag';
 	import PictureComponent from '../Picture.svelte';
+	import { safeHref } from '$lib/utils/safeUrl';
 
 	let className = '';
 	export { className as class };
@@ -33,7 +34,7 @@
 				<div class="btn tagWidget-cta lg:mx-20 mx-2 md:text-2xl text-center w-auto">
 					<a
 						class="tagWidget-hyperlink"
-						href={cta.href.startsWith('http') || cta.href.includes('/') ? cta.href : `/${cta.href}`}
+						href={safeHref(cta.href)}
 						target={cta.href.startsWith('http') || cta.openNewTab ? '_blank' : '_self'}
 						>{cta.label}</a
 					>

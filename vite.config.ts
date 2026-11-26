@@ -6,7 +6,9 @@ if (!process.env.PUBLIC_VERSION) {
 
 import 'sharp'; // Otherwise build errors with "module did not self-register"
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vitest/config';
+// Vite's `defineConfig` does not know the `test` block; this reference types it.
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
 import { readdir, stat, writeFile, readFile, mkdir } from 'fs/promises';
 
@@ -29,24 +31,27 @@ async function recursiveCopy(src: string, dest: string) {
 
 await recursiveCopy('node_modules/tinymce', 'static/tinymce');
 
-export default defineConfig(({ command }) => {
+// Async because SvelteKit 2's plugin resolves to a promise, which the config type
+// does not accept inside `plugins`.
+export default defineConfig(async ({ command }) => {
 	if (command === 'serve') {
 		// Set ORIGIN to http://localhost:5173 for local development
 		process.env.ORIGIN = 'http://localhost:5173';
 	}
 	return {
 		plugins: [
-			sveltekit(),
+			await sveltekit(),
 			Icons({
 				compiler: 'svelte'
 			})
 		],
 		test: {
-			include: ['src/**/*.{test,spec}.{js,ts}'],
-			// One database, shared by every suite that touches Mongo, and several of them wipe it
-			// clean between tests. Run in parallel, one file's cleanDb() empties the collection
-			// another has just seeded, and the failure lands on whichever file was unlucky.
-			singleThread: true
+			include: ['src/**/*.{test,spec}.{js,ts}', 'scripts/**/*.test.ts'],
+			// Every test file shares one MongoDB, and `cleanDb()` empties it between tests:
+			// two files running at once wipe each other's fixtures, so one file runs at a time.
+			pool: 'forks',
+			fileParallelism: false,
+			maxWorkers: 1
 		},
 		// LayerCake ships uncompiled .svelte files; let Vite transform them for SSR
 		// instead of Node trying to import the raw .svelte (ERR_UNKNOWN_FILE_EXTENSION).
