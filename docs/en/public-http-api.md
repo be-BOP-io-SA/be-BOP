@@ -63,7 +63,7 @@ See [v1 orders write](./api/v1-orders-write.md). Batch; one call, one order. An 
 
 ## Order streams
 
-Three Server-Sent Events streams, each with the `orders:stream` scope. They carry what happens from the moment they open and resume after the last event received (`Last-Event-ID`, a signed cursor); the history is read from the listings.
+Three Server-Sent Events streams, each with the `orders:stream` scope. They carry what happens from the moment they open and resume after the last event received (`Last-Event-ID`, a signed cursor); the history is read from the listings. A stream opened at the live edge sends an `id:` line with no event as soon as it opens, dated from that moment: keep it as the last id, and a connection cut before the first event resumes from it instead of from the present.
 
 - `GET /api/v1/orders/paid/stream`: a sale once it is paid, announced once.
 - `GET /api/v1/orders/stream`: every order on each change of the order itself — created pending, paid, failed, cancelled, expired.

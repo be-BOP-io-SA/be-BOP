@@ -115,6 +115,20 @@ export function sseEvent(id: string, data: unknown): string {
 	return `id: ${id}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+/** An id with no event: the client keeps it as its last id and sends it back when it reconnects. */
+export function sseId(id: string): string {
+	return `id: ${id}\n\n`;
+}
+
+/**
+ * Where a stream stands the moment it opens, before any order has been sent. It carries no real
+ * order id: `-` sorts before every order id, so a resume from it replays everything dated from that
+ * moment on, and a stream cut before its first event loses nothing.
+ */
+export function openingCursor(at: number): PaidStreamCursor {
+	return { ms: at, orderId: '-' };
+}
+
 /**
  * A resume point ahead of the server's clock replays nothing, which on a feed means losing every
  * event until the client's clock is fixed — a silent, permanent gap. A till whose clock runs fast,

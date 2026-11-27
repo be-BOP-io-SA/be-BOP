@@ -129,7 +129,11 @@ async function readFrames(res: Response, count: number): Promise<string[]> {
 		buffer += decoder.decode(chunk.value, { stream: true });
 		let index = buffer.indexOf('\n\n');
 		while (index !== -1) {
-			frames.push(buffer.slice(0, index));
+			const frame = buffer.slice(0, index);
+			// The id a stream sends as it opens is not an event: these tests count events.
+			if (!/^id: [^\n]+$/.test(frame)) {
+				frames.push(frame);
+			}
 			buffer = buffer.slice(index + 2);
 			index = buffer.indexOf('\n\n');
 		}

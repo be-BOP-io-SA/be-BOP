@@ -1319,7 +1319,9 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 						'note, a label or the erasure of personal data added to the order later does not announce ' +
 						'it again — those are on `/api/v1/orders/updates/stream`. Without `Last-Event-ID` the ' +
 						'stream starts at the live edge and replays nothing; the order history is read from ' +
-						'`GET /api/v1/orders/paid`. ' +
+						'`GET /api/v1/orders/paid`. Right after `:ok`, a stream opened at the live edge sends an ' +
+						'`id:` line with no event, dated from the moment it opened: keep it, and a connection cut ' +
+						'before the first event resumes from there instead of from the present. ' +
 						'Authentication uses the same Bearer / X-Api-Key headers as the rest of v1, so a browser ' +
 						'`EventSource` (which cannot set headers) is not a supported client — drive the stream over fetch.',
 					operationId: 'streamPaidOrders',

@@ -11,12 +11,16 @@ import {
 import {
 	SSE_HEARTBEAT_MS,
 	SSE_RETRY_MS,
+	encodeStreamCursor,
 	iteratePaidOrderBacklog,
+	openingCursor,
 	orderStreamCursor,
 	sseComment,
 	sseEvent,
+	sseId,
 	type OrderFeed,
-	type PaidStreamCursor
+	type PaidStreamCursor,
+	type StreamCursorScope
 } from './paidStream';
 
 /** Live events waiting to be written out. Past this the client is too slow to keep up. */
@@ -106,6 +110,12 @@ export type PaidStreamOptions = {
 	 * surface that sends labels: the others would pay a lookup for nothing.
 	 */
 	withLabelNames?: boolean;
+	/**
+	 * Whom the ids of this stream are signed for. When given, a stream opened at the live edge sends
+	 * an id of the moment it opened, so a client cut off before its first event resumes from there
+	 * instead of from the present: whatever happened meanwhile is replayed, not lost.
+	 */
+	cursorScope?: StreamCursorScope;
 	/** Null skips the order — nothing to announce for it on this surface. */
 	render: (
 		order: Order,
@@ -122,6 +132,9 @@ export type PaidStreamOptions = {
  */
 export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	const { keyId } = options;
+	// Taken before anything is subscribed to, so nothing dated after it can slip between the id and
+	// the live events.
+	const openedAt = Date.now();
 
 	const budget = options.maxConcurrentStreams;
 	const openStreams = activeStreamsByKey.get(keyId) ?? new Set<() => void>();
@@ -273,6 +286,14 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 		}
 		if (!(await push(sseComment('ok')))) {
 			return;
+		}
+		// Not when replaying: the client already holds an id, and one dated now would skip the
+		// events still to come if the connection broke during the replay.
+		if (options.cursorScope && !replaying) {
+			const id = encodeStreamCursor(openingCursor(openedAt), options.cursorScope);
+			if (!(await push(sseId(id)))) {
+				return;
+			}
 		}
 		if (replaying) {
 			try {

@@ -63,7 +63,7 @@ Voir [écriture commandes v1](./api/v1-orders-write.md). Lot ; un appel, une com
 
 ## Flux de commandes
 
-Trois flux Server-Sent Events, chacun avec le droit `orders:stream`. Ils portent ce qui arrive à partir de leur ouverture et reprennent après le dernier événement reçu (`Last-Event-ID`, un curseur signé) ; l'historique se lit dans les listes.
+Trois flux Server-Sent Events, chacun avec le droit `orders:stream`. Ils portent ce qui arrive à partir de leur ouverture et reprennent après le dernier événement reçu (`Last-Event-ID`, un curseur signé) ; l'historique se lit dans les listes. Un flux ouvert au présent envoie dès son ouverture une ligne `id:` sans événement, datée de ce moment : la garder comme dernier identifiant, et une connexion coupée avant le premier événement reprend de là plutôt que du présent.
 
 - `GET /api/v1/orders/paid/stream` : une vente une fois payée, annoncée une seule fois.
 - `GET /api/v1/orders/stream` : toutes les commandes, à chaque changement de la commande elle-même — créée en attente, payée, échouée, annulée, expirée.
