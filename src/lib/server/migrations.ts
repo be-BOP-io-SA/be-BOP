@@ -1136,7 +1136,7 @@ export const migrations = [
 		}
 	},
 	{
-		_id: new ObjectId('6b35c2a0e92e590e85af2835'),
+		_id: new ObjectId('6b35c2a0e92e590e85af2834'),
 		name: 'Gather customer opt-in answers into one consent record per address (issue #2834)',
 		run: async (session: ClientSession) => {
 			// A customer file that holds both an e-mail and an npub gives a record carrying both: the

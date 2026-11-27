@@ -176,7 +176,7 @@ describe('consent opt-ins', () => {
 				newsletter: { seller: true, partner: true }
 			} as never);
 			const migration = migrations.find((m) =>
-				m._id.equals(new ObjectId('6b35c2a0e92e590e85af2835'))
+				m._id.equals(new ObjectId('6b35c2a0e92e590e85af2834'))
 			);
 
 			if (!migration) {
