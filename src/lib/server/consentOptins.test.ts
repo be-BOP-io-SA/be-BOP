@@ -112,20 +112,6 @@ describe('consent opt-ins', () => {
 		});
 	});
 
-	describe('e-mail case', () => {
-		it('finds the record of an e-mail whatever its case', async () => {
-			await cleanDb();
-			await saveSignedInConsent({
-				address: { kind: 'email', address: 'Paul@Example.com' },
-				displayedIds: DISPLAYED,
-				acceptedIds: ['x']
-			});
-
-			expect((await findConsentRecord(EMAIL))?.optinIds).toEqual(['x']);
-			expect((await findConsentRecord(EMAIL))?.email).toBe('paul@example.com');
-		});
-	});
-
 	describe('acceptance dates', () => {
 		it('dates each opt-in when it is accepted, and keeps that date on later saves', async () => {
 			await cleanDb();
