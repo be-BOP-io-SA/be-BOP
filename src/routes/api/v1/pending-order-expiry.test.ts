@@ -236,7 +236,7 @@ describe('when a pending order of a till expires', () => {
 	});
 
 	describe('an order whose payment could not be recorded (payment sync failure)', () => {
-		it('stays pending with the shop deadline, and expires once it has passed', async () => {
+		it('stays pending with no deadline and never expires, like a till payment of the web till', async () => {
 			const spy = failPaymentWrite();
 			const pos = await call(postPosSales, '/api/v1/pos/orders', posBody('stuck-pos-1'));
 			const orders = await call(postOrders, '/api/v1/orders', ordersBody('stuck-ord-1'));
@@ -255,58 +255,16 @@ describe('when a pending order of a till expires', () => {
 				expect(await stored(id)).toMatchObject({
 					orderStatus: 'pending',
 					paymentStatuses: ['pending'],
-					hasDeadline: true,
-					marked: true
+					hasDeadline: false,
+					marked: false
 				});
 			}
 
-			// Before the deadline the shop may still confirm the payment: the routine leaves it be.
 			await afterARound();
+
 			expect(await stored('stuck-pos-1')).toMatchObject({ orderStatus: 'pending' });
-
-			await letDeadlinePass('stuck-pos-1');
-			await letDeadlinePass('stuck-ord-1');
-			for (const id of ['stuck-pos-1', 'stuck-ord-1']) {
-				await vi.waitFor(async () => expect((await stored(id)).orderStatus).toBe('expired'), {
-					timeout: 15_000
-				});
-			}
-		}, 90_000);
-
-		it('is still told pending when the deadline cannot be written either', async () => {
-			const paymentWrite = failPaymentWrite();
-			const original = collections.orders.updateOne.bind(collections.orders);
-			const deadlineWrite = vi.spyOn(collections.orders, 'updateOne').mockImplementation(((
-				filter: unknown,
-				update: { $set?: Record<string, unknown> },
-				...rest: unknown[]
-			) => {
-				if (update?.$set?.['payments.$.expireAtDeadline']) {
-					return Promise.reject(new Error('database write refused'));
-				}
-				return (original as (...args: unknown[]) => unknown)(filter, update, ...rest);
-			}) as never);
-			const pos = await call(postPosSales, '/api/v1/pos/orders', posBody('stuck-pos-2'));
-			const orders = await call(postOrders, '/api/v1/orders', ordersBody('stuck-ord-4'));
-			paymentWrite.mockRestore();
-			deadlineWrite.mockRestore();
-
-			expect(pos.body.results[0]).toMatchObject({
-				status: 'pending',
-				warnings: [{ code: 'PAYMENT_SYNC_FAILED' }]
-			});
-			expect(orders.body.results[0]).toMatchObject({
-				status: 'created',
-				orderStatus: 'pending',
-				warnings: [{ code: 'PAYMENT_SYNC_FAILED' }]
-			});
-			// Nothing could be written: the order is left as the first failure left it.
-			expect(await stored('stuck-pos-2')).toMatchObject({
-				orderStatus: 'pending',
-				hasDeadline: false,
-				marked: false
-			});
-		});
+			expect(await stored('stuck-ord-1')).toMatchObject({ orderStatus: 'pending' });
+		}, 60_000);
 
 		it('then blocks the id: the sale cannot be sent again, nor ever completed through the API', async () => {
 			const spy = failPaymentWrite();
@@ -320,8 +278,7 @@ describe('when a pending order of a till expires', () => {
 	});
 
 	describe('a payment the till sends as pending', () => {
-		it('gets the shop deadline, and expires with its order once it has passed', async () => {
-			const before = Date.now();
+		it('stays pending with no deadline and never expires, like a till payment of the web till', async () => {
 			const first = await call(
 				postOrders,
 				'/api/v1/orders',
@@ -331,20 +288,14 @@ describe('when a pending order of a till expires', () => {
 			expect(await stored('pending-ord-1')).toEqual({
 				orderStatus: 'pending',
 				paymentStatuses: ['pending'],
-				hasDeadline: true,
-				marked: true,
+				hasDeadline: false,
+				marked: false,
 				received: undefined
 			});
-			const order = await collections.orders.findOne({ externalOrderId: 'pending-ord-1' });
-			const wait = (order?.payments[0].expiresAt?.getTime() ?? 0) - before;
-			expect(wait).toBeGreaterThanOrEqual(runtimeConfig.desiredPaymentTimeout * 60_000 - 1000);
 
-			await letDeadlinePass('pending-ord-1');
-			await vi.waitFor(
-				async () => expect((await stored('pending-ord-1')).orderStatus).toBe('expired'),
-				{ timeout: 15_000 }
-			);
-			expect((await stored('pending-ord-1')).paymentStatuses).toEqual(['expired']);
+			await afterARound();
+
+			expect(await stored('pending-ord-1')).toMatchObject({ orderStatus: 'pending' });
 		}, 60_000);
 	});
 

@@ -915,8 +915,7 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			expect(expired?.updatedAt.getTime()).toBeGreaterThanOrEqual(expiredFrom);
 		});
 
-		it('gives a payment the till sent as pending the shop payment deadline, and expires it', async () => {
-			const before = Date.now();
+		it('never expires a point-of-sale payment that carries no deadline', async () => {
 			const res = await writeBatch({
 				apiKey,
 				orders: [
@@ -935,20 +934,14 @@ describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', ()
 			if (!order) {
 				throw new Error('expected the order to be written');
 			}
-			const deadline = order.payments[0].expiresAt?.getTime() ?? 0;
-			const timeoutMs = runtimeConfig.desiredPaymentTimeout * 60_000;
-			expect(deadline).toBeGreaterThanOrEqual(before + timeoutMs);
-			expect(deadline).toBeLessThanOrEqual(Date.now() + timeoutMs);
-			expect(order.payments[0].expireAtDeadline).toBe(true);
-			// Sent as pending, it carries no amount received: nothing is kept on it.
-			expect(order.payments[0].currencySnapshot.main.received).toBeUndefined();
+			expect(order.payments[0].expiresAt).toBeUndefined();
+			expect(order.payments[0].expireAtDeadline).toBeUndefined();
 
-			const expired = await ordersModule.expireUnfollowedPayment(
-				order,
-				order.payments[0],
-				new Date(deadline + 1)
-			);
-			expect(expired?.status).toBe('expired');
+			const inTenYears = new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000);
+			await expect(
+				ordersModule.expireUnfollowedPayment(order, order.payments[0], inTenYears)
+			).resolves.toBeNull();
+			expect((await collections.orders.findOne({ _id: order._id }))?.status).toBe('pending');
 		});
 
 		it('records what the till received, not what be-BOP expected, when it sent more', async () => {
