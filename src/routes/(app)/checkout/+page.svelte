@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConsentOptinCheckboxes from '$lib/components/ConsentOptinCheckboxes.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
@@ -698,18 +699,10 @@
 						</div>
 						{#if data.consentOptins.length}
 							<div class="p-4 flex flex-col gap-3">
-								{#each data.consentOptins as optin (optin.id)}
-									<label class="checkbox-label col-span-3">
-										<input
-											class="form-checkbox"
-											type="checkbox"
-											checked={data.personalInfoConnected.consentOptinIds.includes(optin.id)}
-											name="consentOptinIds"
-											value={optin.id}
-										/>
-										{optin.label}
-									</label>
-								{/each}
+								<ConsentOptinCheckboxes
+									optins={data.consentOptins}
+									acceptedIds={data.personalInfoConnected.consentOptinIds}
+								/>
 							</div>
 						{/if}
 					</article>

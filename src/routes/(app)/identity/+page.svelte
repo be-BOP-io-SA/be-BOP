@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConsentOptinCheckboxes from '$lib/components/ConsentOptinCheckboxes.svelte';
 	import { useI18n } from '$lib/i18n.js';
 	import { page } from '$app/stores';
 	import { cookieConsentVisible } from '$lib/stores/cookieConsentVisible';
@@ -112,18 +113,10 @@
 						<input type="text" class="form-input" value={data.signedInAddress.address} readonly />
 					</label>
 				{/if}
-				{#each data.consentOptins as optin (optin.id)}
-					<label class="checkbox-label col-span-3">
-						<input
-							class="form-checkbox"
-							type="checkbox"
-							checked={data.personalInfoConnected.consentOptinIds.includes(optin.id)}
-							name="consentOptinIds"
-							value={optin.id}
-						/>
-						{optin.label}
-					</label>
-				{/each}
+				<ConsentOptinCheckboxes
+					optins={data.consentOptins}
+					acceptedIds={data.personalInfoConnected.consentOptinIds}
+				/>
 				{#if $page.data.analyticsSnippetConfigured}
 					<button
 						type="button"

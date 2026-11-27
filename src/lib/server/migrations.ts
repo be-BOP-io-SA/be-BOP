@@ -1151,7 +1151,8 @@ export const migrations = [
 				.toArray();
 
 			for (const file of files) {
-				const email = file.email || file.user?.email;
+				// Lowercased as consent records store e-mails (`addressFields` in consentOptins.ts).
+				const email = (file.email || file.user?.email)?.toLowerCase();
 				const npub = file.npub || file.user?.npub;
 				if (!email && !npub) {
 					continue;

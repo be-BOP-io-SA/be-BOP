@@ -22,15 +22,25 @@ import { ObjectId } from 'mongodb';
 import { collections } from './database';
 import { runtimeConfig } from './runtime-config';
 import type { LanguageKey } from '$lib/translations';
-import type { ConsentOptin, ConsentOptinVersion } from '$lib/types/ConsentOptin';
+import {
+	CONSENT_OPTIN_FIELD,
+	type ConsentOptin,
+	type ConsentOptinVersion
+} from '$lib/types/ConsentOptin';
 import type { ConsentRecord } from '$lib/types/ConsentRecord';
 import type { ParsedContactAddress } from '$lib/utils/contactAddress';
 
 /** A valid contact address, in the shape `parseContactAddress` reads it. */
 export type ConsentAddress = Exclude<ParsedContactAddress, { error: unknown }>;
 
+/**
+ * The address as consent records store it. An e-mail is lowercased, so that `Paul@Example.com`
+ * and `paul@example.com` share one record; the unique index on it would otherwise keep two.
+ */
 function addressFields(address: ConsentAddress): { email: string } | { npub: string } {
-	return address.kind === 'email' ? { email: address.address } : { npub: address.address };
+	return address.kind === 'email'
+		? { email: address.address.toLowerCase() }
+		: { npub: address.address };
 }
 
 /** The wording an opt-in has now, to append to its `versions` when it is saved. */
@@ -248,7 +258,7 @@ export async function recordConsentChoice(params: {
 	if (!displayedIds.length) {
 		return;
 	}
-	const acceptedIds = params.formData.getAll('consentOptinIds').map(String);
+	const acceptedIds = params.formData.getAll(CONSENT_OPTIN_FIELD).map(String);
 	const signedInAddress = signedInConsentAddress(params.locals);
 	if (signedInAddress) {
 		await saveSignedInConsent({ address: signedInAddress, displayedIds, acceptedIds });

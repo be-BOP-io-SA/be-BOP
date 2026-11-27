@@ -33,6 +33,9 @@ export interface ConsentOptinVersion extends ConsentOptinTranslatableFields {
 	savedBy?: { userId: ObjectId; alias?: string };
 }
 
+/** Name of the form field carrying the ticked opt-ins, on checkout and the identity page. */
+export const CONSENT_OPTIN_FIELD = 'consentOptinIds';
+
 /** Ids of the two opt-ins every shop had before opt-ins became editable. */
 export const LEGACY_CONSENT_OPTIN_IDS = {
 	seller: 'seller',
