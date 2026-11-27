@@ -155,7 +155,9 @@ describe('the two historical opt-ins (#2834)', () => {
 
 		await ensureDefaultConsentOptins();
 
-		const seller = await collections.consentOptins.findOne({ _id: LEGACY_CONSENT_OPTIN_IDS.seller });
+		const seller = await collections.consentOptins.findOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.seller
+		});
 		const partner = await collections.consentOptins.findOne({
 			_id: LEGACY_CONSENT_OPTIN_IDS.partner
 		});
@@ -182,7 +184,9 @@ describe('the two historical opt-ins (#2834)', () => {
 
 		await ensureDefaultConsentOptins();
 
-		const seller = await collections.consentOptins.findOne({ _id: LEGACY_CONSENT_OPTIN_IDS.seller });
+		const seller = await collections.consentOptins.findOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.seller
+		});
 		expect(seller).toMatchObject({
 			label: 'News from the shop',
 			enabled: false,
