@@ -74,7 +74,8 @@ ${Object.entries(lightModeColors)
 	.join('\n')}
 }
 
-html:root.dark {
+/* app.css also defines html:root.dark and may load after this file, so repeat :root to win */
+html:root:root.dark {
 ${Object.entries(darkModeColors)
 	.map(([key, value]) => `\t--${key.replaceAll('.', '-')}:${value};`)
 	.join('\n')}
