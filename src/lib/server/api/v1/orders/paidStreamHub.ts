@@ -30,6 +30,7 @@ const ANNOTATION_FIELDS = new Set([
 const paidListeners = new Set<OrderChangeListener>();
 const allListeners = new Set<OrderChangeListener>();
 const annotationListeners = new Set<OrderChangeListener>();
+const gapHandlers = new Set<GapHandler>();
 
 let changeStream: ChangeStream<Order, ChangeStreamDocument<Order>> | null = null;
 let resumeToken: ResumeToken | null = null;
@@ -109,8 +110,12 @@ function openStream(): void {
 			? { fullDocument: 'updateLookup', resumeAfter: resumeToken }
 			: { fullDocument: 'updateLookup' }
 	);
+	// The driver also moves the position on a watch that has seen nothing yet, so a cut before the
+	// first event still has somewhere to resume from.
+	changeStream.on('resumeTokenChanged', (token) => {
+		resumeToken = token;
+	});
 	changeStream.on('change', (changeEvent) => {
-		resumeToken = changeEvent._id;
 		const doc = 'fullDocument' in changeEvent ? changeEvent.fullDocument : null;
 		if (doc) {
 			fanOut(doc as Order, changeKind(changeEvent));
@@ -122,6 +127,11 @@ function openStream(): void {
 		// The server no longer holds that position: asking for it again would fail the same way.
 		if (isChangeStreamPositionLost(err)) {
 			resumeToken = null;
+			// What was written since the lost position will never reach the listeners: they must
+			// start again from the database.
+			for (const onGap of [...gapHandlers]) {
+				onGap();
+			}
 		}
 		if (totalListeners() && !reopenTimer) {
 			reopenTimer = setTimeout(() => {
@@ -132,23 +142,45 @@ function openStream(): void {
 	});
 }
 
+/**
+ * Called when the watch had to restart without the position it stopped at: events written since
+ * are not coming. The listener starts again from the database.
+ */
+export type GapHandler = () => void;
+
 /** Orders with at least one paid payment, on every change of the order itself. */
-export function subscribeToPaidOrders(listener: OrderChangeListener): () => void {
-	return subscribe(paidListeners, listener);
+export function subscribeToPaidOrders(
+	listener: OrderChangeListener,
+	onGap?: GapHandler
+): () => void {
+	return subscribe(paidListeners, listener, onGap);
 }
 
 /** Every order, whatever its payments are worth, on every change of the order itself. */
-export function subscribeToAllOrders(listener: OrderChangeListener): () => void {
-	return subscribe(allListeners, listener);
+export function subscribeToAllOrders(
+	listener: OrderChangeListener,
+	onGap?: GapHandler
+): () => void {
+	return subscribe(allListeners, listener, onGap);
 }
 
 /** Every order, each time a note or a label is put on it or its personal data is erased. */
-export function subscribeToOrderAnnotations(listener: OrderChangeListener): () => void {
-	return subscribe(annotationListeners, listener);
+export function subscribeToOrderAnnotations(
+	listener: OrderChangeListener,
+	onGap?: GapHandler
+): () => void {
+	return subscribe(annotationListeners, listener, onGap);
 }
 
-function subscribe(into: Set<OrderChangeListener>, listener: OrderChangeListener): () => void {
+function subscribe(
+	into: Set<OrderChangeListener>,
+	listener: OrderChangeListener,
+	onGap?: GapHandler
+): () => void {
 	into.add(listener);
+	if (onGap) {
+		gapHandlers.add(onGap);
+	}
 	openStream();
 
 	let released = false;
@@ -158,6 +190,9 @@ function subscribe(into: Set<OrderChangeListener>, listener: OrderChangeListener
 		}
 		released = true;
 		into.delete(listener);
+		if (onGap) {
+			gapHandlers.delete(onGap);
+		}
 		if (!totalListeners()) {
 			if (reopenTimer) {
 				clearTimeout(reopenTimer);
@@ -175,6 +210,7 @@ export function resetPaidOrderStreamHub(): void {
 	paidListeners.clear();
 	allListeners.clear();
 	annotationListeners.clear();
+	gapHandlers.clear();
 	if (reopenTimer) {
 		clearTimeout(reopenTimer);
 		reopenTimer = null;

@@ -51,7 +51,7 @@ describe('the order watch, when it fails', () => {
 	it('reopens from the last event it saw after an ordinary failure', () => {
 		const watch = stubWatch();
 		subscribeToAllOrders(() => undefined);
-		watch.latest().emit('change', { _id: { _data: 'token-1' }, operationType: 'insert' });
+		watch.latest().emit('resumeTokenChanged', { _data: 'token-1' });
 
 		watch.latest().emit('error', new Error('connection reset'));
 		vi.advanceTimersByTime(1_000);
@@ -60,12 +60,52 @@ describe('the order watch, when it fails', () => {
 		expect(watch.opened[1].resumeAfter).toEqual({ _data: 'token-1' });
 	});
 
+	it('reopens from the position the server gave a watch that had seen no event yet', () => {
+		const watch = stubWatch();
+		subscribeToAllOrders(() => undefined);
+		// A watch that has seen nothing is still handed a position by the server.
+		watch.latest().emit('resumeTokenChanged', { _data: 'token-at-opening' });
+
+		watch.latest().emit('error', new Error('connection reset'));
+		vi.advanceTimersByTime(1_000);
+
+		expect(watch.opened[1].resumeAfter).toEqual({ _data: 'token-at-opening' });
+	});
+
+	it('tells the listeners that events are missing once the position is lost, and only then', () => {
+		const watch = stubWatch();
+		const onGap = vi.fn();
+		subscribeToAllOrders(() => undefined, onGap);
+		watch.latest().emit('resumeTokenChanged', { _data: 'token-1' });
+
+		watch.latest().emit('error', new Error('connection reset'));
+		vi.advanceTimersByTime(1_000);
+		expect(onGap).not.toHaveBeenCalled();
+
+		const codeName = 'ChangeStreamFatalError';
+		watch.latest().emit('error', new MongoServerError({ codeName, message: codeName }));
+		expect(onGap).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not tell a listener that has left', () => {
+		const watch = stubWatch();
+		const onGap = vi.fn();
+		const leave = subscribeToAllOrders(() => undefined, onGap);
+		subscribeToPaidOrders(() => undefined);
+		leave();
+
+		const codeName = 'ChangeStreamHistoryLost';
+		watch.latest().emit('error', new MongoServerError({ codeName, message: codeName }));
+
+		expect(onGap).not.toHaveBeenCalled();
+	});
+
 	it.each(['ChangeStreamHistoryLost', 'ChangeStreamFatalError'])(
 		'reopens at the live edge once the server answers %s',
 		(codeName) => {
 			const watch = stubWatch();
 			subscribeToAllOrders(() => undefined);
-			watch.latest().emit('change', { _id: { _data: 'token-1' }, operationType: 'insert' });
+			watch.latest().emit('resumeTokenChanged', { _data: 'token-1' });
 
 			watch.latest().emit('error', new MongoServerError({ codeName, message: codeName }));
 			vi.advanceTimersByTime(1_000);

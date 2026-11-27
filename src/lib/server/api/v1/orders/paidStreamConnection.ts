@@ -263,22 +263,26 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 			? subscribeToAllOrders
 			: subscribeToPaidOrders;
 	const ordersOfKey = options.ordersOfKey?.toString();
-	unsubscribe = subscribe((order) => {
-		if (closed) {
-			return;
-		}
-		if (ordersOfKey && order.externalSourceApiKeyId?.toString() !== ordersOfKey) {
-			return;
-		}
-		if (pending.length >= MAX_PENDING_EVENTS) {
-			// The client is not reading. Closing makes it reconnect and replay; dropping frames would
-			// strand it silently.
-			void push(sseComment('overflow')).finally(cleanup);
-			return;
-		}
-		pending.push(order);
-		void drain();
-	});
+	unsubscribe = subscribe(
+		(order) => {
+			if (closed) {
+				return;
+			}
+			if (ordersOfKey && order.externalSourceApiKeyId?.toString() !== ordersOfKey) {
+				return;
+			}
+			if (pending.length >= MAX_PENDING_EVENTS) {
+				// The client is not reading. Closing makes it reconnect and replay; dropping frames would
+				// strand it silently.
+				void push(sseComment('overflow')).finally(cleanup);
+				return;
+			}
+			pending.push(order);
+			void drain();
+		},
+		// Events were missed that no live frame will carry: the client reconnects and replays them.
+		cleanup
+	);
 
 	void (async () => {
 		if (!(await push(`retry: ${SSE_RETRY_MS}\n\n`))) {
