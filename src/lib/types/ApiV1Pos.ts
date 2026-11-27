@@ -135,6 +135,8 @@ export type PosSaleResult = {
 	/** The order this sale produced. Given plainly so a caller never has to parse `orderUrl`. */
 	orderId: string;
 	orderUrl: string;
+	/** Present, and true, on a `conflict` whose order has expired: no payment was recorded as paid on it. */
+	orderExpired?: true;
 	/** What the write of this sale warned about, as `POST /api/v1/orders` gives it. Absent when empty. */
 	warnings?: ApiV1Warning[];
 };

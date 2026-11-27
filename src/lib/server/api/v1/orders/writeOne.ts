@@ -146,23 +146,40 @@ async function settleCreatedPayments(order: Order, payments: OrderPaymentWrite[]
 	return current;
 }
 
-/** `soldAt` is set when the key accepts several orders per external id: the date made the match. */
+/**
+ * Refuse a sale this key already sent, and leave a line in the server log: the shop reads there
+ * which sales were turned away, since the answer itself is an ordinary 200.
+ *
+ * `soldAt` is set when the key accepts several orders per external id: the date made the match.
+ * An order that has since expired is said so: no payment was recorded as paid on it.
+ */
 function duplicateRefusal(
+	apiKey: AuthenticatedApiKey,
 	cmd: OrderWriteCommand,
-	match: { orderId: string; soldAt?: Date }
+	match: { orderId: string; orderStatus: Order['status']; soldAt?: Date }
 ): ApiV1OrderResult {
+	const expired = match.orderStatus === 'expired';
+	console.warn('[api/v1] sale refused as already received', {
+		apiKeyId: apiKey._id.toString(),
+		apiKeyName: apiKey.name,
+		externalOrderId: cmd.externalOrderId,
+		orderId: match.orderId,
+		orderStatus: match.orderStatus
+	});
 	return {
 		externalOrderId: cmd.externalOrderId,
 		status: 'failed',
 		error: {
 			code: API_V1_DUPLICATE_EXTERNAL_ORDER_ID,
-			message: match.soldAt
-				? `externalOrderId ${cmd.externalOrderId} was already received from this API key ` +
-				  `with the same date (${match.soldAt.toISOString()}): it is the same sale sent again.`
-				: `externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
-				  'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
-				  'orders with the same external id" on the key in Admin -> API Keys.',
-			details: { orderId: match.orderId }
+			message:
+				(match.soldAt
+					? `externalOrderId ${cmd.externalOrderId} was already received from this API key ` +
+					  `with the same date (${match.soldAt.toISOString()}): it is the same sale sent again.`
+					: `externalOrderId ${cmd.externalOrderId} was already received from this API key. ` +
+					  'Each call creates one order: send a new externalOrderId, or tick "Accept several ' +
+					  'orders with the same external id" on the key in Admin -> API Keys.') +
+				(expired ? ' The order it names has expired: no payment was recorded as paid on it.' : ''),
+			details: { orderId: match.orderId, ...(expired && { orderExpired: true }) }
 		}
 	};
 }
@@ -278,11 +295,15 @@ export async function writeOne(params: WriteOneParams): Promise<ApiV1OrderResult
 				externalOrderId: cmd.externalOrderId,
 				...alreadySent.order
 			},
-			{ projection: { _id: 1 } }
+			{ projection: { _id: 1, status: 1 } }
 		);
 		if (existing) {
 			await release();
-			return duplicateRefusal(cmd, { orderId: existing._id, soldAt: alreadySent.soldAt });
+			return duplicateRefusal(apiKey, cmd, {
+				orderId: existing._id,
+				orderStatus: existing.status,
+				soldAt: alreadySent.soldAt
+			});
 		}
 	}
 

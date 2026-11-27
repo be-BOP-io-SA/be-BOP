@@ -70,13 +70,18 @@ function isPermanentFailure(error?: { code: string; details?: Record<string, unk
 /** Either every sale has an outcome, or one was refused and the request fails. */
 export type PosIngestResult = { response: PosSalesResponse } | { rejection: PosSaleRejection };
 
-/** The existing order a write refused as a reference already received, when it names one. */
-function duplicateOf(result: ApiV1OrderResult): string | null {
+/**
+ * The existing order a write refused as a reference already received, when it names one, and
+ * whether that order has expired.
+ */
+function duplicateOf(result: ApiV1OrderResult): { orderId: string; expired: boolean } | null {
 	if (result.status !== 'failed' || result.error?.code !== API_V1_DUPLICATE_EXTERNAL_ORDER_ID) {
 		return null;
 	}
 	const orderId = result.error.details?.orderId;
-	return typeof orderId === 'string' ? orderId : null;
+	return typeof orderId === 'string'
+		? { orderId, expired: result.error.details?.orderExpired === true }
+		: null;
 }
 
 /**
@@ -140,7 +145,7 @@ export async function ingestPosSales(params: {
 			results: outcomes.map((result): PosSaleResult => {
 				const duplicate = duplicateOf(result);
 				// Guarded by the `refused` check above: every other result carries an orderId.
-				const orderId = duplicate ?? (result.orderId as string);
+				const orderId = duplicate?.orderId ?? (result.orderId as string);
 				return {
 					externalOrderId: result.externalOrderId,
 					// Only an order that is paid is a success: the till must not hand over goods
@@ -148,6 +153,7 @@ export async function ingestPosSales(params: {
 					status: duplicate ? 'conflict' : result.orderStatus === 'paid' ? 'success' : 'pending',
 					orderId,
 					orderUrl: orderUrl(orderId),
+					...(duplicate?.expired && { orderExpired: true }),
 					...(result.warnings?.length && { warnings: result.warnings })
 				};
 			})

@@ -92,7 +92,8 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 				description:
 					'Your reference for the order, kept on it as sent. One command, one order: by default a ' +
 					'reference this key already sent is refused with the `DUPLICATE_EXTERNAL_ORDER_ID` error ' +
-					'(`details.orderId` names the order that holds it, which is left untouched). A reference ' +
+					'(`details.orderId` names the order that holds it, which is left untouched; ' +
+					'`details.orderExpired: true` is added when that order has expired). A reference ' +
 					'another call is still writing is refused with `EXTERNAL_ORDER_ID_IN_PROGRESS` instead: ' +
 					'no order is known for it yet, send the command again. A key set to accept several ' +
 					'orders with the same external id creates a new order for each command, except for a ' +
@@ -1949,6 +1950,14 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 										type: 'string',
 										format: 'uri',
 										description: 'URL of the be-BOP order.'
+									},
+									orderExpired: {
+										type: 'boolean',
+										enum: [true],
+										description:
+											'Present, and true, only on a `conflict` whose order has expired: no payment is ' +
+											'recorded as paid on the order it names. An amount received that fell short, if ' +
+											'any, stays noted on its payment.'
 									},
 									warnings: {
 										type: 'array',
