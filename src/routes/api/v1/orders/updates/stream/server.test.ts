@@ -296,6 +296,25 @@ describe('GET /api/v1/orders/updates/stream: a connection that is cut', () => {
 	});
 });
 
+describe('the sales streams: a connection that is cut before any event', () => {
+	it.each([
+		['/api/v1/orders/stream', ordersStream],
+		['/api/v1/orders/paid/stream', salesStream]
+	])('brings back an order paid during the cut, once, on %s', async (_path, handler) => {
+		const key = makeKey();
+		const first = new FrameReader(await connect(handler, key));
+		const opening = await openingIdOf(first);
+		expect(await first.next()).toBeNull();
+		openConnections[openConnections.length - 1].abort();
+		await pause(5);
+
+		const order = await annotatedOrder();
+
+		const frames = await new FrameReader(await connect(handler, key, opening)).drain();
+		expect(frames.map((frame) => frame.data?.orderId)).toEqual([order._id]);
+	});
+});
+
 describe('the sales streams', () => {
 	it.each([
 		['/api/v1/orders/stream', ordersStream],
