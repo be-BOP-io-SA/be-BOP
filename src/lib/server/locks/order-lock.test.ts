@@ -2,6 +2,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { addMinutes, subMinutes } from 'date-fns';
 import type { Order } from '$lib/types/Order';
 import { cleanDb, insertTestOrder } from '../test-utils';
+import { collections } from '../database';
+import { expireUnfollowedPayment } from '../orders';
 
 const polled = vi.hoisted(() => ({ orderIds: [] as string[], raceOrderId: '' }));
 
@@ -65,5 +67,50 @@ describe('order poller', () => {
 		});
 
 		await vi.waitFor(() => expect(polled.orderIds).toContain(next._id), { timeout: 10_000 });
+	}, 30_000);
+
+	const overdue = () => subMinutes(new Date(), 1);
+	const pendingTillPayment = (marked: boolean) =>
+		insertTestOrder({
+			status: 'pending',
+			payments: [
+				{
+					status: 'pending',
+					method: 'point-of-sale',
+					expiresAt: overdue(),
+					...(marked && { expireAtDeadline: true as const })
+				}
+			]
+		});
+	const statusOf = async (orderId: string) =>
+		(await collections.orders.findOne({ _id: orderId }))?.status;
+
+	it('expires an overdue payment marked for it, and no other payment without a processor', async () => {
+		const unmarked = await pendingTillPayment(false);
+		const marked = await pendingTillPayment(true);
+		await vi.waitFor(async () => expect(await statusOf(marked._id)).toBe('expired'), {
+			timeout: 10_000
+		});
+
+		// Written after the first expired: once it expires too, the unmarked order went through a
+		// whole round of the routine.
+		const later = await pendingTillPayment(true);
+		await vi.waitFor(async () => expect(await statusOf(later._id)).toBe('expired'), {
+			timeout: 10_000
+		});
+
+		expect(await statusOf(unmarked._id)).toBe('pending');
+	}, 30_000);
+
+	it('leaves a marked payment to the processor that follows it', async () => {
+		const followed = await insertTestOrder({
+			status: 'pending',
+			payments: [{ ...pendingCardPayment(overdue()), expireAtDeadline: true }]
+		});
+
+		await expect(expireUnfollowedPayment(followed, followed.payments[0])).resolves.toBeNull();
+
+		await vi.waitFor(() => expect(polled.orderIds).toContain(followed._id), { timeout: 10_000 });
+		expect(await statusOf(followed._id)).toBe('pending');
 	}, 30_000);
 });

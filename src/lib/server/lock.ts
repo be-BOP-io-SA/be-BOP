@@ -4,8 +4,55 @@ import { processClosed } from './process';
 import { setTimeout } from 'node:timers/promises';
 import { NO_LOCK } from '$lib/server/env-config';
 import { env } from '$env/dynamic/private';
+import { isUniqueConstraintError } from './utils/isUniqueConstraintError';
 
 const processId = new ObjectId();
+
+const RESERVATION_POLL_MS = 100;
+
+/**
+ * Hold `id` across every be-BOP process for the time of one piece of work. Null when it is still
+ * held elsewhere once `waitMs` is over.
+ *
+ * A hold whose process died frees itself: entries of the locks collection expire a minute or two
+ * after they were written.
+ */
+export async function reserve(
+	id: string,
+	opts?: { waitMs?: number }
+): Promise<{ release: () => Promise<void> } | null> {
+	const instanceId = new ObjectId();
+	const giveUpAt = Date.now() + (opts?.waitMs ?? 0);
+
+	for (;;) {
+		const now = new Date();
+		try {
+			await collections.locks.insertOne({
+				_id: id,
+				ownerId: processId,
+				instanceId,
+				createdAt: now,
+				updatedAt: now
+			});
+			break;
+		} catch (err) {
+			if (!isUniqueConstraintError(err)) {
+				throw err;
+			}
+		}
+		if (Date.now() + RESERVATION_POLL_MS > giveUpAt) {
+			return null;
+		}
+		await setTimeout(RESERVATION_POLL_MS);
+	}
+
+	return {
+		// By instance: a hold that expired and was taken by someone else is theirs, not ours to free.
+		release: async () => {
+			await collections.locks.deleteOne({ _id: id, instanceId }).catch(console.error);
+		}
+	};
+}
 
 export class Lock {
 	id: string;

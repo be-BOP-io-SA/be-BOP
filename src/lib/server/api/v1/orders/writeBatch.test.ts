@@ -1,0 +1,1931 @@
+import { MongoClient, ObjectId } from 'mongodb';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import * as ordersModule from '$lib/server/orders';
+import { env } from '$env/dynamic/private';
+import { cleanDb } from '$lib/server/test-utils';
+import { collections } from '$lib/server/database';
+import { runtimeConfig } from '$lib/server/runtime-config';
+import {
+	TEST_DIGITAL_PRODUCT,
+	TEST_PHYSICAL_PRODUCT,
+	TEST_PRODUCT_STOCK
+} from '$lib/server/seed/product';
+import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
+import { writeBatch } from './writeBatch';
+import { writeOne } from './writeOne';
+import { paidAmount } from './listPaid';
+import { API_ORDER_SELLER_ALIAS } from './seller';
+import { amountToMinor } from './money';
+import {
+	API_ORDER_LABEL_ID,
+	CATALOG_INTEGRITY_WARNING_LABEL_ID
+} from './ensureCatalogIntegrityLabel';
+
+const apiKey: AuthenticatedApiKey = {
+	_id: new ObjectId(),
+	name: 'integration-key',
+	scopes: ['orders:write'],
+	keyPrefix: 'bebop_ak_test_intkey01'
+};
+
+function paidCommand(overrides: Record<string, unknown> = {}) {
+	const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+	return {
+		externalOrderId: 'pos-ext-1',
+		currency: 'EUR' as const,
+		items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+		payment: {
+			method: 'point-of-sale' as const,
+			status: 'paid' as const,
+			amountMinor,
+			currency: 'EUR' as const
+		},
+		...overrides
+	};
+}
+
+function requireOrderId(result: { orderId?: string | null }): string {
+	if (!result.orderId) {
+		throw new Error('expected orderId on batch result');
+	}
+	return result.orderId;
+}
+
+const MONGO_UNAVAILABLE_MSG =
+	'Mongo not available — start docker compose -f docker-compose.dev.yml up -d mongo';
+
+/** Fast probe so the suite can skip instead of hanging on beforeEach/cleanDb. */
+async function isMongoAvailable(): Promise<boolean> {
+	const url = env.MONGODB_TEST_URL || 'mongodb://127.0.0.1:27017';
+	const probe = new MongoClient(url, {
+		directConnection: true,
+		serverSelectionTimeoutMS: 2_000
+	});
+	try {
+		await probe.connect();
+		await probe.db('admin').command({ ping: 1 });
+		return true;
+	} catch {
+		return false;
+	} finally {
+		await probe.close().catch(() => undefined);
+	}
+}
+
+const mongoAvailable = await isMongoAvailable();
+if (!mongoAvailable) {
+	console.warn(MONGO_UNAVAILABLE_MSG);
+}
+
+describe.skipIf(!mongoAvailable)('writeBatch / writeOne (Mongo integration)', () => {
+	beforeEach(async () => {
+		await cleanDb();
+		await collections.products.insertOne({ ...TEST_DIGITAL_PRODUCT });
+		apiKey._id = new ObjectId();
+		// Predictable totals for amountMinor assertions (default mainCurrency is BTC).
+		runtimeConfig.mainCurrency = 'EUR';
+		runtimeConfig.secondaryCurrency = 'USD';
+		runtimeConfig.vatExempted = true;
+	}, 60_000);
+
+	it('does not settle a zero-base-price variation product as free', async () => {
+		// Base price 0, the paid part lives entirely in the chosen variation. Summing the base
+		// price alone would read this as a zero total, pick paymentMethod 'free', and mark the
+		// order paid without any money moving.
+		const variationProduct = {
+			...TEST_DIGITAL_PRODUCT,
+			_id: 'variation-zero-base',
+			alias: ['variation-zero-base'],
+			price: { amount: 0, currency: 'EUR' as const },
+			payWhatYouWant: false,
+			variations: [{ name: 'size', value: 'XL', price: 10 }]
+		};
+		await collections.products.insertOne(variationProduct);
+
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'variation-not-free-1',
+					currency: 'EUR' as const,
+					items: [
+						{ productId: variationProduct._id, quantity: 1, chosenVariations: { size: 'XL' } }
+					],
+					payment: {
+						method: 'point-of-sale' as const,
+						status: 'paid' as const,
+						amountMinor: amountToMinor(10, 'EUR'),
+						currency: 'EUR' as const
+					}
+				}
+			]
+		});
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order).toBeTruthy();
+		expect(order?.payments[0].method).not.toBe('free');
+		expect(order?.payments[0].method).toBe('point-of-sale');
+		// The variation surcharge must reach the order total, not just the item line.
+		expect(order?.currencySnapshot.main.totalPrice.amount).toBe(10);
+		expect(order?.items[0].currencySnapshot.main.customPrice?.amount).toBe(10);
+	});
+
+	describe('price sent by the third-party system', () => {
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
+		});
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
+
+		it('charges the catalogue price when the third party is not the source of truth', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'price-ignored-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 1, currency: 'EUR' }
+							}
+						]
+					})
+				]
+			});
+			expect(res.results[0].warnings?.map((w) => w.code)).toContain('PRICE_OVERRIDE');
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount
+			);
+			expect(order?.status).toBe('paid');
+		});
+
+		it('charges the price sent when the third party is the source of truth', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = true;
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'price-honoured-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 1, currency: 'EUR' }
+							}
+						],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 1, currency: 'EUR' }
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(0.01);
+			expect(order?.status).toBe('paid');
+		});
+
+		describe('for a pay-what-you-want product, from 5 to 50 EUR', () => {
+			const donation = {
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'pwyw-donation',
+				alias: ['pwyw-donation'],
+				price: { amount: 5, currency: 'EUR' as const },
+				payWhatYouWant: true,
+				maximumPrice: { amount: 50, currency: 'EUR' as const }
+			};
+
+			/** Sends one donation at `amount` EUR, paid in full, and returns what be-BOP wrote. */
+			async function donate(externalOrderId: string, amount: number, charged = amount) {
+				const res = await writeBatch({
+					apiKey,
+					orders: [
+						paidCommand({
+							externalOrderId,
+							items: [
+								{
+									productId: donation._id,
+									quantity: 1,
+									customPrice: { amountMinor: amount * 100, currency: 'EUR' }
+								}
+							],
+							payment: {
+								method: 'point-of-sale',
+								status: 'paid',
+								amountMinor: charged * 100,
+								currency: 'EUR'
+							}
+						})
+					]
+				});
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				return {
+					total: order?.currencySnapshot.main.totalPrice.amount,
+					warnings: res.results[0].warnings?.map((w) => w.code) ?? []
+				};
+			}
+
+			beforeEach(async () => {
+				await collections.products.insertOne(donation);
+			});
+
+			it.each([false, true])(
+				'charges an amount the shop allows as sent (third party as source of truth: %s)',
+				async (trustExternalPricing) => {
+					runtimeConfig.apiV1.trustExternalPricing = trustExternalPricing;
+
+					await expect(donate('pwyw-allowed', 20)).resolves.toEqual({ total: 20, warnings: [] });
+				}
+			);
+
+			it.each([
+				['under the minimum', 1],
+				['over the maximum', 80]
+			])(
+				'brings an amount %s back to the minimum, and says so, when be-BOP prices the line',
+				async (_where, sent) => {
+					runtimeConfig.apiV1.trustExternalPricing = false;
+
+					await expect(donate('pwyw-out-of-bounds', sent, 5)).resolves.toEqual({
+						total: 5,
+						warnings: ['PRICE_OVERRIDE']
+					});
+				}
+			);
+
+			it('records an amount over the maximum as sent, and says so, when the third party is the source of truth', async () => {
+				runtimeConfig.apiV1.trustExternalPricing = true;
+
+				await expect(donate('pwyw-trusted', 80)).resolves.toEqual({
+					total: 80,
+					warnings: ['PRICE_OVERRIDE']
+				});
+			});
+		});
+
+		it('charges the variation price of a line sent at zero, instead of leaving it pending', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+			await collections.products.insertOne({
+				...TEST_DIGITAL_PRODUCT,
+				_id: 'variation-sent-free',
+				alias: ['variation-sent-free'],
+				price: { amount: 0, currency: 'EUR' as const },
+				payWhatYouWant: false,
+				variations: [{ name: 'size', value: 'L', price: 20 }]
+			});
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'variation-sent-free-1',
+						items: [
+							{
+								productId: 'variation-sent-free',
+								quantity: 1,
+								chosenVariations: { size: 'L' },
+								customPrice: { amountMinor: 0, currency: 'EUR' }
+							}
+						],
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: amountToMinor(20, 'EUR'),
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.currencySnapshot.main.totalPrice.amount).toBe(20);
+			expect(order?.payments[0].method).toBe('point-of-sale');
+			expect(order?.status).toBe('paid');
+		});
+	});
+
+	it('creates a paid order from lines and marks payment paid', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'create-paid-1' })]
+		});
+		expect(res.status).toBe('ok');
+		expect(res.ok).toBe(true);
+		expect(res.results).toHaveLength(1);
+		expect(res.results[0]).toMatchObject({
+			externalOrderId: 'create-paid-1',
+			status: 'created'
+		});
+		expect(res.results[0].orderId).toBeTruthy();
+
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order).toBeTruthy();
+		expect(order?.status).toBe('paid');
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.onLocation).toBe(true);
+		expect(order?.shippingAddress).toBeUndefined();
+		expect(order?.externalOrderId).toBe('create-paid-1');
+		expect(order?.externalSourceApiKeyId?.toString()).toBe(apiKey._id.toString());
+		expect(order?.user.sessionId).toBe(`api-v1:${apiKey._id.toString()}`);
+		expect(order?.user.userHasPosOptions).toBe(true);
+		// The admin order listing reads the seller here, and labels a missing one "System".
+		expect(order?.user.userAlias).toBe(API_ORDER_SELLER_ALIAS);
+	});
+
+	it('puts the labels the payload asked for on the order', async () => {
+		await collections.labels.insertOne({
+			_id: 'cashless',
+			name: 'Cashless',
+			color: '#000000',
+			icon: '',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'label-1', labels: ['cashless'] })]
+		});
+		expect(res.status).toBe('ok');
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.orderLabelIds).toEqual([API_ORDER_LABEL_ID, 'cashless']);
+	});
+
+	it('writes the order without an unknown label, and says so', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'label-2', labels: ['nope'] })]
+		});
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].warnings).toContainEqual(
+			expect.objectContaining({ code: 'LABEL_MISSING', details: { labelId: 'nope' } })
+		);
+
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		// The label the caller asked for is gone; the one marking the sale as ours stays.
+		expect(order?.orderLabelIds).toEqual([API_ORDER_LABEL_ID]);
+	});
+
+	it('refuses a replay without mutating the existing order', async () => {
+		const first = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'dup-1' })]
+		});
+		expect(first.results[0].status).toBe('created');
+		const orderId = requireOrderId(first.results[0]);
+
+		const before = await collections.orders.findOne({ _id: orderId });
+		const second = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'dup-1', notes: 'should-not-apply' })]
+		});
+		expect(second.status).toBe('ok_with_errors');
+		expect(second.ok).toBe(false);
+		expect(second.results[0]).toMatchObject({
+			externalOrderId: 'dup-1',
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+		});
+		expect(second.results[0].orderId).toBeUndefined();
+		const after = await collections.orders.findOne({ _id: orderId });
+		expect(after?.notes?.some((n) => n.content === 'should-not-apply')).toBeFalsy();
+		expect(after?.updatedAt?.getTime()).toBe(before?.updatedAt?.getTime());
+		expect(await collections.orders.countDocuments({})).toBe(1);
+	});
+
+	it('creates a second order with the same external id when the key accepts it', async () => {
+		const acceptingKey = { ...apiKey, acceptDuplicateExternalOrderIds: true };
+		const first = await writeBatch({
+			apiKey: acceptingKey,
+			orders: [paidCommand({ externalOrderId: 'dup-accepted-1' })]
+		});
+		const second = await writeBatch({
+			apiKey: acceptingKey,
+			orders: [paidCommand({ externalOrderId: 'dup-accepted-1', notes: 'second sale' })]
+		});
+		expect(first.results[0].status).toBe('created');
+		expect(second.results[0].status).toBe('created');
+		const firstId = requireOrderId(first.results[0]);
+		const secondId = requireOrderId(second.results[0]);
+		expect(secondId).not.toBe(firstId);
+
+		const orders = await collections.orders
+			.find({ externalSourceApiKeyId: apiKey._id, externalOrderId: 'dup-accepted-1' })
+			.toArray();
+		expect(orders.map((order) => order._id).sort()).toEqual([firstId, secondId].sort());
+		expect(orders.every((order) => order.status === 'paid')).toBe(true);
+		// The first order is left as it was: the note went to the new one only.
+		const firstOrder = orders.find((order) => order._id === firstId);
+		expect(firstOrder?.notes?.some((n) => n.content === 'second sale')).toBeFalsy();
+	});
+
+	describe('a key that accepts several orders per external id, when a sale is sent again', () => {
+		const soldAt = '2026-07-29T14:03:00.000Z';
+		const soldLater = '2026-07-29T14:09:00.000Z';
+		const acceptingKey = () => ({ ...apiKey, acceptDuplicateExternalOrderIds: true });
+		const sale = (externalOrderId: string, createdAt?: string) =>
+			paidCommand({ externalOrderId, ...(createdAt && { createdAt }) });
+		const ordersOf = (externalOrderId: string) =>
+			collections.orders.countDocuments({ externalSourceApiKeyId: apiKey._id, externalOrderId });
+
+		it('writes only what was missing when a batch that partly landed is sent again', async () => {
+			const first = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('batch-a', soldAt)]
+			});
+			const landedId = requireOrderId(first.results[0]);
+
+			const replay = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('batch-a', soldAt), sale('batch-b', soldAt)]
+			});
+
+			expect(replay.results.map((result) => result.status)).toEqual(['failed', 'created']);
+			expect(replay.results[0].error).toMatchObject({
+				code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+				details: { orderId: landedId }
+			});
+			expect(await ordersOf('batch-a')).toBe(1);
+			expect(await ordersOf('batch-b')).toBe(1);
+		});
+
+		it('still writes two sales that share an external id and were made at different dates', async () => {
+			const res = await writeBatch({
+				apiKey: acceptingKey(),
+				orders: [sale('same-ref', soldAt), sale('same-ref', soldLater)]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'created']);
+			expect(await ordersOf('same-ref')).toBe(2);
+		});
+
+		it('writes one order when the same sale is sent twice at once', async () => {
+			const [a, b] = await Promise.all([
+				writeOne({ apiKey: acceptingKey(), order: sale('race-sale', soldAt) }),
+				writeOne({ apiKey: acceptingKey(), order: sale('race-sale', soldAt) })
+			]);
+
+			expect([a.status, b.status].sort()).toEqual(['created', 'failed']);
+			expect(await ordersOf('race-sale')).toBe(1);
+		});
+
+		it('cannot tell a sale sent again from a new one when no date is sent, and writes both', async () => {
+			await writeBatch({ apiKey: acceptingKey(), orders: [sale('undated')] });
+			const again = await writeBatch({ apiKey: acceptingKey(), orders: [sale('undated')] });
+
+			expect(again.results[0].status).toBe('created');
+			expect(await ordersOf('undated')).toBe(2);
+		});
+
+		it('leaves a key without the option as it was: the external id alone is refused', async () => {
+			await writeBatch({ apiKey, orders: [sale('plain-key', soldAt)] });
+			const again = await writeBatch({ apiKey, orders: [sale('plain-key', soldLater)] });
+
+			expect(again.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
+			});
+			expect(again.results[0].error?.message).toContain('Accept several orders');
+			expect(await ordersOf('plain-key')).toBe(1);
+		});
+
+		it('ignores the option on a key that has a point-of-sale right and holds it all the same', async () => {
+			const tillKey = { ...acceptingKey(), scopes: ['pos:write' as const] };
+
+			const res = await writeBatch({
+				apiKey: tillKey,
+				orders: [sale('till-key', soldAt), sale('till-key', soldLater)]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'failed']);
+			expect(res.results[1].error).toMatchObject({ code: 'DUPLICATE_EXTERNAL_ORDER_ID' });
+			expect(await ordersOf('till-key')).toBe(1);
+		});
+	});
+
+	it('ignores notifications: false from a key that may not turn notifications off, and says so', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({ externalOrderId: 'not-silent-1', notifications: false }),
+				paidCommand({ externalOrderId: 'usual-1' })
+			]
+		});
+
+		expect(res.status).toBe('ok_with_warnings');
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].warnings?.map((w) => w.code)).toEqual(['NOTIFICATIONS_NOT_DISABLED']);
+		expect(res.results[1].warnings).toBeUndefined();
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		// Written and paid as any other, and notified as any other.
+		expect(order?.status).toBe('paid');
+		expect(order?.skipNotifications).toBeUndefined();
+	});
+
+	it('writes an order nobody is notified about when a key that may turn notifications off asks for it', async () => {
+		const res = await writeBatch({
+			apiKey: { ...apiKey, canDisableNotifications: true },
+			orders: [
+				paidCommand({ externalOrderId: 'silent-1', notifications: false }),
+				paidCommand({ externalOrderId: 'default-1' }),
+				paidCommand({ externalOrderId: 'notified-1', notifications: true })
+			]
+		});
+		expect(res.results.map((r) => r.status)).toEqual(['created', 'created', 'created']);
+		const [silent, byDefault, notified] = await Promise.all(
+			res.results.map((r) => collections.orders.findOne({ _id: requireOrderId(r) }))
+		);
+		expect(silent?.skipNotifications).toBe(true);
+		expect(res.results[0].warnings).toBeUndefined();
+		// The order itself is written and paid as any other: only its notifications are off.
+		expect(silent?.status).toBe('paid');
+		expect(byDefault?.skipNotifications).toBeUndefined();
+		expect(notified?.skipNotifications).toBeUndefined();
+	});
+
+	describe('a product be-BOP does not know', () => {
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
+		});
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
+
+		const unknownLine = (withPrice: boolean, amountMinor = 250) => ({
+			productId: 'ghost-sku',
+			quantity: 1,
+			...(withPrice && { customPrice: { amountMinor, currency: 'EUR' } })
+		});
+		const writeUnknown = (externalOrderId: string, withPrice: boolean, amountMinor?: number) =>
+			writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId,
+						items: [unknownLine(withPrice, amountMinor)],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 250, currency: 'EUR' }
+					})
+				]
+			});
+
+		async function expectRefused(
+			externalOrderId: string,
+			withPrice: boolean,
+			amountMinor?: number
+		) {
+			const res = await writeUnknown(externalOrderId, withPrice, amountMinor);
+
+			expect(res.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'VALIDATION_ERROR', details: { productIds: ['ghost-sku'] } }
+			});
+			expect(res.results[0].error?.message).toContain('ghost-sku');
+			expect(await collections.orders.countDocuments({})).toBe(0);
+			expect(
+				await collections.labels.findOne({ _id: CATALOG_INTEGRITY_WARNING_LABEL_ID })
+			).toBeNull();
+		}
+
+		describe('when be-BOP prices its own catalogue', () => {
+			beforeEach(() => {
+				runtimeConfig.apiV1.trustExternalPricing = false;
+			});
+
+			it('is refused when it is sent with a price', async () => {
+				await expectRefused('unknown-off-priced', true);
+			});
+
+			it('is refused when it is sent without a price', async () => {
+				await expectRefused('unknown-off-unpriced', false);
+			});
+
+			it('is refused when it is sent at a price of zero', async () => {
+				await expectRefused('unknown-off-zero', true, 0);
+			});
+
+			it('leaves a known product sent without a price at its catalogue price, not at zero', async () => {
+				const res = await writeBatch({
+					apiKey,
+					orders: [
+						paidCommand({
+							externalOrderId: 'known-off-unpriced',
+							items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }]
+						})
+					]
+				});
+
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.currencySnapshot.main.totalPrice.amount).toBe(
+					TEST_DIGITAL_PRODUCT.price.amount
+				);
+				expect(order?.status).toBe('paid');
+			});
+		});
+
+		describe('when the third-party system is the source of truth', () => {
+			beforeEach(() => {
+				runtimeConfig.apiV1.trustExternalPricing = true;
+			});
+
+			it('is refused when it is sent without a price', async () => {
+				await expectRefused('unknown-on-unpriced', false);
+			});
+
+			it('is refused when it is sent at a price of zero, which would be a free line', async () => {
+				await expectRefused('unknown-on-zero', true, 0);
+			});
+
+			it('is refused when it is sent at a negative price', async () => {
+				await expectRefused('unknown-on-negative', true, -250);
+			});
+
+			it('is written as a missing product at the price sent, and labelled, when it has one', async () => {
+				const res = await writeUnknown('unknown-on-priced', true);
+
+				expect(res.results[0].status).toBe('created');
+				expect(res.results[0].warnings).toEqual(
+					expect.arrayContaining([
+						expect.objectContaining({ code: 'PRODUCT_MISSING', productId: 'ghost-sku' })
+					])
+				);
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.items[0]?.product.name).toBe('Missing product ghost-sku');
+				expect(order?.items[0]?.product.shipping).toBe(false);
+				expect(order?.currencySnapshot.main.totalPrice.amount).toBe(2.5);
+				expect(order?.orderLabelIds).toContain(CATALOG_INTEGRITY_WARNING_LABEL_ID);
+				expect(
+					await collections.labels.findOne({ _id: CATALOG_INTEGRITY_WARNING_LABEL_ID })
+				).toBeTruthy();
+			});
+		});
+
+		it('refuses the whole command it is in, and only that command of a batch', async () => {
+			runtimeConfig.apiV1.trustExternalPricing = false;
+
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({ externalOrderId: 'batch-ok' }),
+					paidCommand({
+						externalOrderId: 'batch-mixed',
+						items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }, unknownLine(true)],
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor: 350, currency: 'EUR' }
+					})
+				]
+			});
+
+			expect(res.results.map((result) => result.status)).toEqual(['created', 'failed']);
+			expect(res.results[1].error?.details).toEqual({ productIds: ['ghost-sku'] });
+			expect(await collections.orders.countDocuments({})).toBe(1);
+		});
+	});
+
+	it('fails the command when stock is insufficient', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'stock-fail-1',
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: TEST_PRODUCT_STOCK + 1 }],
+					payment: {
+						method: 'point-of-sale',
+						status: 'pending',
+						amountMinor: amountToMinor(
+							TEST_DIGITAL_PRODUCT.price.amount * (TEST_PRODUCT_STOCK + 1),
+							'EUR'
+						),
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(res.status).toBe('ok_with_errors');
+		expect(res.ok).toBe(false);
+		expect(res.results[0].status).toBe('failed');
+		expect(res.results[0].error?.code).toBe('STOCK_UNAVAILABLE');
+		expect(await collections.orders.countDocuments({})).toBe(0);
+	});
+
+	it('mixes created / failed / warning statuses in one batch', async () => {
+		// A product be-BOP does not know only gets a warning when the third party sets the prices.
+		const previousTrust = runtimeConfig.apiV1.trustExternalPricing;
+		runtimeConfig.apiV1.trustExternalPricing = true;
+		onTestFinished(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previousTrust;
+		});
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({ externalOrderId: 'mix-ok' }),
+				paidCommand({
+					externalOrderId: 'mix-stock',
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: TEST_PRODUCT_STOCK + 5 }],
+					payment: {
+						method: 'point-of-sale',
+						status: 'pending',
+						amountMinor: 1,
+						currency: 'EUR'
+					}
+				}),
+				paidCommand({
+					externalOrderId: 'mix-missing',
+					items: [
+						{ productId: 'absent', quantity: 1, customPrice: { amountMinor: 100, currency: 'EUR' } }
+					],
+					payment: {
+						method: 'point-of-sale',
+						status: 'paid',
+						amountMinor: 100,
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(res.status).toBe('ok_with_errors');
+		expect(res.results.map((r) => r.status)).toEqual(['created', 'failed', 'created']);
+		expect(res.results[2].warnings?.[0]?.code).toBe('PRODUCT_MISSING');
+	});
+
+	it('honors client createdAt and maps customFields + posLabel', async () => {
+		await collections.posPaymentSubtypes.updateOne(
+			{ slug: 'cash' },
+			{
+				$set: {
+					name: 'Cash',
+					sortOrder: 0,
+					updatedAt: new Date(),
+					disabled: false
+				},
+				$setOnInsert: { _id: new ObjectId(), createdAt: new Date() }
+			},
+			{ upsert: true }
+		);
+		const createdAt = '2024-06-01T12:00:00.000Z';
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'meta-1',
+					createdAt,
+					customFields: { table: 'A1' },
+					payment: {
+						method: 'point-of-sale',
+						status: 'pending',
+						amountMinor: amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR'),
+						currency: 'EUR',
+						posLabel: 'cash'
+					}
+				})
+			]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order?.createdAt.toISOString()).toBe(createdAt);
+		expect(order?.customCheckoutFields).toEqual([
+			expect.objectContaining({ fieldId: 'api:table', slug: 'table', type: 'free', value: 'A1' })
+		]);
+		expect(order?.payments[0]?.posSubtype).toBe('cash');
+		expect(order?.status).toBe('pending');
+	});
+
+	it('warns POS_LABEL_UNKNOWN without failing', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'warn-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'paid',
+						amountMinor: amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR'),
+						currency: 'EUR',
+						posLabel: 'does-not-exist'
+					}
+				})
+			]
+		});
+		expect(res.status).toBe('ok_with_warnings');
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].warnings?.map((w) => w.code)).toEqual(['POS_LABEL_UNKNOWN']);
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order?.status).toBe('paid');
+		expect(order?.payments[0]?.posSubtype).toBeUndefined();
+	});
+
+	describe('an order is only paid by a payment that covers it', () => {
+		const expectedMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+
+		async function writePaid(externalOrderId: string, amountMinor: number) {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId,
+						payment: { method: 'point-of-sale', status: 'paid', amountMinor, currency: 'EUR' }
+					})
+				]
+			});
+			const result = res.results[0];
+			const order = await collections.orders.findOne({ _id: requireOrderId(result) });
+			if (!order) {
+				throw new Error('expected the order to be written');
+			}
+			return { result, order };
+		}
+
+		it('writes the order paid when the amount sent is the amount expected', async () => {
+			const { result, order } = await writePaid('covered-1', expectedMinor);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(result.warnings).toBeUndefined();
+			expect(order.status).toBe('paid');
+			expect(order.payments.map((payment) => payment.status)).toEqual(['paid']);
+			expect(order.currencySnapshot.main.totalReceived?.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount
+			);
+		});
+
+		it('writes the order paid when the amount sent is one cent under, as be-BOP does for any payment', async () => {
+			const { result, order } = await writePaid('one-cent-under-1', expectedMinor - 1);
+
+			expect(order.status).toBe('paid');
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(order.payments.map((payment) => payment.status)).toEqual(['paid']);
+			expect(order.payments[0].expiresAt).toBeUndefined();
+		});
+
+		it('writes the order pending, and its payment too, when the amount sent is lower', async () => {
+			const { result, order } = await writePaid('short-1', expectedMinor - 2);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'pending' });
+			expect(result.warnings?.map((w) => w.code)).toEqual(['AMOUNT_MISMATCH']);
+			expect(order.status).toBe('pending');
+			// Nothing is recorded as received: no payment is paid, no invoice is numbered.
+			expect(order.payments.map((payment) => payment.status)).toEqual(['pending']);
+			expect(order.payments[0].invoice).toBeUndefined();
+			expect(order.currencySnapshot.main.totalReceived).toBeUndefined();
+		});
+
+		it('keeps the short amount the till sent on the pending payment, counted nowhere as paid', async () => {
+			const { result, order } = await writePaid('short-kept-1', 4000);
+
+			expect(JSON.stringify(order)).toMatch(/"amount":40[,}]/);
+			expect(order.payments[0].currencySnapshot.main.received).toEqual({
+				amount: 40,
+				currency: 'EUR'
+			});
+			// Still an order nobody paid: nothing the shop or the API reads as money in.
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'pending' });
+			expect(order.status).toBe('pending');
+			expect(order.payments.map((payment) => payment.status)).toEqual(['pending']);
+			expect(order.payments[0].paidAt).toBeUndefined();
+			expect(order.payments[0].invoice).toBeUndefined();
+			expect(order.currencySnapshot.main.totalReceived).toBeUndefined();
+			expect(ordersModule.isOrderFullyPaid(order)).toBe(false);
+			expect(paidAmount(order)).toBeNull();
+		});
+
+		it('lets an order written pending for a short amount expire at the shop payment deadline', async () => {
+			const before = Date.now();
+			const { order } = await writePaid('short-expires-1', expectedMinor - 2);
+			// The mark is what lets the order routine enforce the deadline.
+			expect(order.payments[0].expireAtDeadline).toBe(true);
+			const deadline = order.payments[0].expiresAt?.getTime() ?? 0;
+			const timeoutMs = runtimeConfig.desiredPaymentTimeout * 60_000;
+			expect(deadline).toBeGreaterThanOrEqual(before + timeoutMs);
+			expect(deadline).toBeLessThanOrEqual(Date.now() + timeoutMs);
+
+			// Not yet due: the routine leaves it alone.
+			await expect(
+				ordersModule.expireUnfollowedPayment(order, order.payments[0])
+			).resolves.toBeNull();
+
+			const afterDeadline = new Date(deadline + 1);
+			const expiredFrom = Date.now();
+			const expired = await ordersModule.expireUnfollowedPayment(
+				order,
+				order.payments[0],
+				afterDeadline
+			);
+
+			expect(expired?.status).toBe('expired');
+			expect(expired?.payments.map((payment) => payment.status)).toEqual(['expired']);
+			// The date a stream resumes on moves with it.
+			expect(expired?.updatedAt.getTime()).toBeGreaterThanOrEqual(expiredFrom);
+		});
+
+		it('never expires a point-of-sale payment that carries no deadline', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'till-pending-forever',
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: expectedMinor,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			if (!order) {
+				throw new Error('expected the order to be written');
+			}
+			expect(order.payments[0].expiresAt).toBeUndefined();
+			expect(order.payments[0].expireAtDeadline).toBeUndefined();
+
+			const inTenYears = new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000);
+			await expect(
+				ordersModule.expireUnfollowedPayment(order, order.payments[0], inTenYears)
+			).resolves.toBeNull();
+			expect((await collections.orders.findOne({ _id: order._id }))?.status).toBe('pending');
+		});
+
+		it('records what the till received, not what be-BOP expected, when it sent more', async () => {
+			const { result, order } = await writePaid('over-1', expectedMinor + 250);
+
+			expect(result).toMatchObject({ status: 'created', orderStatus: 'paid' });
+			expect(result.warnings?.map((w) => w.code)).toEqual(['AMOUNT_MISMATCH']);
+			expect(order.status).toBe('paid');
+			expect(order.currencySnapshot.main.totalReceived?.amount).toBe(
+				TEST_DIGITAL_PRODUCT.price.amount + 2.5
+			);
+		});
+
+		it('says pending for an order the till itself sent as pending', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'till-pending-1',
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: expectedMinor,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+
+			expect(res.results[0]).toMatchObject({ status: 'created', orderStatus: 'pending' });
+		});
+	});
+
+	it('fails the command when order currency differs from mainCurrency', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'cur-1', currency: 'USD' })]
+		});
+		expect(res.status).toBe('ok_with_errors');
+		expect(res.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'CURRENCY_UNSUPPORTED' }
+		});
+		expect(await collections.orders.countDocuments({})).toBe(0);
+	});
+
+	it('does not complete a pending order from a replay marked paid', async () => {
+		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const first = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'dup-pay-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'pending',
+						amountMinor,
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(first.results[0].status).toBe('created');
+		const orderId = requireOrderId(first.results[0]);
+
+		const second = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'dup-pay-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'paid',
+						amountMinor,
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(second.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+		});
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.status).toBe('pending');
+		expect(order?.payments).toHaveLength(1);
+		expect(order?.payments[0]?.status).toBe('pending');
+	});
+
+	it('applies canceled payment via domain path (not raw status set)', async () => {
+		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'cancel-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'canceled',
+						amountMinor,
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order?.payments[0]?.status).toBe('canceled');
+		// All payments canceled while order was pending → order becomes canceled via onOrderPaymentFailed
+		expect(order?.status).toBe('canceled');
+	});
+
+	describe('C4 admin-parity payment transitions', () => {
+		function pendingCreate(externalOrderId: string) {
+			const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+			return paidCommand({
+				externalOrderId,
+				payment: {
+					method: 'point-of-sale',
+					status: 'pending',
+					amountMinor,
+					currency: 'EUR'
+				}
+			});
+		}
+
+		it('pending→paid settles via onOrderPayment (admin confirm parity)', async () => {
+			const paySpy = vi.spyOn(ordersModule, 'onOrderPayment');
+			try {
+				const res = await writeBatch({
+					apiKey,
+					orders: [paidCommand({ externalOrderId: 'c4-paid' })]
+				});
+				expect(res.results[0].status).toBe('created');
+				expect(paySpy).toHaveBeenCalled();
+				const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+				expect(order?.payments[0]?.status).toBe('paid');
+				expect(order?.status).toBe('paid');
+			} finally {
+				paySpy.mockRestore();
+			}
+		});
+
+		it.each(['canceled', 'failed', 'expired'] as const)(
+			'pending→%s via onOrderPaymentFailed (admin cancel / lock parity)',
+			async (status) => {
+				const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+				const failedSpy = vi.spyOn(ordersModule, 'onOrderPaymentFailed');
+				try {
+					// One call: the order is created with its payment pending, then the outcome the till
+					// reported is applied to it.
+					const res = await writeBatch({
+						apiKey,
+						orders: [
+							paidCommand({
+								externalOrderId: `c4-${status}`,
+								payment: {
+									method: 'point-of-sale',
+									status,
+									amountMinor,
+									currency: 'EUR'
+								}
+							})
+						]
+					});
+					expect(res.results[0].status).toBe('created');
+					expect(failedSpy).toHaveBeenCalledWith(expect.anything(), expect.anything(), status, {
+						terminal: true
+					});
+					const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+					expect(order?.payments).toHaveLength(1);
+					expect(order?.payments[0]?.status).toBe(status);
+					// Its only payment is closed, so the order is closed with it rather than left waiting
+					// for a payment that will never come.
+					expect(order?.status).toBe(status);
+				} finally {
+					failedSpy.mockRestore();
+				}
+			}
+		);
+
+		it('keeps a paid deposit, and the order pending, when the other payment fails', async () => {
+			const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+			const depositMinor = Math.floor(totalMinor / 2);
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					{
+						externalOrderId: 'c4-deposit-then-failed',
+						currency: 'EUR' as const,
+						items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+						payments: [
+							{
+								method: 'point-of-sale' as const,
+								status: 'paid' as const,
+								amountMinor: depositMinor,
+								currency: 'EUR' as const
+							},
+							{
+								method: 'point-of-sale' as const,
+								status: 'failed' as const,
+								amountMinor: totalMinor - depositMinor,
+								currency: 'EUR' as const
+							}
+						]
+					}
+				]
+			});
+			expect(res.results[0].status).toBe('created');
+			const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+			expect(order?.payments.map((p) => p.status)).toEqual(['paid', 'failed']);
+			// A payment was received: the order is neither closed as failed nor counted as paid.
+			expect(order?.status).toBe('pending');
+		});
+
+		it('refuses a replay of a paid order and leaves it as it is', async () => {
+			const first = await writeBatch({
+				apiKey,
+				orders: [paidCommand({ externalOrderId: 'c4-replay-paid' })]
+			});
+			const orderId = requireOrderId(first.results[0]);
+			const before = await collections.orders.findOne({ _id: orderId });
+			const second = await writeBatch({
+				apiKey,
+				orders: [paidCommand({ externalOrderId: 'c4-replay-paid', notes: 'ignored' })]
+			});
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			const after = await collections.orders.findOne({ _id: orderId });
+			expect(after?.payments[0]?.status).toBe('paid');
+			expect(after?.updatedAt?.getTime()).toBe(before?.updatedAt?.getTime());
+			expect(after?.notes?.some((n) => n.content === 'ignored')).toBeFalsy();
+		});
+
+		it('a failed order never turns paid on a later call', async () => {
+			const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+			const failedCommand = paidCommand({
+				externalOrderId: 'c4-terminal',
+				payment: {
+					method: 'point-of-sale',
+					status: 'failed',
+					amountMinor,
+					currency: 'EUR'
+				}
+			});
+			const first = await writeBatch({ apiKey, orders: [failedCommand] });
+			const orderId = requireOrderId(first.results[0]);
+			const failed = await collections.orders.findOne({ _id: orderId });
+			expect(failed?.status).toBe('failed');
+
+			const paidRetry = paidCommand({ externalOrderId: 'c4-terminal' });
+			const refused = await writeBatch({ apiKey, orders: [paidRetry] });
+			expect(refused.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
+			});
+
+			// Accepted as a new order, the paid retry is paid on its own; the failed one stays failed.
+			const accepted = await writeBatch({
+				apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
+				orders: [paidRetry]
+			});
+			const retryId = requireOrderId(accepted.results[0]);
+			expect(retryId).not.toBe(orderId);
+			expect((await collections.orders.findOne({ _id: retryId }))?.status).toBe('paid');
+
+			const after = await collections.orders.findOne({ _id: orderId });
+			expect(after?.payments[0]?.status).toBe('failed');
+			expect(after?.status).toBe('failed');
+		});
+
+		it('refuses a pending replay, leaving the pending order as it is', async () => {
+			const first = await writeBatch({ apiKey, orders: [pendingCreate('c4-pending-noop')] });
+			const orderId = requireOrderId(first.results[0]);
+			const second = await writeBatch({
+				apiKey,
+				orders: [pendingCreate('c4-pending-noop')]
+			});
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			const order = await collections.orders.findOne({ _id: orderId });
+			expect(order?.payments[0]?.status).toBe('pending');
+			expect(order?.status).toBe('pending');
+		});
+	});
+
+	it('creates one order when the same external id is sent twice at once, and refuses the other', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-1' });
+		const [a, b] = await Promise.all([
+			writeOne({ apiKey, order: cmd }),
+			writeOne({ apiKey, order: cmd })
+		]);
+		expect([a.status, b.status].sort()).toEqual(['created', 'failed']);
+		const [refused, created] = a.status === 'failed' ? [a, b] : [b, a];
+		expect(refused.error).toMatchObject({
+			code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+			details: { orderId: created.orderId }
+		});
+		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-1' })).toBe(1);
+	});
+
+	it('frees the external id once the write is over, so a later call is told which order holds it', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-2' });
+		const first = await writeOne({ apiKey, order: cmd });
+		const replay = await writeOne({ apiKey, order: cmd });
+
+		expect(replay.error?.details).toEqual({ orderId: first.orderId });
+		expect(await collections.locks.countDocuments({ _id: /^api-v1-order:/ })).toBe(0);
+	});
+
+	it('does not say an order exists while another write of the same external id is still running', async () => {
+		// What a write leaves when it holds the id and has not finished, or never will.
+		const now = new Date();
+		await collections.locks.insertOne({
+			_id: `api-v1-order:${apiKey._id.toString()}:held-ext-1`,
+			ownerId: new ObjectId(),
+			instanceId: new ObjectId(),
+			createdAt: now,
+			updatedAt: now
+		});
+
+		const result = await writeOne({
+			apiKey,
+			order: paidCommand({ externalOrderId: 'held-ext-1' })
+		});
+
+		expect(await collections.orders.countDocuments({ externalOrderId: 'held-ext-1' })).toBe(0);
+		expect(result.status).toBe('failed');
+		expect(result.error?.code).not.toBe('DUPLICATE_EXTERNAL_ORDER_ID');
+		expect(result.error).toMatchObject({
+			code: 'EXTERNAL_ORDER_ID_IN_PROGRESS',
+			details: { retryable: true }
+		});
+		// The hold is the other write's: giving up must not free it.
+		expect(await collections.locks.countDocuments({ _id: /held-ext-1$/ })).toBe(1);
+	}, 15_000);
+
+	it('writes one order for eight identical calls at once, and names it to the seven others', async () => {
+		const cmd = paidCommand({ externalOrderId: 'race-ext-8' });
+		const results = await Promise.all(
+			Array.from({ length: 8 }, () => writeOne({ apiKey, order: cmd }))
+		);
+
+		const created = results.filter((result) => result.status === 'created');
+		expect(created).toHaveLength(1);
+		expect(
+			results.filter((result) => result.status === 'failed').map((result) => result.error)
+		).toEqual(
+			Array.from({ length: 7 }, () =>
+				expect.objectContaining({
+					code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+					details: { orderId: created[0].orderId }
+				})
+			)
+		);
+		expect(await collections.orders.countDocuments({ externalOrderId: 'race-ext-8' })).toBe(1);
+	}, 15_000);
+
+	it('P2: same externalOrderId twice in one batch → created then refused', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({ externalOrderId: 'batch-dup' }),
+				paidCommand({ externalOrderId: 'batch-dup' })
+			]
+		});
+		expect(res.results).toHaveLength(2);
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[1]).toMatchObject({
+			status: 'failed',
+			error: {
+				code: 'DUPLICATE_EXTERNAL_ORDER_ID',
+				details: { orderId: res.results[0].orderId }
+			}
+		});
+		expect(res.status).toBe('ok_with_errors');
+		expect(await collections.orders.countDocuments({})).toBe(1);
+	});
+
+	it('P2: same externalOrderId twice in one batch → two orders when the key accepts it', async () => {
+		const res = await writeBatch({
+			apiKey: { ...apiKey, acceptDuplicateExternalOrderIds: true },
+			orders: [
+				paidCommand({ externalOrderId: 'batch-dup-accepted' }),
+				paidCommand({ externalOrderId: 'batch-dup-accepted' })
+			]
+		});
+		expect(res.results.map((r) => r.status)).toEqual(['created', 'created']);
+		expect(res.results[1].orderId).not.toBe(res.results[0].orderId);
+		expect(await collections.orders.countDocuments({ externalOrderId: 'batch-dup-accepted' })).toBe(
+			2
+		);
+	});
+
+	it('Face A onLocation accepts shippable SKU without shippingAddress', async () => {
+		await collections.products.insertOne({ ...TEST_PHYSICAL_PRODUCT });
+		const amountMinor = amountToMinor(TEST_PHYSICAL_PRODUCT.price.amount, 'EUR');
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'pos-physical-onlocation-1',
+					items: [{ productId: TEST_PHYSICAL_PRODUCT._id, quantity: 1 }],
+					payment: {
+						method: 'point-of-sale',
+						status: 'paid',
+						amountMinor,
+						currency: 'EUR'
+					}
+				})
+			]
+		});
+		expect(res.status).toBe('ok');
+		expect(res.results[0].status).toBe('created');
+		expect(res.results[0].error?.message ?? '').not.toMatch(/Shipping address is required/i);
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order).toBeTruthy();
+		expect(order?.onLocation).toBe(true);
+		expect(order?.shippingAddress).toBeUndefined();
+		expect(order?.items[0]?.product.shipping).toBe(true);
+	});
+
+	it('sells at the counter with mandatory billing on, as /pos/touch does', async () => {
+		// The rule targets the checkout form. A till has none, and the API is a till.
+		const prev = runtimeConfig.isBillingAddressMandatory;
+		runtimeConfig.isBillingAddressMandatory = true;
+		try {
+			const res = await writeBatch({
+				apiKey,
+				orders: [paidCommand({ externalOrderId: 'billing-gate-1' })]
+			});
+			expect(res.results[0].status).toBe('created');
+			expect(await collections.orders.countDocuments({})).toBe(1);
+		} finally {
+			runtimeConfig.isBillingAddressMandatory = prev;
+		}
+	});
+
+	describe('zero total sent by the third-party system', () => {
+		// A line sent at zero is only charged at zero when the third party sets the prices.
+		let previous: boolean;
+		beforeEach(() => {
+			previous = runtimeConfig.apiV1.trustExternalPricing;
+			runtimeConfig.apiV1.trustExternalPricing = true;
+		});
+		afterEach(() => {
+			runtimeConfig.apiV1.trustExternalPricing = previous;
+		});
+
+		it('zero-total paid uses free domain path (onOrderPayment), not raw status set', async () => {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-paid-1',
+						items: [
+							{
+								productId: TEST_DIGITAL_PRODUCT._id,
+								quantity: 1,
+								customPrice: { amountMinor: 0, currency: 'EUR' }
+							}
+						],
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: 0,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(res.results[0].status).toBe('created');
+			const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+			expect(order?.status).toBe('paid');
+			expect(order?.payments.length).toBeGreaterThanOrEqual(1);
+			expect(order?.payments[0]?.method).toBe('free');
+			expect(order?.payments[0]?.status).toBe('paid');
+			expect(order?.payments[0]?.invoice).toBeTruthy();
+		});
+
+		it('zero-total pending order is not settled by a replay marked paid', async () => {
+			const zeroLine = [
+				{
+					productId: TEST_DIGITAL_PRODUCT._id,
+					quantity: 1,
+					customPrice: { amountMinor: 0, currency: 'EUR' as const }
+				}
+			];
+			const first = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-settle-1',
+						items: zeroLine,
+						payment: {
+							method: 'point-of-sale',
+							status: 'pending',
+							amountMinor: 0,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(first.results[0].status).toBe('created');
+			const orderId = requireOrderId(first.results[0]);
+			const pending = await collections.orders.findOne({ _id: orderId });
+			expect(pending?.status).toBe('pending');
+			expect(pending?.payments ?? []).toHaveLength(0);
+
+			const second = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'zero-settle-1',
+						items: zeroLine,
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor: 0,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			const after = await collections.orders.findOne({ _id: orderId });
+			expect(after?.status).toBe('pending');
+			expect(after?.payments ?? []).toHaveLength(0);
+		});
+	});
+
+	it('creates an order with two payments and applies each status to its own row', async () => {
+		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const aMinor = Math.floor(totalMinor / 2);
+		const bMinor = totalMinor - aMinor;
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'multi-pay-1',
+					currency: 'EUR' as const,
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					payments: [
+						{
+							method: 'point-of-sale' as const,
+							status: 'paid' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const
+						},
+						{
+							method: 'point-of-sale' as const,
+							status: 'canceled' as const,
+							amountMinor: bMinor,
+							currency: 'EUR' as const
+						}
+					]
+				}
+			]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments).toHaveLength(2);
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.payments[1]?.status).toBe('canceled');
+		// Not fully paid (second canceled) — order must not flip to paid.
+		expect(order?.status).not.toBe('paid');
+	});
+
+	it('mono singular payment still works alongside payments[] support', async () => {
+		const res = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'mono-still-1' })]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+		expect(order?.payments).toHaveLength(1);
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.status).toBe('paid');
+	});
+
+	it('persists externalPaymentId and applies each status to the row written for it', async () => {
+		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const aMinor = Math.floor(totalMinor / 2);
+		const bMinor = totalMinor - aMinor;
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'multi-ids-1',
+					currency: 'EUR' as const,
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					payments: [
+						{
+							method: 'point-of-sale' as const,
+							status: 'canceled' as const,
+							amountMinor: bMinor,
+							currency: 'EUR' as const,
+							externalPaymentId: 'pay-b'
+						},
+						{
+							method: 'point-of-sale' as const,
+							status: 'paid' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const,
+							externalPaymentId: 'pay-a'
+						}
+					]
+				}
+			]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments.map((p) => p.externalPaymentId)).toEqual(['pay-b', 'pay-a']);
+		const byId = Object.fromEntries(
+			(order?.payments ?? []).map((p) => [p.externalPaymentId, p.status])
+		);
+		expect(byId['pay-a']).toBe('paid');
+		expect(byId['pay-b']).toBe('canceled');
+	});
+
+	it('applies statuses by position when payments carry no externalPaymentId', async () => {
+		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const aMinor = Math.floor(totalMinor / 3);
+		const bMinor = totalMinor - aMinor;
+		expect(aMinor).not.toBe(bMinor);
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'multi-position-1',
+					currency: 'EUR' as const,
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					payments: [
+						{
+							method: 'point-of-sale' as const,
+							status: 'paid' as const,
+							amountMinor: bMinor,
+							currency: 'EUR' as const
+						},
+						{
+							method: 'point-of-sale' as const,
+							status: 'canceled' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const
+						}
+					]
+				}
+			]
+		});
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments.map((p) => amountToMinor(p.price.amount, 'EUR'))).toEqual([
+			bMinor,
+			aMinor
+		]);
+		expect(order?.payments[0]?.status).toBe('paid'); // bMinor row
+		expect(order?.payments[1]?.status).toBe('canceled'); // aMinor row
+	});
+
+	it('writes one row per payment, even when two share an externalPaymentId', async () => {
+		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const aMinor = Math.floor(totalMinor / 3);
+		const res = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'multi-shared-id-1',
+					currency: 'EUR' as const,
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					payments: [
+						{
+							method: 'point-of-sale' as const,
+							status: 'paid' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const,
+							externalPaymentId: 'only-a'
+						},
+						{
+							method: 'point-of-sale' as const,
+							status: 'canceled' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const,
+							externalPaymentId: 'only-a'
+						}
+					]
+				}
+			]
+		});
+		expect(res.results[0].status).toBe('created');
+		const order = await collections.orders.findOne({ _id: requireOrderId(res.results[0]) });
+		expect(order?.payments).toHaveLength(2);
+		expect(order?.payments[0]?.status).toBe('paid');
+		expect(order?.payments[1]?.status).toBe('canceled');
+	});
+
+	it('refuses a replay before touching any payment of the existing order', async () => {
+		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const first = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'settle-err-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'pending',
+						amountMinor,
+						currency: 'EUR',
+						externalPaymentId: 'pay-settle-1'
+					}
+				}),
+				paidCommand({ externalOrderId: 'settle-ok-sibling' })
+			]
+		});
+		expect(first.results[0].status).toBe('created');
+		expect(first.results[1].status).toBe('created');
+		const orderId = requireOrderId(first.results[0]);
+
+		const paySpy = vi.spyOn(ordersModule, 'onOrderPayment');
+		const failedSpy = vi.spyOn(ordersModule, 'onOrderPaymentFailed');
+		try {
+			const second = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({ externalOrderId: 'settle-ok-sibling' }),
+					paidCommand({
+						externalOrderId: 'settle-err-1',
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor,
+							currency: 'EUR',
+							externalPaymentId: 'pay-settle-1'
+						}
+					})
+				]
+			});
+			// Both refused, each on its own: the batch still answers for every command.
+			expect(second.results.map((r) => r.error?.code)).toEqual([
+				'DUPLICATE_EXTERNAL_ORDER_ID',
+				'DUPLICATE_EXTERNAL_ORDER_ID'
+			]);
+			expect(second.results[1].error?.details).toEqual({ orderId });
+			expect(second.status).toBe('ok_with_errors');
+			expect(paySpy).not.toHaveBeenCalled();
+			expect(failedSpy).not.toHaveBeenCalled();
+		} finally {
+			paySpy.mockRestore();
+			failedSpy.mockRestore();
+		}
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.status).toBe('pending');
+		expect(order?.payments[0]?.status).toBe('pending');
+	});
+
+	it('never adds a payment to an existing order on a replay', async () => {
+		const totalMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const aMinor = Math.floor(totalMinor / 2);
+		// Under-covered on purpose: the order still has room for the payment the replay brings.
+		const first = await writeBatch({
+			apiKey,
+			orders: [
+				{
+					externalOrderId: 'add-log-1',
+					currency: 'EUR' as const,
+					items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+					payments: [
+						{
+							method: 'point-of-sale' as const,
+							status: 'pending' as const,
+							amountMinor: aMinor,
+							currency: 'EUR' as const,
+							externalPaymentId: 'pay-a'
+						},
+						{
+							method: 'point-of-sale' as const,
+							status: 'pending' as const,
+							amountMinor: 1,
+							currency: 'EUR' as const,
+							externalPaymentId: 'pay-tiny'
+						}
+					]
+				}
+			]
+		});
+		expect(first.results[0].status).toBe('created');
+		const orderId = requireOrderId(first.results[0]);
+
+		const addSpy = vi.spyOn(ordersModule, 'addOrderPayment');
+		try {
+			const second = await writeBatch({
+				apiKey,
+				orders: [
+					{
+						externalOrderId: 'add-log-1',
+						currency: 'EUR' as const,
+						items: [{ productId: TEST_DIGITAL_PRODUCT._id, quantity: 1 }],
+						payments: [
+							{
+								method: 'point-of-sale' as const,
+								status: 'pending' as const,
+								amountMinor: aMinor,
+								currency: 'EUR' as const,
+								externalPaymentId: 'pay-a'
+							},
+							{
+								method: 'point-of-sale' as const,
+								status: 'pending' as const,
+								amountMinor: 1,
+								currency: 'EUR' as const,
+								externalPaymentId: 'pay-tiny'
+							},
+							{
+								method: 'point-of-sale' as const,
+								status: 'pending' as const,
+								amountMinor: totalMinor - aMinor - 1,
+								currency: 'EUR' as const,
+								externalPaymentId: 'pay-new-extra'
+							}
+						]
+					}
+				]
+			});
+			expect(second.results[0]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId } }
+			});
+			expect(addSpy).not.toHaveBeenCalled();
+		} finally {
+			addSpy.mockRestore();
+		}
+		const order = await collections.orders.findOne({ _id: orderId });
+		expect(order?.payments.map((p) => p.externalPaymentId)).toEqual(['pay-a', 'pay-tiny']);
+	});
+
+	it('uses channel api and does not apply auto-discounts on Face A create', async () => {
+		const now = new Date();
+		await collections.discounts.insertOne({
+			_id: 'api-skip-auto-disc',
+			name: 'API/Web-POS 50%',
+			mode: 'percentage',
+			percentage: 50,
+			wholeCatalog: true,
+			productIds: [],
+			// Even if a shop discount targets api (or legacy web-pos), Face A must not rewrite totals.
+			channels: ['api', 'web-pos'],
+			beginsAt: new Date(now.getTime() - 60_000),
+			endsAt: null,
+			createdAt: now,
+			updatedAt: now
+		});
+		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		const createSpy = vi.spyOn(ordersModule, 'createOrder');
+		try {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'no-auto-disc-1',
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor,
+							currency: 'EUR'
+						}
+					})
+				]
+			});
+			expect(res.results[0].status).toBe('created');
+			expect(createSpy).toHaveBeenCalledWith(
+				expect.any(Array),
+				expect.anything(),
+				expect.objectContaining({ channel: 'api', skipAutoDiscounts: true })
+			);
+			const order = await collections.orders.findOne({ _id: res.results[0].orderId });
+			expect(order).toBeTruthy();
+			if (!order) {
+				throw new Error('expected order');
+			}
+			// Catalog line total must remain undiscounted (50% discount must not apply).
+			expect(order.currencySnapshot.main.totalPrice.amount).toBe(TEST_DIGITAL_PRODUCT.price.amount);
+			expect(order.items.every((item) => !item.discountPercentage)).toBe(true);
+			const codes = res.results[0].warnings?.map((w) => w.code) ?? [];
+			expect(codes).not.toContain('AMOUNT_MISMATCH');
+		} finally {
+			createSpy.mockRestore();
+		}
+	});
+
+	it('domain error during create settle stays created with PAYMENT_SYNC_FAILED', async () => {
+		const amountMinor = amountToMinor(TEST_DIGITAL_PRODUCT.price.amount, 'EUR');
+		// Sibling created before spy so only the failing command exercises the create-path catch.
+		const sibling = await writeBatch({
+			apiKey,
+			orders: [paidCommand({ externalOrderId: 'create-settle-ok-sibling' })]
+		});
+		expect(sibling.results[0].status).toBe('created');
+
+		const paySpy = vi.spyOn(ordersModule, 'onOrderPayment').mockRejectedValue({
+			status: 400,
+			body: 'Payment settle boom'
+		});
+		const logSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		try {
+			const res = await writeBatch({
+				apiKey,
+				orders: [
+					paidCommand({
+						externalOrderId: 'create-settle-err-1',
+						payment: {
+							method: 'point-of-sale',
+							status: 'paid',
+							amountMinor,
+							currency: 'EUR',
+							externalPaymentId: 'pay-create-1'
+						}
+					}),
+					// Already sent: refused before any payment is touched (no onOrderPayment call).
+					paidCommand({ externalOrderId: 'create-settle-ok-sibling' })
+				]
+			});
+			expect(res.results[0]).toMatchObject({
+				status: 'created',
+				orderId: expect.any(String)
+			});
+			expect(res.results[0].warnings).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						code: 'PAYMENT_SYNC_FAILED',
+						details: expect.objectContaining({ domainCode: 'DOMAIN_ERROR' })
+					})
+				])
+			);
+			expect(res.results[1]).toMatchObject({
+				status: 'failed',
+				error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID' }
+			});
+			expect(res.status).toBe('ok_with_errors');
+			expect(logSpy).toHaveBeenCalledWith(
+				'[api/v1] payment sync on create failed',
+				expect.objectContaining({
+					externalOrderId: 'create-settle-err-1',
+					code: 'DOMAIN_ERROR'
+				})
+			);
+		} finally {
+			paySpy.mockRestore();
+			logSpy.mockRestore();
+		}
+
+		// The external id is on the order — a retry is refused, not a second create.
+		const createdId = (
+			await collections.orders.findOne({
+				externalSourceApiKeyId: apiKey._id,
+				externalOrderId: 'create-settle-err-1'
+			})
+		)?._id;
+		expect(createdId).toBeTruthy();
+		const retry = await writeBatch({
+			apiKey,
+			orders: [
+				paidCommand({
+					externalOrderId: 'create-settle-err-1',
+					payment: {
+						method: 'point-of-sale',
+						status: 'paid',
+						amountMinor,
+						currency: 'EUR',
+						externalPaymentId: 'pay-create-1'
+					}
+				})
+			]
+		});
+		expect(retry.results[0]).toMatchObject({
+			status: 'failed',
+			error: { code: 'DUPLICATE_EXTERNAL_ORDER_ID', details: { orderId: createdId } }
+		});
+		expect(
+			await collections.orders.countDocuments({ externalOrderId: 'create-settle-err-1' })
+		).toBe(1);
+	});
+});

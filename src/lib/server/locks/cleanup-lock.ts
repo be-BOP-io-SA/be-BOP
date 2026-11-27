@@ -7,6 +7,7 @@ import { getS3Client } from '../s3';
 import { runtimeConfig } from '$lib/server/runtime-config';
 import { ObjectId } from 'mongodb';
 import { anonymizeOrderData } from '../orders';
+import { trimApiV1LogToCeiling } from '../api/v1/log';
 
 const lock = new Lock('cleanup');
 
@@ -151,6 +152,12 @@ async function cleanup() {
 			}
 		} catch (err) {
 			console.error('Error during data cleanup:', err);
+		}
+
+		try {
+			await trimApiV1LogToCeiling();
+		} catch (err) {
+			console.error('[api/v1] could not trim the call log', err);
 		}
 
 		await setTimeout(5_000);

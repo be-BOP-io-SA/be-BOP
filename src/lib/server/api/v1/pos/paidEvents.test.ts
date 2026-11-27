@@ -1,0 +1,152 @@
+import { describe, expect, it, vi } from 'vitest';
+import { ObjectId } from 'mongodb';
+import type { Order } from '$lib/types/Order';
+
+vi.mock('$lib/server/database', () => ({ collections: {} }));
+vi.mock('$lib/server/runtime-config', () => ({
+	runtimeConfig: { authLinkJwtSigningKey: 'test-signing-key' }
+}));
+
+import { toPosPaidOrderEvent } from './paidEvents';
+import { TEST_DIGITAL_PRODUCT } from '$lib/server/seed/product';
+
+function makeOrder(opts?: {
+	paid?: boolean;
+	amount?: number;
+	tagIds?: string[];
+	chosenVariations?: Record<string, string>;
+	extraLine?: boolean;
+}): Order {
+	const amount = opts?.amount ?? 20;
+	const paid = opts?.paid ?? true;
+	return {
+		_id: '3f2a0c',
+		number: 1,
+		createdAt: new Date('2026-07-29T14:03:00Z'),
+		updatedAt: new Date('2026-07-29T14:03:10Z'),
+		status: paid ? 'paid' : 'pending',
+		items: [
+			{
+				product: { ...TEST_DIGITAL_PRODUCT, _id: 'credit', tagIds: opts?.tagIds },
+				quantity: 1,
+				...(opts?.chosenVariations && { chosenVariations: opts.chosenVariations }),
+				currencySnapshot: {
+					main: { price: { amount, currency: 'CHF' } },
+					priceReference: { price: { amount, currency: 'CHF' } }
+				},
+				vatRate: 0
+			},
+			...(opts?.extraLine
+				? [
+						{
+							product: { ...TEST_DIGITAL_PRODUCT, _id: 'biere', tagIds: ['boissons'] },
+							quantity: 2,
+							currencySnapshot: {
+								main: { price: { amount: 5, currency: 'CHF' } },
+								priceReference: { price: { amount: 5, currency: 'CHF' } }
+							},
+							vatRate: 0
+						}
+				  ]
+				: [])
+		],
+		payments: [
+			{
+				_id: new ObjectId(),
+				status: paid ? 'paid' : 'pending',
+				method: 'point-of-sale',
+				price: { amount, currency: 'CHF' },
+				currencySnapshot: {
+					main: { price: { amount, currency: 'CHF' } },
+					priceReference: { price: { amount, currency: 'CHF' } }
+				},
+				paidAt: paid ? new Date('2026-07-29T14:03:05Z') : undefined
+			}
+		],
+		currencySnapshot: {
+			main: { totalPrice: { amount, currency: 'CHF' } },
+			priceReference: { totalPrice: { amount, currency: 'CHF' } }
+		},
+		sellerIdentity: null,
+		notifications: { paymentStatus: {} },
+		user: {},
+		locale: 'en'
+	} as unknown as Order;
+}
+
+describe('toPosPaidOrderEvent', () => {
+	it('carries the order id and the amount in minor units', () => {
+		expect(toPosPaidOrderEvent(makeOrder({ amount: 20 }))).toEqual({
+			orderId: '3f2a0c',
+			amount: { amountMinor: 2000, currency: 'CHF' }
+		});
+	});
+
+	it('gives an amount with cents as an integer, with no float residue', () => {
+		expect(toPosPaidOrderEvent(makeOrder({ amount: 12.3 }))?.amount).toEqual({
+			amountMinor: 1230,
+			currency: 'CHF'
+		});
+	});
+
+	it('carries nothing else — no order is flagged as belonging to an integration', () => {
+		expect(Object.keys(toPosPaidOrderEvent(makeOrder()) ?? {})).toEqual(['orderId', 'amount']);
+	});
+
+	it('is null for an order with nothing actually received', () => {
+		expect(toPosPaidOrderEvent(makeOrder({ paid: false }))).toBeNull();
+	});
+});
+
+describe('toPosPaidOrderEvent with a tag', () => {
+	it('ignores an order with no line carrying the tag', () => {
+		expect(toPosPaidOrderEvent(makeOrder({ tagIds: ['boissons'] }), 'recharge')).toBeNull();
+	});
+
+	it('announces an order whose line carries the tag', () => {
+		const event = toPosPaidOrderEvent(makeOrder({ tagIds: ['recharge'], amount: 20 }), 'recharge');
+		expect(event).toMatchObject({
+			orderId: '3f2a0c',
+			amount: { amountMinor: 2000, currency: 'CHF' }
+		});
+	});
+
+	it('reports the tagged line alone, not the basket it was bought with', () => {
+		// 20 of credit plus 2 beers at 5: the order total is 30, the line is 20.
+		const event = toPosPaidOrderEvent(
+			makeOrder({ tagIds: ['recharge'], amount: 20, extraLine: true }),
+			'recharge'
+		);
+		expect(event?.amount.amountMinor).toBe(2000);
+	});
+
+	it('carries the variations of the line, which is how the support is identified', () => {
+		const event = toPosPaidOrderEvent(
+			makeOrder({ tagIds: ['recharge'], chosenVariations: { key: '3Qz8yTaVbNk7' } }),
+			'recharge'
+		);
+		expect(event?.chosenVariations).toEqual({ key: '3Qz8yTaVbNk7' });
+	});
+
+	it('gives the VAT of the tagged line in minor units', () => {
+		const order = makeOrder({ tagIds: ['recharge'], amount: 20 });
+		order.items[0].vatRate = 8.1;
+		const event = toPosPaidOrderEvent(order, 'recharge');
+		expect(event?.amount).toEqual({ amountMinor: 2162, currency: 'CHF' });
+		expect(event?.vat).toEqual([{ rate: 8.1, amountMinor: 162 }]);
+	});
+
+	it('stays silent on an order carrying two tagged lines rather than crediting one at random', () => {
+		const ambiguous = makeOrder({ tagIds: ['recharge'] });
+		ambiguous.items.push({ ...ambiguous.items[0], product: { ...ambiguous.items[0].product } });
+		expect(toPosPaidOrderEvent(ambiguous, 'recharge')).toBeNull();
+	});
+
+	it('still announces the whole order when no tag is named', () => {
+		const event = toPosPaidOrderEvent(
+			makeOrder({ tagIds: ['recharge'], amount: 20, extraLine: true })
+		);
+		expect(event?.amount.amountMinor).toBe(2000);
+		expect(event).not.toHaveProperty('key');
+	});
+});

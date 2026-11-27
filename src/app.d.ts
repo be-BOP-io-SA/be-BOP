@@ -8,6 +8,7 @@ import type { LanguageKey } from '$lib/translations';
 import type { CountryAlpha2 } from '$lib/types/Country';
 import type { Role } from '$lib/types/Role';
 import type { ObjectId } from 'mongodb';
+import type { AuthenticatedApiKey } from '$lib/types/ApiV1';
 
 declare global {
 	namespace App {
@@ -41,6 +42,10 @@ declare global {
 				id: string;
 			}>;
 			clientIp?: string;
+			/** Set by /api/v1 auth middleware when a valid API key is presented. */
+			apiKey?: AuthenticatedApiKey;
+			/** Set instead of `apiKey` when the key presented is suspended: refused, but named in the journal. */
+			suspendedApiKey?: Pick<AuthenticatedApiKey, '_id' | 'name' | 'keyPrefix'>;
 			acceptAgeLimitation?: boolean;
 			language: LanguageKey;
 		}

@@ -52,6 +52,7 @@ import { refreshSessionCookie, SESSION_COOKIE_NAME } from '$lib/server/cookies';
 import { renewSessionId } from '$lib/server/user';
 import { typedInclude } from '$lib/utils/typedIncludes';
 import { rateLimit } from '$lib/server/rateLimit';
+import { handleApiV1, isApiV1Path } from '$lib/server/api/v1/middleware';
 import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
 import { attemptAutoconfigurePhoenixd } from '$lib/server/phoenixd';
 
@@ -550,9 +551,16 @@ const handleSSO = authProviders
 	  })
 	: null;
 
-export const handle = handleSSO
-	? sequence(addSecurityHeaders, handleGlobal, handleSSO.handle, handleSsoCookie)
-	: sequence(addSecurityHeaders, handleGlobal);
+const handleApp: Handle = handleSSO
+	? sequence(handleGlobal, handleSSO.handle, handleSsoCookie)
+	: handleGlobal;
+
+export const handle: Handle = sequence(addSecurityHeaders, async ({ event, resolve }) => {
+	if (isApiV1Path(event.url.pathname)) {
+		return handleApiV1({ event, resolve });
+	}
+	return handleApp({ event, resolve });
+});
 
 // Kick-off autoconfiguration of phoenixd
 attemptAutoconfigurePhoenixd();
