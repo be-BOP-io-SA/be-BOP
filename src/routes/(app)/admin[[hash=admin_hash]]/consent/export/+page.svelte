@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { csvCell } from '$lib/utils/csvCell';
 	import { goto } from '$app/navigation';
 	import { useI18n } from '$lib/i18n';
 
@@ -22,10 +23,6 @@
 		return iso ? new Date(iso).toLocaleString($locale) : '';
 	}
 
-	function csvField(value: string) {
-		return `"${value.replaceAll('"', '""')}"`;
-	}
-
 	function exportCsv() {
 		const rows = [
 			[
@@ -41,7 +38,7 @@
 				customer.updatedAt
 			])
 		];
-		const csv = rows.map((row) => row.map(csvField).join(',')).join('\n');
+		const csv = rows.map((row) => row.map(csvCell).join(',')).join('\n');
 		const link = document.createElement('a');
 		link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
 		link.setAttribute('download', `consent-${data.selectedId}.csv`);
