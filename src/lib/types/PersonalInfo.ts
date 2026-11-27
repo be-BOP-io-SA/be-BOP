@@ -24,11 +24,6 @@ export interface PersonalInfo extends Timestamp {
 		seller: boolean;
 		partner: boolean;
 	};
-	/**
-	 * Opt-ins accepted before consents moved to one record per address (consentRecords). Kept as
-	 * stored, read only by the migration that gathered them.
-	 */
-	consentOptinIds?: string[];
 	npub?: string;
 	email?: string;
 	subscribedSchedule?: Schedule['_id'][];

@@ -1144,11 +1144,7 @@ export const migrations = [
 			const files = await collections.personalInfo
 				.find(
 					{
-						$or: [
-							{ 'newsletter.seller': true },
-							{ 'newsletter.partner': true },
-							{ 'consentOptinIds.0': { $exists: true } }
-						]
+						$or: [{ 'newsletter.seller': true }, { 'newsletter.partner': true }]
 					},
 					{ session }
 				)
@@ -1161,7 +1157,6 @@ export const migrations = [
 					continue;
 				}
 				const optinIds = [
-					...(file.consentOptinIds ?? []),
 					...(file.newsletter?.seller ? [LEGACY_CONSENT_OPTIN_IDS.seller] : []),
 					...(file.newsletter?.partner ? [LEGACY_CONSENT_OPTIN_IDS.partner] : [])
 				];

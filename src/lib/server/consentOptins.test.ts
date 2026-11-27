@@ -173,8 +173,7 @@ describe('consent opt-ins', () => {
 				_id: new ObjectId(),
 				email: EMAIL.address,
 				npub: NPUB.address,
-				newsletter: { seller: true, partner: false },
-				consentOptinIds: ['x']
+				newsletter: { seller: true, partner: true }
 			} as never);
 			const migration = migrations.find((m) =>
 				m._id.equals(new ObjectId('6b35c2a0e92e590e85af2835'))
@@ -188,7 +187,7 @@ describe('consent opt-ins', () => {
 
 			const record = await findConsentRecord(EMAIL);
 			expect(record).toMatchObject({ email: EMAIL.address, npub: NPUB.address });
-			expect(record?.optinIds.sort()).toEqual(['seller', 'x']);
+			expect(record?.optinIds.sort()).toEqual(['partner', 'seller']);
 			expect((await findConsentRecord(NPUB))?._id).toEqual(record?._id);
 		});
 	});
