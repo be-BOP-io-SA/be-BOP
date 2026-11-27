@@ -1,5 +1,6 @@
 import { apiError } from '../errors';
 import { isApiV1Enabled } from '../enabled';
+import { loadLabelNames, type LabelNames } from './listPaid';
 import type { Order } from '$lib/types/Order';
 import type { ObjectId } from 'mongodb';
 import {
@@ -100,8 +101,17 @@ export type PaidStreamOptions = {
 	 * means every order.
 	 */
 	ordersOfKey?: ObjectId;
+	/**
+	 * Hand `render` the names of the order's labels, read the way the listings read them. Only for a
+	 * surface that sends labels: the others would pay a lookup for nothing.
+	 */
+	withLabelNames?: boolean;
 	/** Null skips the order — nothing to announce for it on this surface. */
-	render: (order: Order, cursor: PaidStreamCursor) => PaidStreamFraming | null;
+	render: (
+		order: Order,
+		cursor: PaidStreamCursor,
+		labelNames: LabelNames
+	) => PaidStreamFraming | null;
 };
 
 /**
@@ -194,7 +204,8 @@ export function openPaidOrderStream(options: PaidStreamOptions): Response {
 	}
 
 	async function emit(order: Order, cursor: PaidStreamCursor): Promise<boolean> {
-		const framing = options.render(order, cursor);
+		const labelNames = options.withLabelNames ? await loadLabelNames([order]) : new Map();
+		const framing = options.render(order, cursor, labelNames);
 		if (!framing) {
 			return true;
 		}

@@ -66,8 +66,9 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		signal: event.request.signal,
 		after: resumeFrom,
 		feed: cursorScope.feed,
-		render: (order, cursor) => {
-			const dto = toOrderReadDto(order);
+		withLabelNames: true,
+		render: (order, cursor, labelNames) => {
+			const dto = toOrderReadDto(order, labelNames);
 			return {
 				id: encodeStreamCursor(cursor, cursorScope),
 				data: dto,
