@@ -42,9 +42,7 @@ export async function load({ locals }) {
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			consentOptinIds: await acceptedConsentOptinIds(signedInConsentAddress(locals)),
-			npub: personalInfoConnected?.npub,
-			email: personalInfoConnected?.email
+			consentOptinIds: await acceptedConsentOptinIds(signedInConsentAddress(locals))
 		}
 	};
 }
