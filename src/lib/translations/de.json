@@ -372,7 +372,8 @@
 				"galleries": "Galerien",
 				"schedules": "Zeitpläne",
 				"leaderboards": "Ranglisten",
-				"searchlists": "Suchlisten"
+				"searchlists": "Suchlisten",
+				"consent": "Einwilligungen"
 			},
 			"closeMenu": "Menü schließen",
 			"brandHome": "Admin",
@@ -1112,7 +1113,7 @@
 			"removePopinProductPrice": "Produktpreis im Pop-in beim Hinzufügen zum Warenkorb entfernen",
 			"checkout": "Kasse",
 			"showCheckoutButtonOnProductPage": "„Zur Kasse“-Schaltfläche auf der Produktseite anzeigen",
-			"displayNewsletterCommercialProspection": "Newsletter- + Werbe-Prospektions-Option anzeigen (standardmäßig deaktiviert)",
+			"displayNewsletterCommercialProspection": "Kunden-Opt-ins für Werbeanfragen anzeigen",
 			"requestIpCollectionOnDeliverylessOrder": "IP-Erfassung bei Bestellungen ohne Lieferung anfordern",
 			"mandatoryBillingAddress": "Rechnungsadresse verpflichtend",
 			"onlyAllowNonBusinessCustomers": "Nur Privatkunden zulassen (keine Firmenrechnungsoption)",
@@ -2096,6 +2097,45 @@
 			"notConfigured": "nicht konfiguriert",
 			"priority": "Priorität",
 			"systemPriority": "Systempriorität"
+		},
+		"consentOptins": {
+			"manageLink": "Kunden-Opt-ins für Werbeanfragen verwalten",
+			"title": "Kunden-Opt-ins für Werbeanfragen",
+			"description": "Opt-ins, die Kunden auf der Kassen- und der Identitätsseite in dieser Reihenfolge angeboten werden, wenn „Kunden-Opt-ins für Werbeanfragen anzeigen“ unter Einstellungen > Allgemein aktiviert ist. Nur aktivierte Opt-ins werden angezeigt, und ein Kunde stimmt einem Opt-in nur durch Ankreuzen zu.",
+			"empty": "Noch kein Opt-in.",
+			"disabledBadge": "Deaktiviert",
+			"translations": "Übersetzungen",
+			"edit": "Bearbeiten",
+			"deleteConfirm": "Opt-in „{label}“ löschen? Kunden, die zugestimmt haben, bleiben im Einwilligungsexport aufgeführt.",
+			"createNew": "Opt-in hinzufügen",
+			"saveSortOrder": "Reihenfolge speichern",
+			"editTitle": "Opt-in bearbeiten: {label}",
+			"labelField": "Bezeichnung",
+			"labelHint": "Wird in jeder Sprache ohne Übersetzung angezeigt. Übersetzen Sie sie über den Link Übersetzungen.",
+			"enabledCheckbox": "Aktiviert (für Kunden sichtbar)",
+			"createButton": "Erstellen",
+			"cancel": "Abbrechen",
+			"operationSuccess": "Gespeichert.",
+			"backToList": "Zurück zu den Opt-ins",
+			"translationsTitle": "Übersetzungen: {label}"
+		},
+		"consent": {
+			"title": "Einwilligungen",
+			"description": "Kunden, die dem gewählten Opt-in zugestimmt haben.",
+			"optinSelect": "Opt-in",
+			"deletedSuffix": "(gelöscht)",
+			"email": "E-Mail",
+			"npub": "npub",
+			"updatedAt": "Letzte Aktualisierung",
+			"acceptedAt": "Akzeptiert am",
+			"empty": "Kein Kunde hat diesem Opt-in zugestimmt.",
+			"exportCsv": "Als CSV exportieren",
+			"copyBcc": "E-Mail-Liste für das Bcc-Feld kopieren",
+			"copied": "Kopiert",
+			"count": "Kunden: {count}",
+			"optinsTab": "Opt-ins",
+			"exportTab": "Export",
+			"disabledSuffix": "(deaktiviert)"
 		}
 	},
 	"ageWarning": {
@@ -2628,7 +2668,7 @@
 		},
 		"session": {
 			"email": "E-Mail: {email}",
-			"identityPrefill": "Sie können Ihre Postanschrift und Ihre Kontaktadresse vorausfüllen. Wenn Sie eine Bestellung aufgeben, werden diese Informationen vorausgefüllt. Wenn Sie sich später entscheiden, ein Konto zu erstellen, werden diese Informationen für zukünftige Bestellungen gespeichert.",
+			"identityPrefill": "Sie können Ihre Postanschrift vorausfüllen und die Kontaktaufnahmen wählen, denen Sie zustimmen. Wenn Sie eine Bestellung aufgeben, werden diese Angaben vorausgefüllt.",
 			"npub": "Npub: {npub}",
 			"title": "Sitzung",
 			"userId": "Benutzer-ID: {userId}"

@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { cleanDb } from './test-utils';
 import { collections, withTransaction } from './database';
-import { ensureDefaultSearchlist, ensureSearchSearchlist, migrations } from './migrations';
+import {
+	ensureDefaultConsentOptins,
+	ensureDefaultSearchlist,
+	ensureSearchSearchlist,
+	migrations
+} from './migrations';
+import { LEGACY_CONSENT_OPTIN_IDS } from '$lib/types/ConsentOptin';
 import { TEST_BOOKING_SPEC, TEST_DIGITAL_PRODUCT } from './seed/product';
 
 function migrationById(id: string) {
@@ -139,5 +145,53 @@ describe('built-in searchlists seeding', () => {
 		await ensureDefaultSearchlist();
 
 		expect((await collections.searchlists.findOne({ _id: 'default' }))?.name).toBe('Mine');
+	});
+});
+
+describe('the two historical opt-ins (#2834)', () => {
+	it('creates them enabled and translated, as the first two opt-ins', async () => {
+		await cleanDb();
+		await collections.consentOptins.deleteMany({});
+
+		await ensureDefaultConsentOptins();
+
+		const seller = await collections.consentOptins.findOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.seller
+		});
+		const partner = await collections.consentOptins.findOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.partner
+		});
+		expect(seller).toMatchObject({ enabled: true, sortOrder: 0 });
+		expect(partner).toMatchObject({ enabled: true, sortOrder: 1 });
+		expect(seller?.label).toBeTruthy();
+		expect(seller?.translations?.fr?.label).toBeTruthy();
+		expect(seller?.versions).toHaveLength(1);
+	});
+
+	it('leaves alone an opt-in an employee already edited or deleted', async () => {
+		await cleanDb();
+		await collections.consentOptins.deleteMany({});
+		const deletedAt = new Date('2026-11-01T00:00:00.000Z');
+		await collections.consentOptins.insertOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.seller,
+			label: 'News from the shop',
+			enabled: false,
+			sortOrder: 5,
+			deletedAt,
+			createdAt: deletedAt,
+			updatedAt: deletedAt
+		});
+
+		await ensureDefaultConsentOptins();
+
+		const seller = await collections.consentOptins.findOne({
+			_id: LEGACY_CONSENT_OPTIN_IDS.seller
+		});
+		expect(seller).toMatchObject({
+			label: 'News from the shop',
+			enabled: false,
+			sortOrder: 5,
+			deletedAt
+		});
 	});
 });

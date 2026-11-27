@@ -91,6 +91,10 @@ export const adminLinks: AdminLinks = [
 				label: 'General'
 			},
 			{
+				href: '/admin/consent',
+				label: 'Consent'
+			},
+			{
 				href: '/admin/language',
 				label: 'Languages'
 			},

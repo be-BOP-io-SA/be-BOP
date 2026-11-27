@@ -54,6 +54,8 @@ import type { Leaderboard } from '$lib/types/Leaderboard';
 import type { OrderTab } from '$lib/types/OrderTab';
 import type { PosPaymentSubtype } from '$lib/types/PosPaymentSubtype';
 import type { CheckoutFieldConfig } from '$lib/types/CheckoutFieldConfig';
+import type { ConsentOptin } from '$lib/types/ConsentOptin';
+import type { ConsentRecord } from '$lib/types/ConsentRecord';
 import type { PosSession } from '$lib/types/PosSession';
 import type { PendingZap } from '$lib/types/PendingZap';
 import type { AccountingLog } from '$lib/types/AccountingLog';
@@ -121,6 +123,8 @@ const genCollection = () => ({
 	scheduleEvents: db.collection<ScheduleEventBooked>('schedule.events'),
 	posPaymentSubtypes: db.collection<PosPaymentSubtype>('posPaymentSubtypes'),
 	checkoutFieldConfigs: db.collection<CheckoutFieldConfig>('checkoutFieldConfigs'),
+	consentOptins: db.collection<ConsentOptin>('consentOptins'),
+	consentRecords: db.collection<ConsentRecord>('consentRecords'),
 	posSessions: db.collection<PosSession>('posSessions'),
 	pendingZaps: db.collection<PendingZap>('pendingZaps'),
 
@@ -249,6 +253,18 @@ const indexes: Array<[Collection<any>, IndexSpecification, CreateIndexesOptions?
 	[collections.checkoutFieldConfigs, { slug: 1 }, { unique: true }],
 	[collections.checkoutFieldConfigs, { sortOrder: 1 }],
 	[collections.checkoutFieldConfigs, { disabled: 1 }],
+	[collections.consentOptins, { sortOrder: 1 }],
+	[
+		collections.consentRecords,
+		{ email: 1 },
+		{ unique: true, partialFilterExpression: { email: { $type: 'string' } } }
+	],
+	[
+		collections.consentRecords,
+		{ npub: 1 },
+		{ unique: true, partialFilterExpression: { npub: { $type: 'string' } } }
+	],
+	[collections.consentRecords, { optinIds: 1 }],
 	[collections.posSessions, { status: 1, openedAt: -1 }],
 	[collections.posSessions, { closedAt: -1 }],
 	[collections.orderTabs, { slug: 1 }, { unique: true }],

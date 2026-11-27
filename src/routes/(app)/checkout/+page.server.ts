@@ -33,6 +33,13 @@ import { rateLimit } from '$lib/server/rateLimit.js';
 import { cmsFromContent } from '$lib/server/cms';
 import { omit } from '$lib/utils/omit.js';
 import { set } from '$lib/utils/set';
+import {
+	acceptedConsentOptinIds as acceptedOptinIdsFor,
+	displayedConsentOptins,
+	recordConsentChoice,
+	signedInConsentAddress,
+	type ConsentAddress
+} from '$lib/server/consentOptins';
 import { ObjectId } from 'mongodb';
 import type { Tag } from '$lib/types/Tag';
 import {
@@ -203,13 +210,14 @@ export async function load({ parent, locals }) {
 			lastName: personalInfoConnected?.lastName,
 			address: personalInfoConnected?.address,
 			_id: personalInfoConnected?._id.toString(),
-			newsletter: personalInfoConnected?.newsletter,
+			// Only a signed-in customer sees their choice: it would reveal what an address accepted.
+			consentOptinIds: await acceptedOptinIdsFor(signedInConsentAddress(locals)),
 			npub: personalInfoConnected?.npub,
 			email: personalInfoConnected?.email
 		},
 		shopInformation: runtimeConfig.shopInformation,
 		isBillingAddressMandatory: runtimeConfig.isBillingAddressMandatory,
-		displayNewsletterCommercialProspection: runtimeConfig.displayNewsletterCommercialProspection,
+		consentOptins: await displayedConsentOptins(locals.language),
 		noProBilling: runtimeConfig.noProBilling,
 		posSubtypes: posSubtypes.map((subtype) => ({
 			slug: subtype.slug,
@@ -379,6 +387,7 @@ export const actions = {
 		const rawAddress = String(formData.get('paymentStatusAddress') ?? '').trim();
 		let npubAddress: string | undefined;
 		let email: string | undefined;
+		let typedConsentAddress: ConsentAddress | null = null;
 		if (rawAddress) {
 			const addressResult = validateEmailOrNpub(
 				rawAddress,
@@ -387,6 +396,7 @@ export const actions = {
 			if ('error' in addressResult) {
 				throw error(400, 'Invalid notification address');
 			}
+			typedConsentAddress = addressResult;
 			if (addressResult.kind === 'email') {
 				email = addressResult.address;
 			} else {
@@ -398,18 +408,6 @@ export const actions = {
 		if (shippingInfo && !shippingInfo.shipping.state) {
 			delete shippingInfo.shipping.state;
 		}
-		const newsletterProspection = runtimeConfig.displayNewsletterCommercialProspection
-			? z
-					.object({
-						newsletter: z
-							.object({
-								seller: z.boolean({ coerce: true }).default(false),
-								partner: z.boolean({ coerce: true }).default(false)
-							})
-							.optional()
-					})
-					.parse(json)
-			: null;
 		const note = json.noteContent
 			? z
 					.object({
@@ -512,28 +510,7 @@ export const actions = {
 			throw error(400, 'You must acknowledge that you offer delivery fees and add a justification');
 		}
 
-		if (
-			runtimeConfig.displayNewsletterCommercialProspection &&
-			newsletterProspection &&
-			(newsletterProspection.newsletter?.partner || newsletterProspection.newsletter?.seller)
-		) {
-			await collections.personalInfo.updateOne(
-				userQuery(userIdentifier(locals)),
-				{
-					$set: {
-						newsletter: newsletterProspection.newsletter,
-						...(npubAddress && { npub: npubAddress }),
-						...(email && { email: email }),
-						updatedAt: new Date(),
-						user: userIdentifier(locals)
-					},
-					$setOnInsert: { createdAt: new Date() }
-				},
-				{
-					upsert: true
-				}
-			);
-		}
+		await recordConsentChoice({ locals, formData, typedAddress: typedConsentAddress });
 		const physicalFullyPaid =
 			locals.user?.hasPosOptions && runtimeConfig.defaultOnLocation
 				? z

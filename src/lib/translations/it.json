@@ -372,7 +372,8 @@
 				"galleries": "Gallerie",
 				"schedules": "Programmi",
 				"leaderboards": "Classifiche",
-				"searchlists": "Liste di ricerca"
+				"searchlists": "Liste di ricerca",
+				"consent": "Consensi"
 			},
 			"closeMenu": "Chiudi menu",
 			"brandHome": "Admin",
@@ -1112,7 +1113,7 @@
 			"removePopinProductPrice": "Rimuovi il prezzo del prodotto nel pop-in quando si aggiunge al carrello",
 			"checkout": "Pagamento",
 			"showCheckoutButtonOnProductPage": "Mostra il pulsante \"checkout\" nella pagina del prodotto",
-			"displayNewsletterCommercialProspection": "Mostra l'opzione newsletter + prospezione commerciale (disabilitata per impostazione predefinita)",
+			"displayNewsletterCommercialProspection": "Mostra i consensi per le sollecitazioni ai clienti",
 			"requestIpCollectionOnDeliverylessOrder": "Richiedi la raccolta dell'IP per gli ordini senza consegna",
 			"mandatoryBillingAddress": "Indirizzo di fatturazione obbligatorio",
 			"onlyAllowNonBusinessCustomers": "Consenti solo clienti privati (nessuna opzione di fatturazione aziendale)",
@@ -2096,6 +2097,45 @@
 			"notConfigured": "non configurato",
 			"priority": "Priorità",
 			"systemPriority": "Priorità di sistema"
+		},
+		"consentOptins": {
+			"manageLink": "Gestisci i consensi per le sollecitazioni ai clienti",
+			"title": "Consensi per le sollecitazioni ai clienti",
+			"description": "Consensi proposti ai clienti nelle pagine di pagamento e di identità, in questo ordine, quando «Mostra i consensi per le sollecitazioni ai clienti» è selezionato in Impostazioni > Generale. Sono mostrati solo quelli attivati, e un cliente accetta un consenso solo selezionandolo.",
+			"empty": "Ancora nessun consenso.",
+			"disabledBadge": "Disattivato",
+			"translations": "Traduzioni",
+			"edit": "Modifica",
+			"deleteConfirm": "Eliminare il consenso «{label}»? I clienti che lo hanno accettato restano elencati nell'esportazione dei consensi.",
+			"createNew": "Aggiungi un consenso",
+			"saveSortOrder": "Salva l'ordine",
+			"editTitle": "Modifica il consenso: {label}",
+			"labelField": "Etichetta",
+			"labelHint": "Mostrata in tutte le lingue senza traduzione. Traducila dal link Traduzioni.",
+			"enabledCheckbox": "Attivato (visibile ai clienti)",
+			"createButton": "Crea",
+			"cancel": "Annulla",
+			"operationSuccess": "Salvato.",
+			"backToList": "Torna ai consensi",
+			"translationsTitle": "Traduzioni: {label}"
+		},
+		"consent": {
+			"title": "Consensi",
+			"description": "Clienti che hanno accettato il consenso scelto.",
+			"optinSelect": "Consenso",
+			"deletedSuffix": "(eliminato)",
+			"email": "E-mail",
+			"npub": "npub",
+			"updatedAt": "Ultimo aggiornamento",
+			"acceptedAt": "Accettata il",
+			"empty": "Nessun cliente ha accettato questo consenso.",
+			"exportCsv": "Esporta in CSV",
+			"copyBcc": "Copia l'elenco e-mail per il campo Ccn",
+			"copied": "Copiato",
+			"count": "Clienti: {count}",
+			"optinsTab": "Consensi",
+			"exportTab": "Esportazione",
+			"disabledSuffix": "(disattivato)"
 		}
 	},
 	"ageWarning": {
@@ -2628,7 +2668,7 @@
 		},
 		"session": {
 			"email": "Email: {email}",
-			"identityPrefill": "Puoi precompilare il tuo indirizzo postale e il tuo indirizzo di contatto. Se effettui un ordine, queste informazioni saranno precompilate. Se decidi di creare un account in seguito, queste informazioni verranno salvate per ordini futuri.",
+			"identityPrefill": "Puoi precompilare il tuo indirizzo postale e scegliere le sollecitazioni che accetti. Se effettui un ordine, queste informazioni saranno precompilate.",
 			"npub": "Npub: {npub}",
 			"title": "Sessione",
 			"userId": "UserId: {userId}"

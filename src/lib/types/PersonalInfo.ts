@@ -8,13 +8,18 @@ export interface PersonalInfo extends Timestamp {
 	user?: UserIdentifier;
 	firstName?: string;
 	lastName?: string;
+	/** May be partial: the identity page saves whatever the customer filled in. */
 	address?: {
-		street: string;
-		zip: string;
-		city: string;
-		country: CountryAlpha2;
+		street?: string;
+		zip?: string;
+		city?: string;
+		country?: CountryAlpha2;
 		state?: string;
 	};
+	/**
+	 * Answers to the two historical opt-ins. Kept as stored, read only by the migration that
+	 * gathered them into consentRecords.
+	 */
 	newsletter?: {
 		seller: boolean;
 		partner: boolean;

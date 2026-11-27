@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConsentOptinCheckboxes from '$lib/components/ConsentOptinCheckboxes.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import { productLabelWithVariations } from '$lib/types/Product';
 	import { goto } from '$app/navigation';
@@ -696,26 +697,12 @@
 								required={key === 'paymentStatus' && !data.hasPosOptions}
 							/>
 						</div>
-						{#if data.displayNewsletterCommercialProspection}
+						{#if data.consentOptins.length}
 							<div class="p-4 flex flex-col gap-3">
-								<label class="checkbox-label col-span-3">
-									<input
-										class="form-checkbox"
-										type="checkbox"
-										checked={data.personalInfoConnected?.newsletter?.seller ?? false}
-										name="newsletter.seller"
-									/>
-									{t('newsletter.allowSellerContact')}
-								</label>
-								<label class="checkbox-label col-span-3">
-									<input
-										class="form-checkbox"
-										type="checkbox"
-										checked={data.personalInfoConnected?.newsletter?.partner ?? false}
-										name="newsletter.partner"
-									/>
-									{t('newsletter.allowPartnerContact')}
-								</label>
+								<ConsentOptinCheckboxes
+									optins={data.consentOptins}
+									acceptedIds={data.personalInfoConnected.consentOptinIds}
+								/>
 							</div>
 						{/if}
 					</article>
