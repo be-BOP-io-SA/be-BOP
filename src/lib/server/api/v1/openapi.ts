@@ -1445,7 +1445,11 @@ export function buildOpenApiDocument(opts?: { serverUrl?: string }) {
 					description:
 						'Server-Sent Events, with the same framing, heartbeat, signed resume cursor and ' +
 						'live-edge start as `/api/v1/orders/paid/stream`. Each frame carries the order as ' +
-						'`GET /api/v1/orders` returns it. A key restricted to its own orders only receives those. ' +
+						'`GET /api/v1/orders` returns it, plus `annotatedAt`, the date of its last annotation. The ' +
+						'event is the state of the order, not what changed: each note carries its own date, so ' +
+						'the new ones are those dated after the last event handled, and the labels are the ones ' +
+						'now on the order, to compare with the caller’s own. A key restricted to its own orders ' +
+						'only receives those. ' +
 						'Every order, each time a note or a label is put on it or its personal data is erased — ' +
 						'and only then. Those writes leave the sale as it was, which is why the other order ' +
 						'streams do not announce them.',

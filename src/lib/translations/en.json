@@ -2195,7 +2195,7 @@
 			"streamsTitle": "Event streams",
 			"streamsHelp": "How many event streams this key may hold open at once, and how long each one stays open. Both are optional.",
 			"maxConcurrentStreams": "Concurrent streams allowed",
-			"maxConcurrentStreamsHint": "Leave empty for no ceiling. A device that opens several feeds takes one place per feed.",
+			"maxConcurrentStreamsHint": "Leave empty for no ceiling. A device that opens several feeds takes one place per feed: following the sales and the annotations of orders takes two.",
 			"openStreamsNow": "{count} open now",
 			"streamLifetimeSeconds": "Close each stream after (seconds)",
 			"streamLifetimeSecondsHint": "Leave empty to never close it. The device reconnects on its own and picks up where it stopped, so closing costs it nothing.",

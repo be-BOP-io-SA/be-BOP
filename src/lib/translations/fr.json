@@ -2195,7 +2195,7 @@
 			"streamsTitle": "Flux d'événements",
 			"streamsHelp": "Combien de flux d'événements cette clé peut tenir ouverts en même temps, et combien de temps chacun reste ouvert. Les deux sont facultatifs.",
 			"maxConcurrentStreams": "Flux simultanés autorisés",
-			"maxConcurrentStreamsHint": "Laissez vide pour ne pas plafonner. Un appareil qui ouvre plusieurs flux occupe une place par flux.",
+			"maxConcurrentStreamsHint": "Laissez vide pour ne pas plafonner. Un appareil qui ouvre plusieurs flux occupe une place par flux : suivre les ventes et les annotations des commandes en occupe deux.",
 			"openStreamsNow": "{count} ouverts actuellement",
 			"streamLifetimeSeconds": "Fermer chaque flux au bout de (secondes)",
 			"streamLifetimeSecondsHint": "Laissez vide pour ne jamais le fermer. L'appareil se reconnecte seul et reprend où il s'était arrêté : la fermeture ne lui coûte rien.",

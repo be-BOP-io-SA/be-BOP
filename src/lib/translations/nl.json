@@ -2195,7 +2195,7 @@
 			"streamsTitle": "Gebeurtenisstromen",
 			"streamsHelp": "Hoeveel gebeurtenisstromen deze sleutel tegelijk open mag houden, en hoe lang elke stroom openblijft. Beide zijn optioneel.",
 			"maxConcurrentStreams": "Toegestane gelijktijdige stromen",
-			"maxConcurrentStreamsHint": "Laat leeg voor geen bovengrens. Een apparaat dat meerdere stromen opent, neemt per stroom één plaats in.",
+			"maxConcurrentStreamsHint": "Laat leeg voor geen bovengrens. Een apparaat dat meerdere stromen opent, neemt per stroom één plaats in: de verkopen en de annotaties van bestellingen volgen neemt er twee in.",
 			"openStreamsNow": "{count} nu open",
 			"streamLifetimeSeconds": "Elke stroom sluiten na (seconden)",
 			"streamLifetimeSecondsHint": "Laat leeg om hem nooit te sluiten. Het apparaat verbindt zelf opnieuw en gaat verder waar het gebleven was, sluiten kost het dus niets.",

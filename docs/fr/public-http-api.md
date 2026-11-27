@@ -67,7 +67,7 @@ Trois flux Server-Sent Events, chacun avec le droit `orders:stream`. Ils portent
 
 - `GET /api/v1/orders/paid/stream` : une vente une fois payée, annoncée une seule fois.
 - `GET /api/v1/orders/stream` : toutes les commandes, à chaque changement de la commande elle-même — créée en attente, payée, échouée, annulée, expirée.
-- `GET /api/v1/orders/updates/stream` : une note ou un label posé sur une commande, ou ses données personnelles effacées — et seulement cela.
+- `GET /api/v1/orders/updates/stream` : une note ou un label posé sur une commande, ou ses données personnelles effacées — et seulement cela. L'événement est la commande entière telle que `GET /api/v1/orders` la rend, plus `annotatedAt`, la date de sa dernière annotation ; il ne dit pas ce qui a changé. Chaque note porte sa propre date : les nouvelles sont celles datées après le dernier événement traité, et les labels (identifiant et nom) sont ceux qui sont maintenant sur la commande, à comparer aux vôtres. Un appareil qui suit les ventes et les annotations ouvre deux flux et prend donc deux places du budget de flux simultanés de la clé (4 par défaut pour une nouvelle clé).
 
 ## Lecture commandes payées (poll)
 

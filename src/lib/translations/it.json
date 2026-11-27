@@ -2195,7 +2195,7 @@
 			"streamsTitle": "Flussi di eventi",
 			"streamsHelp": "Quanti flussi di eventi questa chiave può tenere aperti contemporaneamente e quanto tempo ciascuno resta aperto. Entrambi sono facoltativi.",
 			"maxConcurrentStreams": "Flussi simultanei consentiti",
-			"maxConcurrentStreamsHint": "Lasciare vuoto per non imporre un limite. Un dispositivo che apre più flussi occupa un posto per flusso.",
+			"maxConcurrentStreamsHint": "Lasciare vuoto per non imporre un limite. Un dispositivo che apre più flussi occupa un posto per flusso: seguire le vendite e le annotazioni degli ordini ne occupa due.",
 			"openStreamsNow": "{count} aperti ora",
 			"streamLifetimeSeconds": "Chiudere ogni flusso dopo (secondi)",
 			"streamLifetimeSecondsHint": "Lasciare vuoto per non chiuderlo mai. Il dispositivo si riconnette da sé e riprende da dove si era fermato, quindi chiuderlo non gli costa nulla.",

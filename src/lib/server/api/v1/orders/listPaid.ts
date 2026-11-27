@@ -403,6 +403,20 @@ export function toOrderReadDto(order: Order, labelNames?: LabelNames): OrderRead
 	};
 }
 
+/**
+ * What the annotations stream sends: the order whole, as the read returns it, and when it was last
+ * annotated. The event does not say what changed: the notes carry their own dates, and the labels
+ * are the ones now on the order, to compare with the caller's own.
+ */
+export type OrderAnnotationDto = OrderReadDto & { annotatedAt: string };
+
+export function toOrderAnnotationDto(order: Order, labelNames?: LabelNames): OrderAnnotationDto {
+	return {
+		...toOrderReadDto(order, labelNames),
+		annotatedAt: (order.annotatedAt ?? order.createdAt).toISOString()
+	};
+}
+
 /** All orders for Face A (`orders:read`), including unpaid. */
 export async function listOrders(query: PaidOrdersQuery): Promise<
 	| {

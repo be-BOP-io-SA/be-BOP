@@ -67,7 +67,7 @@ Three Server-Sent Events streams, each with the `orders:stream` scope. They carr
 
 - `GET /api/v1/orders/paid/stream`: a sale once it is paid, announced once.
 - `GET /api/v1/orders/stream`: every order on each change of the order itself — created pending, paid, failed, cancelled, expired.
-- `GET /api/v1/orders/updates/stream`: a note or a label put on an order, or its personal data erased — and only that.
+- `GET /api/v1/orders/updates/stream`: a note or a label put on an order, or its personal data erased — and only that. The event is the whole order as `GET /api/v1/orders` returns it, plus `annotatedAt`, the date of its last annotation; it does not say what changed. Each note carries its own date, so the new ones are those dated after the last event you handled, and the labels (id and name) are the ones now on the order, to compare with yours. A device that follows the sales and the annotations opens two streams and so takes two places of the key's budget of concurrent streams (4 by default for a new key).
 
 ## Paid-orders read (poll)
 

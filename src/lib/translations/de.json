@@ -2195,7 +2195,7 @@
 			"streamsTitle": "Ereignis-Streams",
 			"streamsHelp": "Wie viele Ereignis-Streams dieser Schlüssel gleichzeitig offen halten darf und wie lange jeder offen bleibt. Beides ist optional.",
 			"maxConcurrentStreams": "Erlaubte gleichzeitige Streams",
-			"maxConcurrentStreamsHint": "Leer lassen für keine Obergrenze. Ein Gerät, das mehrere Feeds öffnet, belegt pro Feed einen Platz.",
+			"maxConcurrentStreamsHint": "Leer lassen für keine Obergrenze. Ein Gerät, das mehrere Feeds öffnet, belegt pro Feed einen Platz: Verkäufe und Annotationen von Bestellungen zu verfolgen belegt zwei.",
 			"openStreamsNow": "{count} derzeit offen",
 			"streamLifetimeSeconds": "Jeden Stream schließen nach (Sekunden)",
 			"streamLifetimeSecondsHint": "Leer lassen, um ihn nie zu schließen. Das Gerät verbindet sich selbst neu und macht dort weiter, wo es aufgehört hat — das Schließen kostet es nichts.",

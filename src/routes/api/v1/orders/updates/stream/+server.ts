@@ -3,7 +3,7 @@ import { apiV1Handler, apiV1OptionsHandler } from '$lib/server/api/v1/handler';
 import { requireApiKey } from '$lib/server/api/v1/auth';
 import { apiError } from '$lib/server/api/v1/errors';
 import { checkRateLimit } from '$lib/server/rateLimit';
-import { toOrderReadDto } from '$lib/server/api/v1/orders/listPaid';
+import { toOrderAnnotationDto } from '$lib/server/api/v1/orders/listPaid';
 import { openPaidOrderStream } from '$lib/server/api/v1/orders/paidStreamConnection';
 import { parseApiQuery, textParam } from '$lib/server/api/v1/query';
 import { encodeStreamCursor, parseStreamCursor } from '$lib/server/api/v1/orders/paidStream';
@@ -13,7 +13,8 @@ export const OPTIONS: RequestHandler = apiV1OptionsHandler;
 
 /**
  * Orders as Server-Sent Events, each time a note or a label is put on one or its personal data is
- * erased. It speaks the same `OrderReadDto` as `GET /api/v1/orders`.
+ * erased. It speaks the same `OrderReadDto` as `GET /api/v1/orders`, plus the date of the last
+ * annotation.
  *
  * Those writes leave the sale as it was, so `/api/v1/orders/paid/stream` and
  * `/api/v1/orders/stream` do not announce them: a device that acts on a sale never sees the same
@@ -69,7 +70,7 @@ export const GET: RequestHandler = apiV1Handler(async (event) => {
 		cursorScope,
 		withLabelNames: true,
 		render: (order, cursor, labelNames) => {
-			const dto = toOrderReadDto(order, labelNames);
+			const dto = toOrderAnnotationDto(order, labelNames);
 			return {
 				id: encodeStreamCursor(cursor, cursorScope),
 				data: dto,
