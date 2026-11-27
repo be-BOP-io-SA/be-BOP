@@ -52,6 +52,35 @@ test('the API is off until the shop ticks the box: the public address is a 404, 
 	expect(on.status()).toBe(200);
 });
 
+test('an /api/v1 address no route owns is a JSON 404, switched on or off, never a page of the site', async ({
+	page
+}) => {
+	const unknown = [
+		'/api/v1',
+		'/api/v1/',
+		'/api/v1/zzz',
+		'/api/v1/zzz/',
+		'/api/v%31/zzz',
+		'/api/v1/orders/abc',
+		'/api/v1/catalog/products//'
+	];
+	for (const on of [false, true]) {
+		await setSwitch(page, on);
+		for (const path of unknown) {
+			const res = await page.request.get(path, { maxRedirects: 0 });
+			expect(res.status(), `${path} (${on ? 'on' : 'off'})`).toBe(404);
+			expect(await res.json()).toEqual({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+		}
+		// The prefix is /api/v1 and nothing around it: these stay pages of the site.
+		for (const neighbour of ['/api/v10', '/apiv1']) {
+			const res = await page.request.get(neighbour);
+			expect(res.headers()['content-type'], neighbour).toMatch(/text\/html/);
+		}
+	}
+	// A real route is still the one that answers, switched on.
+	expect((await page.request.get('/api/v1/health')).status()).toBe(200);
+});
+
 test.describe('in French', () => {
 	test.use({ locale: 'fr-FR' });
 

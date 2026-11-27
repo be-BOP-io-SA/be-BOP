@@ -25,6 +25,8 @@ Décocher la case ferme tout de suite les flux d’événements ouverts ; chaque
 
 Une barre finale est acceptée sur toutes les adresses `/api/v1` : `/api/v1/health/` répond comme `/api/v1/health`, sans redirection.
 
+Une adresse `/api/v1` qui n'existe pas (`/api/v1`, `/api/v1/zzz`, `/api/v1/orders/abc`…) répond un `404` JSON dans la même enveloppe d'erreur, quelle que soit la méthode et que l'API soit activée ou non, jamais une page du site.
+
 ## Créer une clé (Admin → API Keys)
 
 1. Se connecter en Super Admin.

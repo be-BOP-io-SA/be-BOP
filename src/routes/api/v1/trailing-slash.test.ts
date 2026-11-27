@@ -23,7 +23,7 @@ describe('the trailing slash of the API endpoints', () => {
 	});
 
 	it('finds the endpoints', () => {
-		expect(endpoints.length).toBeGreaterThanOrEqual(17);
+		expect(endpoints.length).toBeGreaterThanOrEqual(18);
 	});
 
 	// A route added later without it would answer 308 where the others answer 404 when the API is off.

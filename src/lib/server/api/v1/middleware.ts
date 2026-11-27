@@ -5,7 +5,7 @@ import { runtimeConfig } from '$lib/server/runtime-config';
 import { toIPv4Maybe } from '$lib/server/utils/toIPv4Maybe';
 import type { LanguageKey } from '$lib/translations';
 import { applyApiV1CorsHeaders } from './cors';
-import { apiError } from './errors';
+import { apiError, apiNotFound } from './errors';
 import { isApiV1Enabled } from './enabled';
 import { routedPathname } from '$lib/server/admin';
 
@@ -53,7 +53,7 @@ export const handleApiV1: Handle = async ({ event, resolve }) => {
 	// First, before anything is read or counted: a shop that did not switch the API on must look
 	// like a shop without one, so no preflight header, no limiter bucket, no journal line.
 	if (!isApiV1Enabled()) {
-		return apiError(404, 'NOT_FOUND', 'Not found');
+		return apiNotFound();
 	}
 
 	try {

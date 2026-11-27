@@ -25,6 +25,8 @@ Unticking the box closes the event streams that are open at once; each stream al
 
 A trailing slash is accepted on every `/api/v1` address: `/api/v1/health/` answers like `/api/v1/health`, with no redirect.
 
+An `/api/v1` address that does not exist (`/api/v1`, `/api/v1/zzz`, `/api/v1/orders/abc`…) answers a JSON `404` in the same error envelope, whatever the method and whether the API is switched on or not, never a page of the site.
+
 ## Create a key (Admin → API Keys)
 
 1. Sign in as Super Admin.
